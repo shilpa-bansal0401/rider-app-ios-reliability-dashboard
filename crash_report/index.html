@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentry Fatal Crash Analysis — Rider iOS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc; color: #111; padding: 32px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 13px; margin-bottom: 24px; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 0; border-bottom: 2px solid #e5e7eb; }
+    .tab { padding: 9px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+             border-radius: 6px 6px 0 0; border: 1px solid transparent;
+             border-bottom: none; color: #6b7280; background: transparent;
+             position: relative; top: 2px; transition: color .15s; }
+    .tab:hover { color: #111; }
+    .tab.active { color: #111; background: #fff; border-color: #e5e7eb;
+                   border-bottom-color: #fff; }
+
+    /* ── Panels ── */
+    .panel { display: none; background: #fff; border: 1px solid #e5e7eb;
+               border-top: none; border-radius: 0 6px 6px 6px; padding: 28px; }
+    .panel.active { display: block; }
+
+    /* ── Overview panel ── */
+    .overview-totals { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+    .total-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
+                   padding: 14px 20px; min-width: 180px; }
+    .total-card .month-name { font-size: 11px; text-transform: uppercase;
+                                letter-spacing: .05em; color: #6b7280; margin-bottom: 4px; }
+    .total-card .month-total { font-size: 26px; font-weight: 700; color: #111; }
+    .total-card .month-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+    .overview-chart-wrap { margin-bottom: 28px; }
+    .overview-chart-wrap canvas { max-width: 100%; height: 320px !important; }
+
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .compare-table thead th { text-align: left; padding: 8px 12px;
+      border-bottom: 2px solid #e5e7eb; color: #666; font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    .compare-table thead th.num { text-align: right; }
+    .compare-table tbody tr { border-bottom: 1px solid #f3f4f6; }
+    .compare-table tbody tr:hover { background: #f9fafb; }
+    .compare-table td { padding: 9px 12px; vertical-align: middle; }
+    .compare-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .compare-table td.cell-link { cursor: pointer; }
+    .compare-table td.cell-link:hover { background: #eff6ff; color: #2563eb; text-decoration: underline; }
+    .td-group { display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; }
+    .delta-pos { color: #dc2626; font-size: 11px; }
+    .delta-neg { color: #16a34a; font-size: 11px; }
+    .delta-neu { color: #9ca3af; font-size: 11px; }
+
+    /* ── Month detail panel ── */
+    .layout { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+    .chart-wrap { width: 300px; flex-shrink: 0; }
+    .chart-wrap canvas { width: 300px !important; height: 300px !important; }
+    .legend { margin-top: 14px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px;
+                    margin-bottom: 6px; cursor: pointer; }
+    .legend-item:hover .legend-label { text-decoration: underline; }
+    .swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+    .legend-label { color: #111; }
+    .legend-pct { color: #666; margin-left: auto; font-variant-numeric: tabular-nums; }
+    .table-wrap { flex: 1; min-width: 420px; overflow-x: auto; }
+    table.detail { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.detail thead th { text-align: left; padding: 8px 12px;
+      border-bottom: 2px solid #e5e7eb; color: #666; font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+      cursor: pointer; white-space: nowrap; user-select: none; }
+    table.detail thead th:hover { color: #111; }
+    table.detail thead th.sorted-asc::after { content: " ↑"; }
+    table.detail thead th.sorted-desc::after { content: " ↓"; }
+    table.detail tbody tr { border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+    table.detail tbody tr:hover { background: #f9fafb; }
+    table.detail td { padding: 10px 12px; vertical-align: top; }
+    .td-pct { font-variant-numeric: tabular-nums; color: #374151; }
+    .td-users { font-variant-numeric: tabular-nums; font-weight: 600; }
+    .td-culprits { color: #6b7280; font-size: 11px;
+                    font-family: "SFMono-Regular", Menlo, monospace; line-height: 1.6; }
+    .td-culprits span { display: inline-block; background: #f3f4f6; border-radius: 4px;
+                          padding: 1px 6px; margin: 1px 2px 1px 0; }
+
+    .weekly-chart-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+                         padding: 18px; margin-bottom: 24px; }
+    .weekly-chart-wrap canvas { max-width: 100%; height: 360px !important; }
+    .weekly-summary { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .weekly-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
+                    padding: 12px 16px; min-width: 150px; }
+    .weekly-card .week-name { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+                               color: #6b7280; margin-bottom: 4px; }
+    .weekly-card .week-total { font-size: 22px; font-weight: 700; }
+
+    .footer { margin-top: 32px; font-size: 11px; color: #9ca3af;
+               border-top: 1px solid #e5e7eb; padding-top: 16px; }
+  </style>
+</head>
+<body>
+
+<h1>Fatal Crash Analysis — Rider iOS</h1>
+<p class="subtitle">
+  Filter: <code>level:fatal handled:no</code> &nbsp;|&nbsp;
+  Data fetched: 30 Apr 2026 &nbsp;|&nbsp;
+  Months: Feb 2026 · Mar 2026 · Apr 2026
+</p>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-panel="overview">Overview</div>
+  <div class="tab" data-panel="month-0">Feb 2026</div>
+  <div class="tab" data-panel="month-1">Mar 2026</div>
+  <div class="tab" data-panel="month-2">Apr 2026</div>
+  <div class="tab" data-panel="weekly">Weekly Trend</div>
+</div>
+
+<div class="panel active" id="panel-overview">
+  <div class="overview-totals" id="overview-totals"></div>
+  <div class="overview-chart-wrap">
+    <canvas id="bar-chart"></canvas>
+  </div>
+  <table class="compare-table" id="compare-table">
+    <thead id="compare-thead">
+      <tr id="compare-header-row">
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody id="compare-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel" id="panel-month-0"></div>
+<div class="panel" id="panel-month-1"></div>
+<div class="panel" id="panel-month-2"></div>
+
+<div class="panel" id="panel-weekly">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Last 4 Monday-Sunday weekly windows, including current partial week when applicable &nbsp;|&nbsp;
+    Click any table cell to open the matching Sentry query for that week
+  </p>
+  <div class="weekly-summary" id="weekly-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="weekly-chart"></canvas>
+  </div>
+  <table class="compare-table" id="weekly-table">
+    <thead>
+      <tr id="weekly-header-row">
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody id="weekly-tbody"></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  <strong>Notes:</strong>
+  <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
+     Priority: QUIC Protocol › Data Sync Upload › Watchdog/Fatal Hangs › Mapbox › Location › Core Logic/Concurrency › UIKit/Foundation.
+  <br>• <strong>Filter:</strong> <code>level:fatal handled:no</code> — actionable unresolved fatal crashes where the event is unhandled.
+  <br>• <strong>Apr 2026 is a partial month (data up to 30 Apr 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>Delta arrows:</strong> ▲ = more users impacted (worse), ▼ = fewer (better).
+</div>
+
+<script>
+const ORG        = "delivery-hero-pm";
+const PROJECT_ID = "4506937839976448";
+const BASE_URL   = `https://${ORG}.sentry.io/issues/`;
+
+const MONTHS = [
+  {
+    "label": "February 2026",
+    "short": "Feb 2026",
+    "total": 3998,
+    "start": "2026-02-01T00:00:00",
+    "end": "2026-03-01T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 659,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 271,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 1843,
+        "query": "is:unresolved level:fatal handled:no  message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 1213,
+        "query": "is:unresolved level:fatal handled:no  Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 11,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "March 2026",
+    "short": "Mar 2026",
+    "total": 4434,
+    "start": "2026-03-01T00:00:00",
+    "end": "2026-04-01T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 1403,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 95,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 1482,
+        "query": "is:unresolved level:fatal handled:no  message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 1449,
+        "query": "is:unresolved level:fatal handled:no  Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 5,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "April 2026",
+    "short": "Apr 2026",
+    "total": 4306,
+    "start": "2026-04-01T00:00:00",
+    "end": "2026-05-01T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 910,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 364,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 1660,
+        "query": "is:unresolved level:fatal handled:no  message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 1330,
+        "query": "is:unresolved level:fatal handled:no  Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 41,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  }
+];
+const WEEKS = [
+  {
+    "label": "Apr 06 - Apr 12",
+    "short": "Apr 06",
+    "total": 1056,
+    "start": "2026-04-06T00:00:00",
+    "end": "2026-04-13T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 225,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 11,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 337,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 475,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 8,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Apr 13 - Apr 19",
+    "short": "Apr 13",
+    "total": 1204,
+    "start": "2026-04-13T00:00:00",
+    "end": "2026-04-20T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 214,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 21,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 515,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 452,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Apr 20 - Apr 26",
+    "short": "Apr 20",
+    "total": 1316,
+    "start": "2026-04-20T00:00:00",
+    "end": "2026-04-27T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 218,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 101,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 532,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 464,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Apr 27 - Apr 30 (partial)",
+    "short": "Apr 27",
+    "total": 621,
+    "start": "2026-04-27T00:00:00",
+    "end": "2026-05-01T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 123,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 6,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 235,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* message:*WatchDogTermination*",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 257,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog* !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
+  }
+];
+
+function sentryURL(row, month) {
+  const p = new URLSearchParams({
+    environment: "production",
+    project: PROJECT_ID,
+    query: row.query,
+    start: month.start,
+    end:   month.end,
+  });
+  return BASE_URL + "?" + p.toString();
+}
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("panel-" + tab.dataset.panel).classList.add("active");
+  });
+});
+
+// ── Overview: total cards ────────────────────────────────────────────────────
+const totalsEl = document.getElementById("overview-totals");
+MONTHS.forEach(m => {
+  const card = document.createElement("div");
+  card.className = "total-card";
+  card.innerHTML = `
+    <div class="month-name">${m.label}</div>
+    <div class="month-total">${m.total.toLocaleString()}</div>
+    <div class="month-sub">unique users impacted</div>`;
+  totalsEl.appendChild(card);
+});
+
+// ── Overview: grouped bar chart ──────────────────────────────────────────────
+(function() {
+  const catKeys   = MONTHS[0].categories.map(c => c.key);
+  const catLabels = MONTHS[0].categories.map(c => c.label);
+  const catColors = MONTHS[0].categories.map(c => c.color);
+
+  const datasets = MONTHS.map((m, mi) => {
+    const opacity = mi === 0 ? "cc" : mi === 1 ? "99" : "55";
+    return {
+      label: m.short,
+      data: m.categories.map(c => c.users),
+      backgroundColor: catColors.map(col => col + (mi === 0 ? "" : mi === 1 ? "bb" : "77")),
+      borderColor: catColors.map(col => col),
+      borderWidth: 1,
+      borderRadius: 3,
+    };
+  });
+
+  const ctx = document.getElementById("bar-chart").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: { labels: catLabels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "top", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} users`
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 } }, beginAtZero: true,
+               title: { display: true, text: "Users impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── Overview: comparison table (dynamic — works for any number of months) ────
+(function() {
+  // Build header row dynamically
+  const headerRow = document.getElementById("compare-header-row");
+  MONTHS.forEach(m => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = m.short;
+    headerRow.appendChild(th);
+  });
+  // Delta columns: each consecutive pair
+  for (let i = 1; i < MONTHS.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${MONTHS[i].short} vs ${MONTHS[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  const tbody = document.getElementById("compare-tbody");
+  const cats  = MONTHS[0].categories;
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  cats.forEach((cat, ci) => {
+    const vals = MONTHS.map(m => m.categories[ci].users);
+    const tr = document.createElement("tr");
+
+    // Category label cell
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span class="td-swatch" style="background:${cat.color}"></span>${cat.label}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    // One clickable cell per month
+    MONTHS.forEach((m, mi) => {
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${cat.label} in Sentry — ${m.label}`;
+      td.textContent = vals[mi].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL(m.categories[ci], m), "_blank"));
+      tr.appendChild(td);
+    });
+
+    // Delta cells for consecutive month pairs
+    for (let i = 1; i < MONTHS.length; i++) {
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
+      tr.appendChild(td);
+    }
+
+    tbody.appendChild(tr);
+  });
+
+  // Totals row
+  const totals = MONTHS.map(m => m.total);
+  const tr = document.createElement("tr");
+  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  const tdTotalLabel = document.createElement("td");
+  tdTotalLabel.textContent = "Total";
+  tr.appendChild(tdTotalLabel);
+  totals.forEach(t => {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.textContent = t.toLocaleString();
+    tr.appendChild(td);
+  });
+  for (let i = 1; i < totals.length; i++) {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+})();
+
+// ── Weekly trend tab ────────────────────────────────────────────────────────
+(function() {
+  if (!WEEKS.length) return;
+
+  const summary = document.getElementById("weekly-summary");
+  WEEKS.forEach(w => {
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${w.label}</div>
+      <div class="week-total">${w.total.toLocaleString()}</div>
+      <div class="month-sub">unique users impacted</div>`;
+    summary.appendChild(card);
+  });
+
+  const headerRow = document.getElementById("weekly-header-row");
+  WEEKS.forEach(w => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = w.short;
+    headerRow.appendChild(th);
+  });
+  for (let i = 1; i < WEEKS.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${WEEKS[i].short} vs ${WEEKS[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  const tbody = document.getElementById("weekly-tbody");
+  const cats = WEEKS[0].categories;
+
+  cats.forEach((cat, ci) => {
+    const vals = WEEKS.map(w => w.categories[ci].users);
+    const tr = document.createElement("tr");
+
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span class="td-swatch" style="background:${cat.color}"></span>${cat.label}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    WEEKS.forEach((w, wi) => {
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${cat.label} in Sentry — ${w.label}`;
+      td.textContent = vals[wi].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL(w.categories[ci], w), "_blank"));
+      tr.appendChild(td);
+    });
+
+    for (let i = 1; i < WEEKS.length; i++) {
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
+      tr.appendChild(td);
+    }
+
+    tbody.appendChild(tr);
+  });
+
+  const totals = WEEKS.map(w => w.total);
+  const tr = document.createElement("tr");
+  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  const tdTotalLabel = document.createElement("td");
+  tdTotalLabel.textContent = "Total";
+  tr.appendChild(tdTotalLabel);
+  totals.forEach(t => {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.textContent = t.toLocaleString();
+    tr.appendChild(td);
+  });
+  for (let i = 1; i < totals.length; i++) {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+
+  const ctx = document.getElementById("weekly-chart").getContext("2d");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: WEEKS.map(w => w.label),
+      datasets: WEEKS[0].categories.map((cat, ci) => ({
+        label: cat.label,
+        data: WEEKS.map(w => w.categories[ci].users),
+        borderColor: cat.color,
+        backgroundColor: cat.color,
+        tension: 0.3,
+        fill: false,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "right", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} users`
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "Users impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── Month detail panels ──────────────────────────────────────────────────────
+MONTHS.forEach((month, mi) => {
+  const panel = document.getElementById(`panel-month-${mi}`);
+  const canvasId  = `pie-${mi}`;
+  const legendId  = `legend-${mi}`;
+  const tbodyId   = `tbody-${mi}`;
+
+  panel.innerHTML = `
+    <p style="font-size:13px;color:#666;margin-bottom:20px;">
+      ${month.label} &nbsp;|&nbsp;
+      Total unique users impacted: <strong>${month.total.toLocaleString()}</strong> &nbsp;|&nbsp;
+      Click any row or legend item to open in Sentry
+    </p>
+    <div class="layout">
+      <div class="chart-wrap">
+        <canvas id="${canvasId}"></canvas>
+        <div class="legend" id="${legendId}"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="detail" id="tbl-${mi}">
+          <thead><tr>
+            <th data-col="label">Group</th>
+            <th data-col="pct" class="sorted-desc">% Active</th>
+            <th data-col="users">Users</th>
+            <th data-col="culprits">Representative Culprits</th>
+          </tr></thead>
+          <tbody id="${tbodyId}"></tbody>
+        </table>
+      </div>
+    </div>`;
+
+  const total = month.total;
+  function pct(u) { return total ? (u / total * 100).toFixed(1) + "%" : "0.0%"; }
+
+  let sortCol = "pct", sortDir = -1;
+
+  function sorted(data) {
+    return [...data].sort((a, b) => {
+      if (sortCol === "label") return sortDir * a.label.localeCompare(b.label);
+      if (sortCol === "culprits") return sortDir * ((a.culprits || []).length - (b.culprits || []).length);
+      return sortDir * (a.users - b.users);
+    });
+  }
+
+  function renderLegend(data) {
+    const leg = document.getElementById(legendId);
+    if (!leg) return;
+    leg.innerHTML = "";
+    sorted(data).filter(r => r.users > 0).forEach(row => {
+      const item = document.createElement("div");
+      item.className = "legend-item";
+      item.innerHTML = `<span class="swatch" style="background:${row.color}"></span>
+        <span class="legend-label">${row.label}</span>
+        <span class="legend-pct">${pct(row.users)}</span>`;
+      item.addEventListener("click", () => window.open(sentryURL(row, month), "_blank"));
+      leg.appendChild(item);
+    });
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    sorted(data).forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><div class="td-group">
+          <span class="td-swatch" style="background:${row.color}"></span>${row.label}
+        </div></td>
+        <td class="td-pct">${pct(row.users)}</td>
+        <td class="td-users">${row.users.toLocaleString()}</td>
+        <td class="td-culprits">
+          ${(row.culprits || []).length
+            ? row.culprits.map(c => `<span>${c}</span>`).join("")
+            : '<span style="color:#d1d5db">—</span>'}
+        </td>`;
+      tr.addEventListener("click", () => window.open(sentryURL(row, month), "_blank"));
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Sortable headers — must wait until panel is in DOM
+  requestAnimationFrame(() => {
+    document.querySelectorAll(`#tbl-${mi} thead th[data-col]`).forEach(th => {
+      th.addEventListener("click", () => {
+        const col = th.dataset.col;
+        if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = col === "label" ? 1 : -1; }
+        document.querySelectorAll(`#tbl-${mi} thead th`).forEach(h =>
+          h.classList.remove("sorted-asc", "sorted-desc"));
+        th.classList.add(sortDir === 1 ? "sorted-asc" : "sorted-desc");
+        renderTable(month.categories);
+        renderLegend(month.categories);
+      });
+    });
+  });
+
+  // Pie chart
+  const visible = month.categories.filter(r => r.users > 0);
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    new Chart(canvas.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: visible.map(r => r.label),
+        datasets: [{
+          data: visible.map(r => r.users),
+          backgroundColor: visible.map(r => r.color),
+          borderWidth: 2, borderColor: "#fff"
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            label: c => ` ${c.label}: ${c.parsed.toLocaleString()} users (${(c.parsed/total*100).toFixed(1)}%)`
+          } }
+        },
+        onClick: (evt, elements) => {
+          if (elements.length) window.open(sentryURL(visible[elements[0].index], month), "_blank");
+        }
+      }
+    });
+    renderLegend(month.categories);
+    renderTable(month.categories);
+  });
+});
+</script>
+</body>
+</html>

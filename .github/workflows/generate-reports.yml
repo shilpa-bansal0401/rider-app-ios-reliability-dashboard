@@ -1,0 +1,46 @@
+name: Generate Reliability Reports
+
+on:
+  schedule:
+    - cron: '25 17 * * 1'  # Monday 11:25 CST (17:25 UTC)
+    - cron: '25 17 * * 4'  # Thursday 11:25 CST (17:25 UTC)
+  workflow_dispatch:       # allow manual runs
+
+jobs:
+  generate-reports:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate hang report
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: python3 generate_hang_report.py
+
+      - name: Generate crash report
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: python3 generate_crash_report.py
+
+      - name: Commit and push updated reports
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/deliveryhero/rider-app-ios-reliability-dashboard.git
+          git add hang_report/index.html crash_report/index.html
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: auto-update reliability reports $(date -u '+%Y-%m-%d')"
+          git push
