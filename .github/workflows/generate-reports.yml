@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: Checkout repo
@@ -33,14 +39,46 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: python3 generate_crash_report.py
 
-      - name: Commit and push updated reports
+      - name: Create Pages index
+        run: |
+          cat > index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Rider iOS Reliability Dashboard</title>
+            <style>
+              body { font-family: sans-serif; max-width: 600px; margin: 80px auto; text-align: center; }
+              a { display: inline-block; margin: 16px; padding: 16px 32px; background: #0066cc;
+                  color: white; text-decoration: none; border-radius: 8px; font-size: 18px; }
+              a:hover { background: #0052a3; }
+            </style>
+          </head>
+          <body>
+            <h1>Rider iOS Reliability Dashboard</h1>
+            <p>Auto-updated every Monday &amp; Thursday at 11:25 AM CST</p>
+            <a href="crash_report/index.html">Crash Report</a>
+            <a href="hang_report/index.html">Hang Report</a>
+          </body>
+          </html>
+          EOF
+
+      - name: Commit updated reports to repo
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/deliveryhero/rider-app-ios-reliability-dashboard.git
-          git add hang_report/index.html crash_report/index.html
+          git add hang_report/index.html crash_report/index.html index.html
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: auto-update reliability reports $(date -u '+%Y-%m-%d')"
           git push
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
