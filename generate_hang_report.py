@@ -119,7 +119,7 @@ NX = {
     "webkit":   "!stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView*",
     "firebase": "!message:*FIRCLS* !message:*FireApp*",
     "sentry":   "!stack.package:*Sentry* !message:*SentryAppHang*",
-    "swizzle":  "!message:*swizzled_sendEvent*",
+    "keyboard": "!stack.function:*UIKeyboard*",
 }
 
 def excl(*keys):
@@ -184,20 +184,20 @@ CATEGORIES = [
         ],
     },
     {
-        "key":      "swizzle",
-        "label":    "Swizzle",
+        "key":      "keyboard",
+        "label":    "Keyboard",
         "color":    "#E0BBE4", # Pastel Lavender
-        "filters":  ["stack.function:*swizzled_sendEvent*"],
+        "filters":  ["stack.function:*UIKeyboard*"],
         "excl":     excl("mapbox", "naver", "webkit", "firebase"),
-        "link_filter": "stack.function:*swizzled_sendEvent*",
-        "culprits": ["UIWindow.swizzled_sendEvent"],
+        "link_filter": "stack.function:*UIKeyboard*",
+        "culprits": [],
     },
     {
         "key":      "location",
         "label":    "Location",
         "color":    "#B2F2EF", # Pastel Turquoise
         "filters":  ["stack.package:*CoreLocation*", "stack.function:*CLLocation*"],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "swizzle"),
+        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreLocation*",
         "culprits": [
             "AppleLocationProvider.init", "LocationPermission",
@@ -212,7 +212,7 @@ CATEGORIES = [
             "stack.package:*AVFoundation*", "stack.function:*AVAudio*",
             "stack.function:*AudioPlayer*",
         ],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "swizzle"),
+        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*AVFoundation*",
         "culprits": [
             "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -227,7 +227,7 @@ CATEGORIES = [
             "stack.package:*ARKit*", "stack.function:*ARSession*",
             "stack.function:*CameraProvider*",
         ],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "swizzle"),
+        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*ARKit*",
         "culprits": [
             "ARView.init", "ARPhotoManagerImpl.convertPixelBufferToUIImage",
@@ -239,7 +239,7 @@ CATEGORIES = [
         "label":    "Storage",
         "color":    "#D3C0B0", # Pastel Taupe
         "filters":  ["stack.package:*CoreData*", "stack.function:*PersistentData*"],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "swizzle"),
+        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreData*",
         "culprits": [
             "PersistentDataActorImpl.__allocating_init", "PersistentDataActorImpl.init",
@@ -560,7 +560,7 @@ html = f"""<!DOCTYPE html>
 
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
-  Filter: <code>error.mechanism:AppHang</code> &nbsp;|&nbsp;
+  Filter: <code>is:unresolved error.mechanism:AppHang</code> &nbsp;|&nbsp;
   Data fetched: {fetch_date} &nbsp;|&nbsp;
   Months: {month_summary_text}
 </p>
@@ -610,7 +610,7 @@ html = f"""<!DOCTYPE html>
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
-     Priority: Mapbox › Naver › WebKit › Firebase › Sentry SDK › Swizzle › Location › Audio › Camera › Storage.
+     Priority: Mapbox › Naver › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
   <br>• <strong>Filter:</strong> <code>error.mechanism:AppHang</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
