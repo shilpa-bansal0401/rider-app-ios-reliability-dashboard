@@ -115,6 +115,9 @@
   <div class="tab" data-panel="month-2">Apr 2026</div>
   <div class="tab" data-panel="month-3">May 2026</div>
   <div class="tab" data-panel="weekly">Weekly Trend</div>
+  <div class="tab" data-panel="releases">By Release</div>
+  <div class="tab" data-panel="release-weekly">Release Weekly</div>
+  <div class="tab" data-panel="peya-mapbox">Peya · Mapbox</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -156,6 +159,64 @@
   </table>
 </div>
 
+<div class="panel" id="panel-release-weekly">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Total AppHang riders impacted per week per release — overall hang numbers, no category breakdown &nbsp;|&nbsp;
+    Click any cell to open Sentry for that release + week
+  </p>
+  <div class="weekly-chart-wrap">
+    <canvas id="release-weekly-chart"></canvas>
+  </div>
+  <table class="compare-table" id="release-weekly-table">
+    <thead>
+      <tr id="release-weekly-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="release-weekly-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel" id="panel-releases">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    AppHang category breakdown per release — last 4 weeks &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query for that release
+  </p>
+  <div class="weekly-summary" id="release-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="release-chart"></canvas>
+  </div>
+  <table class="compare-table" id="release-table">
+    <thead>
+      <tr id="release-header-row">
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody id="release-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel" id="panel-peya-mapbox">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Mapbox AppHang riders impacted per release — <strong>Peya brand only</strong>
+    (<code>Brand:com.logistics.rider.pedidosya</code>) &nbsp;|&nbsp;
+    Window: last 4 weeks &nbsp;|&nbsp;
+    Click any cell to open the Sentry query
+  </p>
+  <div class="weekly-summary" id="peya-mapbox-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="peya-mapbox-chart"></canvas>
+  </div>
+  <table class="compare-table" id="peya-mapbox-table">
+    <thead>
+      <tr id="peya-mapbox-header-row">
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody id="peya-mapbox-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -172,7 +233,7 @@ const ORG        = "delivery-hero-pm";
 const PROJECT_ID = "4506937839976448";
 const BASE_URL   = `https://${ORG}.sentry.io/issues/`;
 
-const MONTHS = [
+const MONTHS          = [
   {
     "label": "February 2026",
     "short": "Feb 2026",
@@ -946,6 +1007,443 @@ const WEEKS = [
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
       }
     ]
+  },
+  {
+    "label": "May 11 - May 11 (partial)",
+    "short": "May 11",
+    "total": 434,
+    "start": "2026-05-11T00:00:00",
+    "end": "2026-05-12T00:00:00",
+    "categories": [
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFB3BA",
+        "users": 303,
+        "query": "is:unresolved error.mechanism:AppHang  stack.package:*Mapbox*"
+      },
+      {
+        "key": "naver",
+        "label": "Naver",
+        "color": "#BAFFC9",
+        "users": 3,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*"
+      },
+      {
+        "key": "webkit",
+        "label": "WebKit / WebView",
+        "color": "#BAE1FF",
+        "users": 18,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*"
+      },
+      {
+        "key": "firebase",
+        "label": "Firebase / Crashlytics",
+        "color": "#FFFFBA",
+        "users": 11,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*"
+      },
+      {
+        "key": "keyboard",
+        "label": "Keyboard",
+        "color": "#E0BBE4",
+        "users": 92,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#B2F2EF",
+        "users": 2,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*"
+      },
+      {
+        "key": "audio",
+        "label": "Audio / Media",
+        "color": "#FDFDCC",
+        "users": 5,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*"
+      },
+      {
+        "key": "camera",
+        "label": "Camera / AR",
+        "color": "#97EDEA",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*"
+      },
+      {
+        "key": "storage",
+        "label": "Storage",
+        "color": "#D3C0B0",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
+      }
+    ]
+  }
+];
+const RELEASES        = [
+  {
+    "label": "4.2615.1",
+    "short": "4.2615.1",
+    "total": 17452,
+    "start": "2026-04-20T00:00:00",
+    "end": "2026-05-12T00:00:00",
+    "categories": [
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFB3BA",
+        "users": 10824,
+        "query": "is:unresolved error.mechanism:AppHang dist:948  stack.package:*Mapbox*"
+      },
+      {
+        "key": "naver",
+        "label": "Naver",
+        "color": "#BAFFC9",
+        "users": 189,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*"
+      },
+      {
+        "key": "webkit",
+        "label": "WebKit / WebView",
+        "color": "#BAE1FF",
+        "users": 4540,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*"
+      },
+      {
+        "key": "firebase",
+        "label": "Firebase / Crashlytics",
+        "color": "#FFFFBA",
+        "users": 490,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*"
+      },
+      {
+        "key": "keyboard",
+        "label": "Keyboard",
+        "color": "#E0BBE4",
+        "users": 567,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#B2F2EF",
+        "users": 236,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*"
+      },
+      {
+        "key": "audio",
+        "label": "Audio / Media",
+        "color": "#FDFDCC",
+        "users": 510,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*"
+      },
+      {
+        "key": "camera",
+        "label": "Camera / AR",
+        "color": "#97EDEA",
+        "users": 41,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*"
+      },
+      {
+        "key": "storage",
+        "label": "Storage",
+        "color": "#D3C0B0",
+        "users": 55,
+        "query": "is:unresolved error.mechanism:AppHang dist:948 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
+      }
+    ]
+  },
+  {
+    "label": "4.2617.3",
+    "short": "4.2617.3",
+    "total": 17486,
+    "start": "2026-04-20T00:00:00",
+    "end": "2026-05-12T00:00:00",
+    "categories": [
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFB3BA",
+        "users": 10954,
+        "query": "is:unresolved error.mechanism:AppHang dist:960  stack.package:*Mapbox*"
+      },
+      {
+        "key": "naver",
+        "label": "Naver",
+        "color": "#BAFFC9",
+        "users": 173,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*"
+      },
+      {
+        "key": "webkit",
+        "label": "WebKit / WebView",
+        "color": "#BAE1FF",
+        "users": 4582,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*"
+      },
+      {
+        "key": "firebase",
+        "label": "Firebase / Crashlytics",
+        "color": "#FFFFBA",
+        "users": 508,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*"
+      },
+      {
+        "key": "keyboard",
+        "label": "Keyboard",
+        "color": "#E0BBE4",
+        "users": 375,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#B2F2EF",
+        "users": 238,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*"
+      },
+      {
+        "key": "audio",
+        "label": "Audio / Media",
+        "color": "#FDFDCC",
+        "users": 521,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*"
+      },
+      {
+        "key": "camera",
+        "label": "Camera / AR",
+        "color": "#97EDEA",
+        "users": 77,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*"
+      },
+      {
+        "key": "storage",
+        "label": "Storage",
+        "color": "#D3C0B0",
+        "users": 58,
+        "query": "is:unresolved error.mechanism:AppHang dist:960 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
+      }
+    ]
+  },
+  {
+    "label": "4.2618.1",
+    "short": "4.2618.1",
+    "total": 15058,
+    "start": "2026-04-20T00:00:00",
+    "end": "2026-05-12T00:00:00",
+    "categories": [
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFB3BA",
+        "users": 9524,
+        "query": "is:unresolved error.mechanism:AppHang dist:968  stack.package:*Mapbox*"
+      },
+      {
+        "key": "naver",
+        "label": "Naver",
+        "color": "#BAFFC9",
+        "users": 146,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*"
+      },
+      {
+        "key": "webkit",
+        "label": "WebKit / WebView",
+        "color": "#BAE1FF",
+        "users": 4544,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*"
+      },
+      {
+        "key": "firebase",
+        "label": "Firebase / Crashlytics",
+        "color": "#FFFFBA",
+        "users": 443,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*"
+      },
+      {
+        "key": "keyboard",
+        "label": "Keyboard",
+        "color": "#E0BBE4",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#B2F2EF",
+        "users": 240,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*"
+      },
+      {
+        "key": "audio",
+        "label": "Audio / Media",
+        "color": "#FDFDCC",
+        "users": 5,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*"
+      },
+      {
+        "key": "camera",
+        "label": "Camera / AR",
+        "color": "#97EDEA",
+        "users": 133,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*"
+      },
+      {
+        "key": "storage",
+        "label": "Storage",
+        "color": "#D3C0B0",
+        "users": 23,
+        "query": "is:unresolved error.mechanism:AppHang dist:968 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
+      }
+    ]
+  },
+  {
+    "label": "4.2619.5",
+    "short": "4.2619.5",
+    "total": 0,
+    "start": "2026-04-20T00:00:00",
+    "end": "2026-05-12T00:00:00",
+    "categories": [
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFB3BA",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978  stack.package:*Mapbox*"
+      },
+      {
+        "key": "naver",
+        "label": "Naver",
+        "color": "#BAFFC9",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*"
+      },
+      {
+        "key": "webkit",
+        "label": "WebKit / WebView",
+        "color": "#BAE1FF",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*"
+      },
+      {
+        "key": "firebase",
+        "label": "Firebase / Crashlytics",
+        "color": "#FFFFBA",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*"
+      },
+      {
+        "key": "keyboard",
+        "label": "Keyboard",
+        "color": "#E0BBE4",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#B2F2EF",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*"
+      },
+      {
+        "key": "audio",
+        "label": "Audio / Media",
+        "color": "#FDFDCC",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*"
+      },
+      {
+        "key": "camera",
+        "label": "Camera / AR",
+        "color": "#97EDEA",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*"
+      },
+      {
+        "key": "storage",
+        "label": "Storage",
+        "color": "#D3C0B0",
+        "users": 0,
+        "query": "is:unresolved error.mechanism:AppHang dist:978 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*"
+      }
+    ]
+  }
+];
+const RELEASE_WEEKLY  = [
+  {
+    "label": "4.2615.1",
+    "short": "4.2615.1",
+    "week_users": [
+      0,
+      0,
+      0,
+      351
+    ],
+    "link_query": "is:unresolved App hang* detected dist:948"
+  },
+  {
+    "label": "4.2617.3",
+    "short": "4.2617.3",
+    "week_users": [
+      0,
+      8187,
+      6814,
+      0
+    ],
+    "link_query": "is:unresolved App hang* detected dist:960"
+  },
+  {
+    "label": "4.2618.1",
+    "short": "4.2618.1",
+    "week_users": [
+      0,
+      6618,
+      6663,
+      469
+    ],
+    "link_query": "is:unresolved App hang* detected dist:968"
+  },
+  {
+    "label": "4.2619.5",
+    "short": "4.2619.5",
+    "week_users": [
+      0,
+      0,
+      1088,
+      216
+    ],
+    "link_query": "is:unresolved App hang* detected dist:978"
+  }
+];
+const PEYA_MAPBOX     = [
+  {
+    "label": "4.2615.1",
+    "short": "4.2615.1",
+    "users": 27703,
+    "issues": 22,
+    "start": "2025-12-01T00:00:00",
+    "end": "2026-05-11T00:00:00",
+    "query": "is:unresolved error.mechanism:AppHang Brand:com.logistics.rider.pedidosya dist:948 stack.package:*Mapbox*"
+  },
+  {
+    "label": "4.2617.3",
+    "short": "4.2617.3",
+    "users": 27583,
+    "issues": 17,
+    "start": "2025-12-01T00:00:00",
+    "end": "2026-05-11T00:00:00",
+    "query": "is:unresolved error.mechanism:AppHang Brand:com.logistics.rider.pedidosya dist:960 stack.package:*Mapbox*"
+  },
+  {
+    "label": "4.2618.1",
+    "short": "4.2618.1",
+    "users": 25696,
+    "issues": 15,
+    "start": "2025-12-01T00:00:00",
+    "end": "2026-05-11T00:00:00",
+    "query": "is:unresolved error.mechanism:AppHang Brand:com.logistics.rider.pedidosya dist:968 stack.package:*Mapbox*"
   }
 ];
 
@@ -1227,6 +1725,347 @@ MONTHS.forEach(m => {
       },
       scales: {
         y: { beginAtZero: true, title: { display: true, text: "Riders impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── Release Weekly tab ──────────────────────────────────────────────────────
+(function() {
+  if (!RELEASE_WEEKLY.length || !WEEKS.length) return;
+
+  const COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6"];
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  // Table header
+  const headerRow = document.getElementById("release-weekly-header-row");
+  WEEKS.forEach(w => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = w.label;
+    headerRow.appendChild(th);
+  });
+  for (let i = 1; i < WEEKS.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${WEEKS[i].short} vs ${WEEKS[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  // Table body
+  const tbody = document.getElementById("release-weekly-tbody");
+  RELEASE_WEEKLY.forEach((rel, ri) => {
+    const tr = document.createElement("tr");
+    const color = COLORS[ri % COLORS.length];
+
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;
+                   background:${color};flex-shrink:0"></span>${rel.label}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    WEEKS.forEach((w, wi) => {
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${rel.label} in Sentry — ${w.label}`;
+      td.textContent = rel.week_users[wi].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL({ query: rel.link_query }, w), "_blank"));
+      tr.appendChild(td);
+    });
+
+    for (let i = 1; i < WEEKS.length; i++) {
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(rel.week_users[i-1], rel.week_users[i]);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+
+  // Line chart
+  const datasets = RELEASE_WEEKLY.map((rel, ri) => ({
+    label:           rel.label,
+    data:            rel.week_users,
+    borderColor:     COLORS[ri % COLORS.length],
+    backgroundColor: COLORS[ri % COLORS.length],
+    tension:         0.3,
+    fill:            false,
+    pointRadius:     5,
+    pointHoverRadius: 7,
+  }));
+
+  new Chart(document.getElementById("release-weekly-chart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels:   WEEKS.map(w => w.label),
+      datasets: datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "top", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} riders`
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true,
+               title: { display: true, text: "Riders impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── By Release tab ──────────────────────────────────────────────────────────
+(function() {
+  if (!RELEASES.length) {
+    document.getElementById("panel-releases").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No releases found in the last 4 weeks.</p>';
+    return;
+  }
+
+  // Summary cards
+  const summary = document.getElementById("release-summary");
+  RELEASES.forEach(r => {
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${r.label}</div>
+      <div class="week-total">${r.total.toLocaleString()}</div>
+      <div class="month-sub">unique riders impacted</div>`;
+    summary.appendChild(card);
+  });
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  // Table header
+  const headerRow = document.getElementById("release-header-row");
+  RELEASES.forEach(r => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  });
+  for (let i = 1; i < RELEASES.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${RELEASES[i].short} vs ${RELEASES[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  // Table body
+  const tbody = document.getElementById("release-tbody");
+  const cats = RELEASES[0].categories;
+  cats.forEach((cat, ci) => {
+    const vals = RELEASES.map(r => r.categories[ci].users);
+    const tr = document.createElement("tr");
+
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span class="td-swatch" style="background:${cat.color}"></span>${cat.label}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    RELEASES.forEach((r, ri) => {
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${cat.label} in Sentry — ${r.label}`;
+      td.textContent = vals[ri].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL(r.categories[ci], r), "_blank"));
+      tr.appendChild(td);
+    });
+
+    for (let i = 1; i < RELEASES.length; i++) {
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+
+  // Totals row
+  const totals = RELEASES.map(r => r.total);
+  const tr = document.createElement("tr");
+  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  const tdTotalLabel = document.createElement("td");
+  tdTotalLabel.textContent = "Total";
+  tr.appendChild(tdTotalLabel);
+  totals.forEach(t => {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.textContent = t.toLocaleString();
+    tr.appendChild(td);
+  });
+  for (let i = 1; i < totals.length; i++) {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+
+  // Stacked bar chart
+  const catColors = RELEASES[0].categories.map(c => c.color);
+  const datasets = RELEASES[0].categories.map((cat, ci) => ({
+    label: cat.label,
+    data: RELEASES.map(r => r.categories[ci].users),
+    backgroundColor: catColors[ci],
+    stack: "total",
+    borderWidth: 1,
+    borderColor: catColors[ci],
+    borderRadius: 2,
+  }));
+
+  new Chart(document.getElementById("release-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: RELEASES.map(r => r.label),
+      datasets: datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "right", labels: { font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} riders`
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { stacked: true, beginAtZero: true,
+               title: { display: true, text: "Riders impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── Peya · Mapbox tab ───────────────────────────────────────────────────────
+(function() {
+  if (!PEYA_MAPBOX.length) {
+    document.getElementById("panel-peya-mapbox").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+    return;
+  }
+
+  // Summary cards
+  const summary = document.getElementById("peya-mapbox-summary");
+  PEYA_MAPBOX.forEach(r => {
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${r.label}</div>
+      <div class="week-total">${r.users.toLocaleString()}</div>
+      <div class="month-sub">Mapbox riders (Peya)</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${r.issues} issues</div>`;
+    summary.appendChild(card);
+  });
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  // Table header
+  const headerRow = document.getElementById("peya-mapbox-header-row");
+  PEYA_MAPBOX.forEach(r => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  });
+  for (let i = 1; i < PEYA_MAPBOX.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${PEYA_MAPBOX[i].short} vs ${PEYA_MAPBOX[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  // Table body — single Mapbox row
+  const tbody = document.getElementById("peya-mapbox-tbody");
+  const tr = document.createElement("tr");
+
+  const tdLabel = document.createElement("td");
+  tdLabel.innerHTML = `<div class="td-group">
+    <span class="td-swatch" style="background:#FFB3BA"></span>Mapbox
+  </div>`;
+  tr.appendChild(tdLabel);
+
+  PEYA_MAPBOX.forEach(r => {
+    const td = document.createElement("td");
+    td.className = "num cell-link";
+    td.title = `Open Peya Mapbox hangs in Sentry — ${r.label}`;
+    td.innerHTML = `${r.users.toLocaleString()}<br>
+      <span style="font-size:10px;color:#9ca3af">${r.issues} issues</span>`;
+    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
+    tr.appendChild(td);
+  });
+
+  for (let i = 1; i < PEYA_MAPBOX.length; i++) {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(PEYA_MAPBOX[i-1].users, PEYA_MAPBOX[i].users);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+
+  // Bar chart
+  const MAPBOX_COLOR = "#FFB3BA";
+  new Chart(document.getElementById("peya-mapbox-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels:   PEYA_MAPBOX.map(r => r.label),
+      datasets: [{
+        label:           "Peya Mapbox Riders",
+        data:            PEYA_MAPBOX.map(r => r.users),
+        backgroundColor: PEYA_MAPBOX.map((_, i) =>
+          i === PEYA_MAPBOX.length - 1 ? MAPBOX_COLOR : MAPBOX_COLOR + "99"),
+        borderColor:     MAPBOX_COLOR,
+        borderWidth:     1,
+        borderRadius:    4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.parsed.y.toLocaleString()} Peya riders (${PEYA_MAPBOX[ctx.dataIndex].issues} issues)`
+        } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true,
+               title: { display: true, text: "Peya riders impacted (Mapbox)", font: { size: 11 } } }
       }
     }
   });
