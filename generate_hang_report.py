@@ -37,17 +37,6 @@ PINNED_RELEASES = [
     {"version": "4.2619.5", "dist": "978"},
 ]
 
-# Releases shown in the Peya · Mapbox tab (all-time window, no 4.2619.5).
-PEYA_RELEASES = [
-    {"version": "4.2615.1", "dist": "948"},
-    {"version": "4.2617.3", "dist": "960"},
-    {"version": "4.2618.1", "dist": "968"},
-]
-
-PEYA_BRAND_FILTER    = "Brand:com.logistics.rider.pedidosya"
-# Wide window so Peya data is not restricted to the last-4-weeks slice.
-PEYA_WINDOW_START    = "2025-12-01T00:00:00"
-
 # Release Weekly uses title-based search rather than mechanism filter.
 RELEASE_WEEKLY_QUERY = "is:unresolved App hang* detected"
 
@@ -423,56 +412,10 @@ for month in MONTHS:
     })
 
 
-# ── Run weekly analysis for weekly trend tab ──────────────────────────────────
-
-all_week_results = []
-
-for week in WEEKS:
-    print(f"\n── {week['label']} ({week['start'][:10]} → {week['end'][:10]}) ──")
-
-    assigned = set()
-    results  = []
-
-    for cat in CATEGORIES:
-        cat_issues = {}
-        for filt in cat["filters"]:
-            q = f"{BASE_QUERY} {cat['excl']} {filt}".strip()
-            try:
-                fetched = fetch_all(q, week["start"], week["end"])
-                for iid, u in fetched.items():
-                    if iid not in cat_issues or cat_issues[iid] < u:
-                        cat_issues[iid] = u
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"  ERROR {cat['label']} / {filt}: {e}")
-                time.sleep(3)
-
-        new_issues = {iid: u for iid, u in cat_issues.items() if iid not in assigned}
-        cat_users  = sum(new_issues.values())
-        assigned.update(new_issues.keys())
-
-        results.append({**cat, "users": cat_users})
-        print(f"  {cat['label']:30s} {cat_users:6} users ({len(new_issues)} issues)")
-
-    total_unique = sum(r["users"] for r in results)
-    print(f"  {'TOTAL':30s} {total_unique:6} users")
-
-    cumulative_excl = ""
-    for r in results:
-        r["link_query"] = f'{BASE_QUERY} {cumulative_excl} {r["link_filter"]}'.strip()
-        nx_key = r["key"] if r["key"] in NX else None
-        if nx_key:
-            cumulative_excl = (cumulative_excl + " " + NX[nx_key]).strip()
-
-    all_week_results.append({
-        "week": week,
-        "results": results,
-        "total": total_unique,
-    })
 
 # ── Run release analysis for by-release tab ──────────────────────────────────
-# Uses Discover API (count_unique_users) to get true per-dist unique user counts.
-# The Issues API userCount is all-time across all dists, causing inflated numbers.
+# Total hangs per release — no category breakdown.
+# Uses Discover API for true per-dist unique user counts.
 
 all_release_results = []
 
@@ -480,50 +423,34 @@ for rel in RELEASES:
     v          = rel["version"]
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
+    if v == "4.2619.5":
+        link_query = f'is:unresolved "App hang* detected" {rel_filter}'.strip()
+        discover_q = f'"App hang* detected" {rel_filter}'.strip()
+    else:
+        link_query = f"{BASE_QUERY} {rel_filter}".strip()
+        discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
     print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
-
-    results = []
-
-    for cat in CATEGORIES:
-        # Combine all category filters into a single OR expression for the Discover API.
-        if len(cat["filters"]) == 1:
-            filter_expr = cat["filters"][0]
-        else:
-            filter_expr = " OR ".join(f"({f})" for f in cat["filters"])
-        q = f"{DISCOVER_BASE_QUERY} {rel_filter} {cat['excl']} {filter_expr}".strip()
-        try:
-            users = count_unique_users(q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"  ERROR {cat['label']}: {e}")
-            users = 0
-            time.sleep(3)
-
-        results.append({**cat, "users": users})
-        print(f"  {cat['label']:30s} {users:6} unique users")
-
-    total_unique = sum(r["users"] for r in results)
-    print(f"  {'TOTAL':30s} {total_unique:6} users")
-
-    cumulative_excl = ""
-    for r in results:
-        r["link_query"] = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {r["link_filter"]}'.strip()
-        nx_key = r["key"] if r["key"] in NX else None
-        if nx_key:
-            cumulative_excl = (cumulative_excl + " " + NX[nx_key]).strip()
-
+    try:
+        users = count_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
+        time.sleep(0.5)
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        users = 0
+    print(f"  {users} unique users")
     all_release_results.append({
-        "release": rel,
-        "results": results,
-        "total":   total_unique,
+        "release":    rel,
+        "users":      users,
+        "link_query": link_query,
     })
 
 
 # ── Run release weekly analysis ───────────────────────────────────────────────
+# Excludes 4.2619.5 which has a filtering issue in the weekly view.
 
+RELEASE_WEEKLY_RELEASES = [r for r in RELEASES if r["version"] != "4.2619.5"]
 all_release_weekly = []
 
-for rel in RELEASES:
+for rel in RELEASE_WEEKLY_RELEASES:
     v          = rel["version"]
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
@@ -547,35 +474,6 @@ for rel in RELEASES:
         "week_users": week_users,
         "link_query": link_query,
     })
-
-
-# ── Peya brand: Mapbox hang comparison per release ───────────────────────────
-# Uses PEYA_RELEASES (not RELEASES) and a wide time window so numbers reflect
-# all Mapbox hangs since each release shipped, not just the last-4-weeks slice.
-
-peya_mapbox_results = []
-peya_window_end = TODAY.strftime("%Y-%m-%dT00:00:00")
-
-for rel in PEYA_RELEASES:
-    v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
-    link_query = f"{BASE_QUERY} {PEYA_BRAND_FILTER} {rel_filter} stack.package:*Mapbox*"
-    discover_q = f"{DISCOVER_BASE_QUERY} {PEYA_BRAND_FILTER} {rel_filter} stack.package:*Mapbox*"
-    print(f"\n── Peya Mapbox: {v} ──")
-    try:
-        users = count_unique_users(discover_q, PEYA_WINDOW_START, peya_window_end)
-    except Exception as e:
-        print(f"  ERROR: {e}")
-        users = 0
-    print(f"  {users} unique users")
-    peya_mapbox_results.append({
-        "release":    rel,
-        "users":      users,
-        "issues":     0,
-        "link_query": link_query,
-    })
-    time.sleep(0.5)
 
 
 # ── Build JS data ─────────────────────────────────────────────────────────────
@@ -605,43 +503,23 @@ months_js = json.dumps([
 
 weeks_js = json.dumps([
     {
-        "label":  w["week"]["label"],
-        "short":  w["week"]["short"],
-        "total":  w["total"],
-        "start":  w["week"]["start"],
-        "end":    w["week"]["end"],
-        "categories": [
-            {
-                "key":      r["key"],
-                "label":    r["label"],
-                "color":    r["color"],
-                "users":    r["users"],
-                "query":    r["link_query"],
-            }
-            for r in w["results"]
-        ],
+        "label": w["label"],
+        "short": w["short"],
+        "start": w["start"],
+        "end":   w["end"],
     }
-    for w in all_week_results
+    for w in WEEKS
 ], indent=2)
 
 
 releases_js = json.dumps([
     {
-        "label":   r["release"]["label"],
-        "short":   r["release"]["short"],
-        "total":   r["total"],
-        "start":   RELEASE_WINDOW_START,
-        "end":     RELEASE_WINDOW_END,
-        "categories": [
-            {
-                "key":   cat["key"],
-                "label": cat["label"],
-                "color": cat["color"],
-                "users": cat["users"],
-                "query": cat["link_query"],
-            }
-            for cat in r["results"]
-        ],
+        "label": r["release"]["label"],
+        "short": r["release"]["short"],
+        "users": r["users"],
+        "start": RELEASE_WINDOW_START,
+        "end":   RELEASE_WINDOW_END,
+        "query": r["link_query"],
     }
     for r in all_release_results
 ], indent=2)
@@ -658,22 +536,8 @@ release_weekly_js = json.dumps([
 ], indent=2)
 
 
-peya_mapbox_js = json.dumps([
-    {
-        "label":  r["release"]["version"],
-        "short":  r["release"]["version"],
-        "users":  r["users"],
-        "issues": r["issues"],
-        "start":  PEYA_WINDOW_START,
-        "end":    peya_window_end,
-        "query":  r["link_query"],
-    }
-    for r in peya_mapbox_results
-], indent=2)
-
-
 month_tabs_html = "\n".join(
-    f'  <div class="tab" data-panel="month-{i}">{m["short"]}</div>'
+    f'  <div class="tab" data-panel="month-{i}">{m["short"]}{" (partial)" if i == len(MONTHS) - 1 else ""}</div>'
     for i, m in enumerate(MONTHS)
 )
 month_panels_html = "\n".join(
@@ -798,10 +662,8 @@ html = f"""<!DOCTYPE html>
 <div class="tabs" id="tabs">
   <div class="tab active" data-panel="overview">Overview</div>
 {month_tabs_html}
-  <div class="tab" data-panel="weekly">Weekly Trend</div>
   <div class="tab" data-panel="releases">By Release</div>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
-  <div class="tab" data-panel="peya-mapbox">Peya · Mapbox</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -820,25 +682,6 @@ html = f"""<!DOCTYPE html>
 </div>
 
 {month_panels_html}
-
-<div class="panel" id="panel-weekly">
-  <p style="font-size:13px;color:#666;margin-bottom:20px;">
-    Last 4 Monday-Sunday weekly windows, including current partial week when applicable &nbsp;|&nbsp;
-    Click any table cell to open the matching Sentry query for that week
-  </p>
-  <div class="weekly-summary" id="weekly-summary"></div>
-  <div class="weekly-chart-wrap">
-    <canvas id="weekly-chart"></canvas>
-  </div>
-  <table class="compare-table" id="weekly-table">
-    <thead>
-      <tr id="weekly-header-row">
-        <th>Category</th>
-      </tr>
-    </thead>
-    <tbody id="weekly-tbody"></tbody>
-  </table>
-</div>
 
 <div class="panel" id="panel-release-weekly">
   <p style="font-size:13px;color:#666;margin-bottom:20px;">
@@ -877,27 +720,6 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
-<div class="panel" id="panel-peya-mapbox">
-  <p style="font-size:13px;color:#666;margin-bottom:20px;">
-    Mapbox AppHang riders impacted per release — <strong>Peya brand only</strong>
-    (<code>Brand:com.logistics.rider.pedidosya</code>) &nbsp;|&nbsp;
-    Window: last 4 weeks &nbsp;|&nbsp;
-    Click any cell to open the Sentry query
-  </p>
-  <div class="weekly-summary" id="peya-mapbox-summary"></div>
-  <div class="weekly-chart-wrap">
-    <canvas id="peya-mapbox-chart"></canvas>
-  </div>
-  <table class="compare-table" id="peya-mapbox-table">
-    <thead>
-      <tr id="peya-mapbox-header-row">
-        <th>Category</th>
-      </tr>
-    </thead>
-    <tbody id="peya-mapbox-tbody"></tbody>
-  </table>
-</div>
-
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -918,7 +740,6 @@ const MONTHS          = {months_js};
 const WEEKS           = {weeks_js};
 const RELEASES        = {releases_js};
 const RELEASE_WEEKLY  = {release_weekly_js};
-const PEYA_MAPBOX     = {peya_mapbox_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -1080,129 +901,6 @@ MONTHS.forEach(m => {{
   tbody.appendChild(tr);
 }})();
 
-// ── Weekly trend tab ────────────────────────────────────────────────────────
-(function() {{
-  if (!WEEKS.length) return;
-
-  const summary = document.getElementById("weekly-summary");
-  WEEKS.forEach(w => {{
-    const card = document.createElement("div");
-    card.className = "weekly-card";
-    card.innerHTML = `
-      <div class="week-name">${{w.label}}</div>
-      <div class="week-total">${{w.total.toLocaleString()}}</div>
-      <div class="month-sub">unique riders impacted</div>`;
-    summary.appendChild(card);
-  }});
-
-  const headerRow = document.getElementById("weekly-header-row");
-  WEEKS.forEach(w => {{
-    const th = document.createElement("th");
-    th.className = "num";
-    th.textContent = w.short;
-    headerRow.appendChild(th);
-  }});
-  for (let i = 1; i < WEEKS.length; i++) {{
-    const th = document.createElement("th");
-    th.className = "num";
-    th.textContent = `${{WEEKS[i].short}} vs ${{WEEKS[i-1].short}}`;
-    headerRow.appendChild(th);
-  }}
-
-  function deltaHTML(a, b) {{
-    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
-    const diff = b - a;
-    const pct = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
-    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
-    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
-    return '<span class="delta-neu">± 0</span>';
-  }}
-
-  const tbody = document.getElementById("weekly-tbody");
-  const cats = WEEKS[0].categories;
-
-  cats.forEach((cat, ci) => {{
-    const vals = WEEKS.map(w => w.categories[ci].users);
-    const tr = document.createElement("tr");
-
-    const tdLabel = document.createElement("td");
-    tdLabel.innerHTML = `<div class="td-group">
-      <span class="td-swatch" style="background:${{cat.color}}"></span>${{cat.label}}
-    </div>`;
-    tr.appendChild(tdLabel);
-
-    WEEKS.forEach((w, wi) => {{
-      const td = document.createElement("td");
-      td.className = "num cell-link";
-      td.title = `Open ${{cat.label}} in Sentry — ${{w.label}}`;
-      td.textContent = vals[wi].toLocaleString();
-      td.addEventListener("click", () =>
-        window.open(sentryURL(w.categories[ci], w), "_blank"));
-      tr.appendChild(td);
-    }});
-
-    for (let i = 1; i < WEEKS.length; i++) {{
-      const td = document.createElement("td");
-      td.className = "num";
-      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
-      tr.appendChild(td);
-    }}
-
-    tbody.appendChild(tr);
-  }});
-
-  const totals = WEEKS.map(w => w.total);
-  const tr = document.createElement("tr");
-  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
-  const tdTotalLabel = document.createElement("td");
-  tdTotalLabel.textContent = "Total";
-  tr.appendChild(tdTotalLabel);
-  totals.forEach(t => {{
-    const td = document.createElement("td");
-    td.className = "num";
-    td.textContent = t.toLocaleString();
-    tr.appendChild(td);
-  }});
-  for (let i = 1; i < totals.length; i++) {{
-    const td = document.createElement("td");
-    td.className = "num";
-    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
-    tr.appendChild(td);
-  }}
-  tbody.appendChild(tr);
-
-  const ctx = document.getElementById("weekly-chart").getContext("2d");
-  new Chart(ctx, {{
-    type: "line",
-    data: {{
-      labels: WEEKS.map(w => w.label),
-      datasets: WEEKS[0].categories.map((cat, ci) => ({{
-        label: cat.label,
-        data: WEEKS.map(w => w.categories[ci].users),
-        borderColor: cat.color,
-        backgroundColor: cat.color,
-        tension: 0.3,
-        fill: false,
-      }}))
-    }},
-    options: {{
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {{
-        legend: {{ position: "right", labels: {{ font: {{ size: 12 }} }} }},
-        tooltip: {{
-          callbacks: {{
-            label: ctx => ` ${{ctx.dataset.label}}: ${{ctx.parsed.y.toLocaleString()}} riders`
-          }}
-        }}
-      }},
-      scales: {{
-        y: {{ beginAtZero: true, title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
-      }}
-    }}
-  }});
-}})();
-
 // ── Release Weekly tab ──────────────────────────────────────────────────────
 (function() {{
   if (!RELEASE_WEEKLY.length || !WEEKS.length) return;
@@ -1317,7 +1015,7 @@ MONTHS.forEach(m => {{
     card.className = "weekly-card";
     card.innerHTML = `
       <div class="week-name">${{r.label}}</div>
-      <div class="week-total">${{r.total.toLocaleString()}}</div>
+      <div class="week-total">${{r.users.toLocaleString()}}</div>
       <div class="month-sub">unique riders impacted</div>`;
     summary.appendChild(card);
   }});
@@ -1346,182 +1044,40 @@ MONTHS.forEach(m => {{
     headerRow.appendChild(th);
   }}
 
-  // Table body
+  // Table body — single total row
   const tbody = document.getElementById("release-tbody");
-  const cats = RELEASES[0].categories;
-  cats.forEach((cat, ci) => {{
-    const vals = RELEASES.map(r => r.categories[ci].users);
-    const tr = document.createElement("tr");
-
-    const tdLabel = document.createElement("td");
-    tdLabel.innerHTML = `<div class="td-group">
-      <span class="td-swatch" style="background:${{cat.color}}"></span>${{cat.label}}
-    </div>`;
-    tr.appendChild(tdLabel);
-
-    RELEASES.forEach((r, ri) => {{
-      const td = document.createElement("td");
-      td.className = "num cell-link";
-      td.title = `Open ${{cat.label}} in Sentry — ${{r.label}}`;
-      td.textContent = vals[ri].toLocaleString();
-      td.addEventListener("click", () =>
-        window.open(sentryURL(r.categories[ci], r), "_blank"));
-      tr.appendChild(td);
-    }});
-
-    for (let i = 1; i < RELEASES.length; i++) {{
-      const td = document.createElement("td");
-      td.className = "num";
-      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
-      tr.appendChild(td);
-    }}
-    tbody.appendChild(tr);
-  }});
-
-  // Totals row
-  const totals = RELEASES.map(r => r.total);
   const tr = document.createElement("tr");
-  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
-  const tdTotalLabel = document.createElement("td");
-  tdTotalLabel.textContent = "Total";
-  tr.appendChild(tdTotalLabel);
-  totals.forEach(t => {{
-    const td = document.createElement("td");
-    td.className = "num";
-    td.textContent = t.toLocaleString();
-    tr.appendChild(td);
-  }});
-  for (let i = 1; i < totals.length; i++) {{
-    const td = document.createElement("td");
-    td.className = "num";
-    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
-    tr.appendChild(td);
-  }}
-  tbody.appendChild(tr);
-
-  // Stacked bar chart
-  const catColors = RELEASES[0].categories.map(c => c.color);
-  const datasets = RELEASES[0].categories.map((cat, ci) => ({{
-    label: cat.label,
-    data: RELEASES.map(r => r.categories[ci].users),
-    backgroundColor: catColors[ci],
-    stack: "total",
-    borderWidth: 1,
-    borderColor: catColors[ci],
-    borderRadius: 2,
-  }}));
-
-  new Chart(document.getElementById("release-chart").getContext("2d"), {{
-    type: "bar",
-    data: {{
-      labels: RELEASES.map(r => r.label),
-      datasets: datasets,
-    }},
-    options: {{
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {{
-        legend: {{ position: "right", labels: {{ font: {{ size: 12 }} }} }},
-        tooltip: {{
-          callbacks: {{
-            label: ctx => ` ${{ctx.dataset.label}}: ${{ctx.parsed.y.toLocaleString()}} riders`
-          }}
-        }}
-      }},
-      scales: {{
-        x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ font: {{ size: 11 }} }} }},
-        y: {{ stacked: true, beginAtZero: true,
-               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
-      }}
-    }}
-  }});
-}})();
-
-// ── Peya · Mapbox tab ───────────────────────────────────────────────────────
-(function() {{
-  if (!PEYA_MAPBOX.length) {{
-    document.getElementById("panel-peya-mapbox").innerHTML =
-      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
-    return;
-  }}
-
-  // Summary cards
-  const summary = document.getElementById("peya-mapbox-summary");
-  PEYA_MAPBOX.forEach(r => {{
-    const card = document.createElement("div");
-    card.className = "weekly-card";
-    card.innerHTML = `
-      <div class="week-name">${{r.label}}</div>
-      <div class="week-total">${{r.users.toLocaleString()}}</div>
-      <div class="month-sub">Mapbox riders (Peya)</div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${{r.issues}} issues</div>`;
-    summary.appendChild(card);
-  }});
-
-  function deltaHTML(a, b) {{
-    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
-    const diff = b - a;
-    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
-    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
-    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
-    return '<span class="delta-neu">± 0</span>';
-  }}
-
-  // Table header
-  const headerRow = document.getElementById("peya-mapbox-header-row");
-  PEYA_MAPBOX.forEach(r => {{
-    const th = document.createElement("th");
-    th.className = "num";
-    th.textContent = r.short;
-    headerRow.appendChild(th);
-  }});
-  for (let i = 1; i < PEYA_MAPBOX.length; i++) {{
-    const th = document.createElement("th");
-    th.className = "num";
-    th.textContent = `${{PEYA_MAPBOX[i].short}} vs ${{PEYA_MAPBOX[i-1].short}}`;
-    headerRow.appendChild(th);
-  }}
-
-  // Table body — single Mapbox row
-  const tbody = document.getElementById("peya-mapbox-tbody");
-  const tr = document.createElement("tr");
-
   const tdLabel = document.createElement("td");
-  tdLabel.innerHTML = `<div class="td-group">
-    <span class="td-swatch" style="background:#FFB3BA"></span>Mapbox
-  </div>`;
+  tdLabel.innerHTML = '<div class="td-group"><strong>Total Hangs</strong></div>';
   tr.appendChild(tdLabel);
-
-  PEYA_MAPBOX.forEach(r => {{
+  RELEASES.forEach(r => {{
     const td = document.createElement("td");
     td.className = "num cell-link";
-    td.title = `Open Peya Mapbox hangs in Sentry — ${{r.label}}`;
-    td.innerHTML = `${{r.users.toLocaleString()}}<br>
-      <span style="font-size:10px;color:#9ca3af">${{r.issues}} issues</span>`;
+    td.title = `Open AppHangs in Sentry — ${{r.label}}`;
+    td.textContent = r.users.toLocaleString();
     td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
     tr.appendChild(td);
   }});
-
-  for (let i = 1; i < PEYA_MAPBOX.length; i++) {{
+  for (let i = 1; i < RELEASES.length; i++) {{
     const td = document.createElement("td");
     td.className = "num";
-    td.innerHTML = deltaHTML(PEYA_MAPBOX[i-1].users, PEYA_MAPBOX[i].users);
+    td.innerHTML = deltaHTML(RELEASES[i-1].users, RELEASES[i].users);
     tr.appendChild(td);
   }}
   tbody.appendChild(tr);
 
-  // Bar chart
-  const MAPBOX_COLOR = "#FFB3BA";
-  new Chart(document.getElementById("peya-mapbox-chart").getContext("2d"), {{
+  // Simple bar chart
+  const HANG_COLOR = "#BAE1FF";
+  new Chart(document.getElementById("release-chart").getContext("2d"), {{
     type: "bar",
     data: {{
-      labels:   PEYA_MAPBOX.map(r => r.label),
+      labels:   RELEASES.map(r => r.label),
       datasets: [{{
-        label:           "Peya Mapbox Riders",
-        data:            PEYA_MAPBOX.map(r => r.users),
-        backgroundColor: PEYA_MAPBOX.map((_, i) =>
-          i === PEYA_MAPBOX.length - 1 ? MAPBOX_COLOR : MAPBOX_COLOR + "99"),
-        borderColor:     MAPBOX_COLOR,
+        label:           "AppHangs",
+        data:            RELEASES.map(r => r.users),
+        backgroundColor: RELEASES.map((_, i) =>
+          i === RELEASES.length - 1 ? HANG_COLOR : HANG_COLOR + "99"),
+        borderColor:     HANG_COLOR,
         borderWidth:     1,
         borderRadius:    4,
       }}]
@@ -1532,13 +1088,13 @@ MONTHS.forEach(m => {{
       plugins: {{
         legend: {{ display: false }},
         tooltip: {{ callbacks: {{
-          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} Peya riders (${{PEYA_MAPBOX[ctx.dataIndex].issues}} issues)`
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders impacted`
         }} }}
       }},
       scales: {{
-        x: {{ grid: {{ display: false }} }},
+        x: {{ grid: {{ display: false }}, ticks: {{ font: {{ size: 11 }} }} }},
         y: {{ beginAtZero: true,
-               title: {{ display: true, text: "Peya riders impacted (Mapbox)", font: {{ size: 11 }} }} }}
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
       }}
     }}
   }});
