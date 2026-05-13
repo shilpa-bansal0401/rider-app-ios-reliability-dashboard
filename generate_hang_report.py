@@ -150,6 +150,9 @@ def excl(*keys):
     return " ".join(NX[k] for k in keys)
 
 BASE_QUERY = 'is:unresolved error.mechanism:AppHang'
+# Discover events API doesn't support is:unresolved (issue-level filter).
+# error.mechanism:AppHang is an event-level field and works directly in Discover.
+DISCOVER_BASE_QUERY = 'error.mechanism:AppHang'
 
 # ── Category definitions ──────────────────────────────────────────────────────
 
@@ -468,38 +471,36 @@ for week in WEEKS:
     })
 
 # ── Run release analysis for by-release tab ──────────────────────────────────
+# Uses Discover API (count_unique_users) to get true per-dist unique user counts.
+# The Issues API userCount is all-time across all dists, causing inflated numbers.
 
 all_release_results = []
 
 for rel in RELEASES:
-    v       = rel["version"]
-    d       = rel.get("dist")
+    v          = rel["version"]
+    d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
     print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
 
-    results     = []
-    assigned    = set()
-    issues_base = f"{BASE_QUERY} {rel_filter}".strip()
+    results = []
 
     for cat in CATEGORIES:
-        cat_issues = {}
-        for filt in cat["filters"]:
-            q = f"{issues_base} {cat['excl']} {filt}".strip()
-            try:
-                fetched = fetch_all(q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
-                for iid, u in fetched.items():
-                    if iid not in cat_issues or cat_issues[iid] < u:
-                        cat_issues[iid] = u
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"  ERROR {cat['label']} / {filt}: {e}")
-                time.sleep(3)
+        # Combine all category filters into a single OR expression for the Discover API.
+        if len(cat["filters"]) == 1:
+            filter_expr = cat["filters"][0]
+        else:
+            filter_expr = " OR ".join(f"({f})" for f in cat["filters"])
+        q = f"{DISCOVER_BASE_QUERY} {rel_filter} {cat['excl']} {filter_expr}".strip()
+        try:
+            users = count_unique_users(q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
+            time.sleep(0.5)
+        except Exception as e:
+            print(f"  ERROR {cat['label']}: {e}")
+            users = 0
+            time.sleep(3)
 
-        new_issues = {iid: u for iid, u in cat_issues.items() if iid not in assigned}
-        cat_users  = sum(new_issues.values())
-        assigned.update(new_issues.keys())
-        results.append({**cat, "users": cat_users})
-        print(f"  {cat['label']:30s} {cat_users:6} users ({len(new_issues)} issues)")
+        results.append({**cat, "users": users})
+        print(f"  {cat['label']:30s} {users:6} unique users")
 
     total_unique = sum(r["users"] for r in results)
     print(f"  {'TOTAL':30s} {total_unique:6} users")
@@ -531,15 +532,14 @@ for rel in RELEASES:
 
     week_users = []
     for week in WEEKS:
-        q = f"{RELEASE_WEEKLY_QUERY} {rel_filter}".strip()
+        q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
         try:
-            fetched = fetch_all(q, week["start"], week["end"])
-            users   = sum(fetched.values())
+            users = count_unique_users(q, week["start"], week["end"])
         except Exception as e:
             print(f"  ERROR {week['label']}: {e}")
             users = 0
         week_users.append(users)
-        print(f"  {week['label']:35s} {users:6} users")
+        print(f"  {week['label']:35s} {users:6} unique users")
         time.sleep(0.5)
 
     all_release_weekly.append({
@@ -561,20 +561,18 @@ for rel in PEYA_RELEASES:
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
     link_query = f"{BASE_QUERY} {PEYA_BRAND_FILTER} {rel_filter} stack.package:*Mapbox*"
+    discover_q = f"{DISCOVER_BASE_QUERY} {PEYA_BRAND_FILTER} {rel_filter} stack.package:*Mapbox*"
     print(f"\n── Peya Mapbox: {v} ──")
     try:
-        fetched = fetch_all(link_query, PEYA_WINDOW_START, peya_window_end)
-        users   = sum(fetched.values())
-        issues  = len(fetched)
+        users = count_unique_users(discover_q, PEYA_WINDOW_START, peya_window_end)
     except Exception as e:
         print(f"  ERROR: {e}")
-        users  = 0
-        issues = 0
-    print(f"  {users} users, {issues} issues")
+        users = 0
+    print(f"  {users} unique users")
     peya_mapbox_results.append({
         "release":    rel,
         "users":      users,
-        "issues":     issues,
+        "issues":     0,
         "link_query": link_query,
     })
     time.sleep(0.5)

@@ -30,6 +30,14 @@ OUT_DIR = "crash_report"
 if not TOKEN:
     raise SystemExit("ERROR: set SENTRY_AUTH_TOKEN environment variable first.")
 
+# Pin specific releases to compare in the Release Trend and Release Weekly tabs.
+PINNED_RELEASES = [
+    {"version": "4.2615.1", "dist": "948"},
+    {"version": "4.2617.3", "dist": "960"},
+    {"version": "4.2618.1", "dist": "968"},
+    {"version": "4.2619.5", "dist": "978"},
+]
+
 # ── Months to analyze ─────────────────────────────────────────────────────────
 
 TODAY = datetime.date.today()
@@ -111,12 +119,44 @@ def get_last_4_weeks():
 
 WEEKS = get_last_4_weeks()
 
+
+def fetch_recent_releases(limit=8):
+    """Return PINNED_RELEASES if configured, otherwise fetch from Sentry API."""
+    if PINNED_RELEASES:
+        return [
+            {"version": r["version"], "dist": r["dist"],
+             "label": r["version"], "short": r["version"]}
+            for r in PINNED_RELEASES
+        ]
+    params = urllib.parse.urlencode([
+        ("project", PROJECT),
+        ("limit",   str(limit)),
+        ("start",   WEEKS[0]["start"]),
+        ("end",     WEEKS[-1]["end"]),
+        ("orderby", "date"),
+    ])
+    url = f"https://sentry.io/api/0/organizations/{ORG}/releases/?{params}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+    except Exception as e:
+        print(f"WARNING: Could not fetch releases: {e}")
+        return []
+    return [{"version": r["version"], "dist": None, "label": r["version"], "short": r["version"]}
+            for r in data if r.get("version")]
+
+
+RELEASES             = fetch_recent_releases()
+RELEASE_WINDOW_START = WEEKS[0]["start"]
+RELEASE_WINDOW_END   = WEEKS[-1]["end"]
+
 # ── Exclusion patterns ────────────────────────────────────────────────────────
 
 NX = {
     "quic":      "!message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet*",
     "data_sync": "!message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload*",
-    "watchdog":  "!message:*watchdog* !message:*Watchdog* !message:*0x8badf00d* !stack.function:*watchdog*",
+    "watchdog":  "!error.mechanism:watchdog_termination",
     "mapbox":    "!stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox*",
     "location":  "!stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location*",
     "core_logic": "!message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch*",
@@ -127,6 +167,9 @@ def excl(*keys):
     return " ".join(NX[k] for k in keys if k in NX)
 
 BASE_QUERY = 'is:unresolved level:fatal handled:no'
+# Discover events API doesn't support is:unresolved or handled:no (issue-level filters).
+# Use event-level equivalents: level:fatal + !error.handled:true (matches false and null).
+DISCOVER_BASE_QUERY = 'level:fatal !error.handled:true'
 
 # ── Category definitions ──────────────────────────────────────────────────────
 
@@ -137,9 +180,9 @@ CATEGORIES = [
     "key": "watchdog",
     "label": "Watchdog / Fatal Hangs",
     "color": "#FFADAD",
-    "filters": ["message:*WatchDogTermination*"],
-    "excl": "",   # keep no exclusion
-    "link_filter": "message:*WatchDogTermination*",
+    "filters": ["error.mechanism:watchdog_termination"],
+    "excl": "",
+    "link_filter": "error.mechanism:watchdog_termination",
     "culprits": ["Watchdog termination", "Main thread blocked", "App unresponsive (0x8badf00d)"],
     },
     {
@@ -207,6 +250,33 @@ def fetch_all(query, start, end):
             break
         time.sleep(0.4)
     return issues
+
+
+def fetch_unique_users(query, start, end):
+    """Use Sentry Discover API to get true unique user count for a filtered query.
+
+    The issues API returns all-time userCount per issue regardless of dist/release
+    filters, leading to inflated numbers. The Discover events endpoint aggregates
+    count_unique(user) correctly within the specified time window and query filters.
+    """
+    params = urllib.parse.urlencode([
+        ("project", PROJECT),
+        ("query",   query),
+        ("start",   start),
+        ("end",     end),
+        ("field",   "count_unique(user)"),
+        ("dataset", "discover"),
+    ])
+    url = f"https://sentry.io/api/0/organizations/{ORG}/events/?{params}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+        rows = data.get("data", [])
+        return int(rows[0].get("count_unique(user)", 0)) if rows else 0
+    except Exception as e:
+        print(f"  ERROR fetch_unique_users: {e}")
+        return 0
 
 
 # ── Run analysis for each month ───────────────────────────────────────────────
@@ -305,6 +375,93 @@ for week in WEEKS:
         "total": total_unique,
     })
 
+
+# ── Run release analysis (total crashes per release, no categories) ───────────
+
+all_release_results = []
+
+for rel in RELEASES:
+    v          = rel["version"]
+    d          = rel.get("dist")
+    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    link_query = f"{BASE_QUERY} {rel_filter}".strip()
+    discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
+    print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
+    try:
+        users = fetch_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        users = 0
+    print(f"  {users} unique users")
+    all_release_results.append({
+        "release":    rel,
+        "users":      users,
+        "issues":     0,
+        "link_query": link_query,
+    })
+    time.sleep(0.5)
+
+
+# ── Run release weekly analysis ───────────────────────────────────────────────
+
+all_release_weekly = []
+
+for rel in RELEASES:
+    v          = rel["version"]
+    d          = rel.get("dist")
+    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    link_query = f"{BASE_QUERY} {rel_filter}".strip()
+    discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
+    print(f"\n── Release weekly: {v} ──")
+
+    week_users = []
+    for week in WEEKS:
+        try:
+            users = fetch_unique_users(discover_q, week["start"], week["end"])
+        except Exception as e:
+            print(f"  ERROR {week['label']}: {e}")
+            users = 0
+        week_users.append(users)
+        print(f"  {week['label']:35s} {users:6} unique users")
+        time.sleep(0.5)
+
+    all_release_weekly.append({
+        "release":    rel,
+        "week_users": week_users,
+        "link_query": link_query,
+    })
+
+
+# ── Run watchdog terminations per release analysis ────────────────────────────
+# Use a 90-day window to match Sentry's default view and capture full release lifetime.
+
+WATCHDOG_FILTER = "error.mechanism:watchdog_termination"
+WATCHDOG_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
+WATCHDOG_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
+all_watchdog_release_results = []
+
+for rel in RELEASES:
+    v          = rel["version"]
+    d          = rel.get("dist")
+    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    link_query = f"{BASE_QUERY} {rel_filter} {WATCHDOG_FILTER}".strip()
+    discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter} {WATCHDOG_FILTER}".strip()
+    print(f"\n── Watchdog Release {v} (dist {d}) ──" if d else f"\n── Watchdog Release {v} ──")
+    try:
+        users = fetch_unique_users(discover_q, WATCHDOG_WINDOW_START, WATCHDOG_WINDOW_END)
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        users = 0
+    print(f"  {users} unique users")
+    all_watchdog_release_results.append({
+        "release":    rel,
+        "users":      users,
+        "issues":     0,
+        "link_query": link_query,
+    })
+    time.sleep(0.5)
+
+
 # ── Build JS data ─────────────────────────────────────────────────────────────
 
 months_js = json.dumps([
@@ -352,6 +509,44 @@ weeks_js = json.dumps([
     for w in all_week_results
 ], indent=2)
 
+
+releases_js = json.dumps([
+    {
+        "label":  r["release"]["label"],
+        "short":  r["release"]["short"],
+        "users":  r["users"],
+        "issues": r["issues"],
+        "start":  RELEASE_WINDOW_START,
+        "end":    RELEASE_WINDOW_END,
+        "query":  r["link_query"],
+    }
+    for r in all_release_results
+], indent=2)
+
+
+release_weekly_js = json.dumps([
+    {
+        "label":      r["release"]["label"],
+        "short":      r["release"]["short"],
+        "week_users": r["week_users"],
+        "link_query": r["link_query"],
+    }
+    for r in all_release_weekly
+], indent=2)
+
+
+watchdog_release_js = json.dumps([
+    {
+        "label":  r["release"]["label"],
+        "short":  r["release"]["short"],
+        "users":  r["users"],
+        "issues": r["issues"],
+        "start":  WATCHDOG_WINDOW_START,
+        "end":    WATCHDOG_WINDOW_END,
+        "query":  r["link_query"],
+    }
+    for r in all_watchdog_release_results
+], indent=2)
 
 
 month_tabs_html = "\n".join(
@@ -481,6 +676,9 @@ html = f"""<!DOCTYPE html>
   <div class="tab active" data-panel="overview">Overview</div>
 {month_tabs_html}
   <div class="tab" data-panel="weekly">Weekly Trend</div>
+  <div class="tab" data-panel="releases">Release Trend</div>
+  <div class="tab" data-panel="release-weekly">Release Weekly</div>
+  <div class="tab" data-panel="watchdog-releases">Watchdog by Release</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -519,6 +717,62 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
+<div class="panel" id="panel-releases">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Total fatal crashes per release — last 4 weeks &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query for that release
+  </p>
+  <div class="weekly-summary" id="release-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="release-chart"></canvas>
+  </div>
+  <table class="compare-table" id="release-table">
+    <thead>
+      <tr id="release-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="release-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel" id="panel-release-weekly">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Total fatal crashes per week per release — no category breakdown &nbsp;|&nbsp;
+    Click any cell to open Sentry for that release + week
+  </p>
+  <div class="weekly-chart-wrap">
+    <canvas id="release-weekly-chart"></canvas>
+  </div>
+  <table class="compare-table" id="release-weekly-table">
+    <thead>
+      <tr id="release-weekly-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="release-weekly-tbody"></tbody>
+  </table>
+</div>
+
+<div class="panel" id="panel-watchdog-releases">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Watchdog terminations per release — last 4 weeks &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query for that release
+  </p>
+  <div class="weekly-summary" id="watchdog-releases-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="watchdog-releases-chart"></canvas>
+  </div>
+  <table class="compare-table" id="watchdog-releases-table">
+    <thead>
+      <tr id="watchdog-releases-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="watchdog-releases-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -533,8 +787,11 @@ const ORG        = "{ORG}";
 const PROJECT_ID = "{PROJECT}";
 const BASE_URL   = `https://${{ORG}}.sentry.io/issues/`;
 
-const MONTHS = {months_js};
-const WEEKS = {weeks_js};
+const MONTHS          = {months_js};
+const WEEKS           = {weeks_js};
+const RELEASES        = {releases_js};
+const RELEASE_WEEKLY    = {release_weekly_js};
+const WATCHDOG_RELEASES = {watchdog_release_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -814,6 +1071,298 @@ MONTHS.forEach(m => {{
       }},
       scales: {{
         y: {{ beginAtZero: true, title: {{ display: true, text: "Users impacted", font: {{ size: 11 }} }} }}
+      }}
+    }}
+  }});
+}})();
+
+// ── Release Trend tab ────────────────────────────────────────────────────────
+(function() {{
+  if (!RELEASES.length) {{
+    document.getElementById("panel-releases").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+    return;
+  }}
+
+  const summary = document.getElementById("release-summary");
+  RELEASES.forEach(r => {{
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${{r.label}}</div>
+      <div class="week-total">${{r.users.toLocaleString()}}</div>
+      <div class="month-sub">unique riders impacted</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${{r.issues}} issues</div>`;
+    summary.appendChild(card);
+  }});
+
+  function deltaHTML(a, b) {{
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }}
+
+  const headerRow = document.getElementById("release-header-row");
+  RELEASES.forEach(r => {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  }});
+  for (let i = 1; i < RELEASES.length; i++) {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${{RELEASES[i].short}} vs ${{RELEASES[i-1].short}}`;
+    headerRow.appendChild(th);
+  }}
+
+  const tbody = document.getElementById("release-tbody");
+
+  // Total crashes row
+  const tr = document.createElement("tr");
+  const tdLabel = document.createElement("td");
+  tdLabel.innerHTML = '<div class="td-group"><strong>Total Crashes</strong></div>';
+  tr.appendChild(tdLabel);
+  RELEASES.forEach(r => {{
+    const td = document.createElement("td");
+    td.className = "num cell-link";
+    td.title = `Open crashes in Sentry — ${{r.label}}`;
+    td.innerHTML = `${{r.users.toLocaleString()}}<br>
+      <span style="font-size:10px;color:#9ca3af">${{r.issues}} issues</span>`;
+    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
+    tr.appendChild(td);
+  }});
+  for (let i = 1; i < RELEASES.length; i++) {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(RELEASES[i-1].users, RELEASES[i].users);
+    tr.appendChild(td);
+  }}
+  tbody.appendChild(tr);
+
+  const CRASH_COLOR = "#FFADAD";
+  new Chart(document.getElementById("release-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels:   RELEASES.map(r => r.label),
+      datasets: [{{
+        label:           "Fatal Crashes",
+        data:            RELEASES.map(r => r.users),
+        backgroundColor: RELEASES.map((_, i) =>
+          i === RELEASES.length - 1 ? CRASH_COLOR : CRASH_COLOR + "99"),
+        borderColor:     CRASH_COLOR,
+        borderWidth:     1,
+        borderRadius:    4,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{ callbacks: {{
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders (${{RELEASES[ctx.dataIndex].issues}} issues)`
+        }} }}
+      }},
+      scales: {{
+        x: {{ grid: {{ display: false }} }},
+        y: {{ beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
+      }}
+    }}
+  }});
+}})();
+
+// ── Release Weekly tab ───────────────────────────────────────────────────────
+(function() {{
+  if (!RELEASE_WEEKLY.length || !WEEKS.length) return;
+
+  const COLORS = ["#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6"];
+
+  function deltaHTML(a, b) {{
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }}
+
+  const headerRow = document.getElementById("release-weekly-header-row");
+  WEEKS.forEach(w => {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = w.label;
+    headerRow.appendChild(th);
+  }});
+  for (let i = 1; i < WEEKS.length; i++) {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${{WEEKS[i].short}} vs ${{WEEKS[i-1].short}}`;
+    headerRow.appendChild(th);
+  }}
+
+  const tbody = document.getElementById("release-weekly-tbody");
+  RELEASE_WEEKLY.forEach((rel, ri) => {{
+    const tr = document.createElement("tr");
+    const color = COLORS[ri % COLORS.length];
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;
+                   background:${{color}};flex-shrink:0"></span>${{rel.label}}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    WEEKS.forEach((w, wi) => {{
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${{rel.label}} in Sentry — ${{w.label}}`;
+      td.textContent = rel.week_users[wi].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL({{ query: rel.link_query }}, w), "_blank"));
+      tr.appendChild(td);
+    }});
+
+    for (let i = 1; i < WEEKS.length; i++) {{
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(rel.week_users[i-1], rel.week_users[i]);
+      tr.appendChild(td);
+    }}
+    tbody.appendChild(tr);
+  }});
+
+  const datasets = RELEASE_WEEKLY.map((rel, ri) => ({{
+    label:            rel.label,
+    data:             rel.week_users,
+    borderColor:      COLORS[ri % COLORS.length],
+    backgroundColor:  COLORS[ri % COLORS.length],
+    tension:          0.3,
+    fill:             false,
+    pointRadius:      5,
+    pointHoverRadius: 7,
+  }}));
+
+  new Chart(document.getElementById("release-weekly-chart").getContext("2d"), {{
+    type: "line",
+    data: {{ labels: WEEKS.map(w => w.label), datasets }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ position: "top", labels: {{ font: {{ size: 12 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            label: ctx => ` ${{ctx.dataset.label}}: ${{ctx.parsed.y.toLocaleString()}} riders`
+          }}
+        }}
+      }},
+      scales: {{
+        y: {{ beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
+      }}
+    }}
+  }});
+}})();
+
+// ── Watchdog by Release tab ───────────────────────────────────────────────────
+(function() {{
+  if (!WATCHDOG_RELEASES.length) {{
+    document.getElementById("panel-watchdog-releases").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+    return;
+  }}
+
+  const summary = document.getElementById("watchdog-releases-summary");
+  WATCHDOG_RELEASES.forEach(r => {{
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${{r.label}}</div>
+      <div class="week-total">${{r.users.toLocaleString()}}</div>
+      <div class="month-sub">riders impacted</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${{r.issues}} issues</div>`;
+    summary.appendChild(card);
+  }});
+
+  function deltaHTML(a, b) {{
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }}
+
+  const headerRow = document.getElementById("watchdog-releases-header-row");
+  WATCHDOG_RELEASES.forEach(r => {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  }});
+  for (let i = 1; i < WATCHDOG_RELEASES.length; i++) {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${{WATCHDOG_RELEASES[i].short}} vs ${{WATCHDOG_RELEASES[i-1].short}}`;
+    headerRow.appendChild(th);
+  }}
+
+  const tbody = document.getElementById("watchdog-releases-tbody");
+  const tr = document.createElement("tr");
+  const tdLabel = document.createElement("td");
+  tdLabel.innerHTML = '<div class="td-group"><strong>Watchdog Terminations</strong></div>';
+  tr.appendChild(tdLabel);
+
+  WATCHDOG_RELEASES.forEach(r => {{
+    const td = document.createElement("td");
+    td.className = "num cell-link";
+    td.title = `Open watchdog crashes in Sentry — ${{r.label}}`;
+    td.innerHTML = `${{r.users.toLocaleString()}}<br>
+      <span style="font-size:10px;color:#9ca3af">${{r.issues}} issues</span>`;
+    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
+    tr.appendChild(td);
+  }});
+
+  for (let i = 1; i < WATCHDOG_RELEASES.length; i++) {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(WATCHDOG_RELEASES[i-1].users, WATCHDOG_RELEASES[i].users);
+    tr.appendChild(td);
+  }}
+  tbody.appendChild(tr);
+
+  const WD_COLOR = "#FFADAD";
+  new Chart(document.getElementById("watchdog-releases-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels:   WATCHDOG_RELEASES.map(r => r.label),
+      datasets: [{{
+        label:           "Watchdog Terminations",
+        data:            WATCHDOG_RELEASES.map(r => r.users),
+        backgroundColor: WATCHDOG_RELEASES.map((_, i) =>
+          i === WATCHDOG_RELEASES.length - 1 ? WD_COLOR : WD_COLOR + "99"),
+        borderColor:     WD_COLOR,
+        borderWidth:     1,
+        borderRadius:    4,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{ callbacks: {{
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders (${{WATCHDOG_RELEASES[ctx.dataIndex].issues}} issues)`
+        }} }}
+      }},
+      scales: {{
+        x: {{ grid: {{ display: false }} }},
+        y: {{ beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
       }}
     }}
   }});
