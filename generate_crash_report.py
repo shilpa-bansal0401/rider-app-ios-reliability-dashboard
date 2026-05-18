@@ -467,6 +467,35 @@ for rel in RELEASES:
     time.sleep(0.5)
 
 
+# ── Run Mapbox crashes per release analysis ────────────────────────────────────
+# Use a 90-day window to match Sentry's default view and capture full release lifetime.
+
+MAPBOX_FILTER = "stack.package:*Mapbox*"
+MAPBOX_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
+MAPBOX_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
+all_mapbox_release_results = []
+
+for rel in RELEASES:
+    v          = rel["version"]
+    d          = rel.get("dist")
+    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    link_query = f"{BASE_QUERY} {rel_filter} Mapbox".strip()
+    discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter} {MAPBOX_FILTER}".strip()
+    print(f"\n── Mapbox Release {v} (dist {d}) ──" if d else f"\n── Mapbox Release {v} ──")
+    try:
+        users = fetch_unique_users(discover_q, MAPBOX_WINDOW_START, MAPBOX_WINDOW_END)
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        users = 0
+    print(f"  {users} unique users")
+    all_mapbox_release_results.append({
+        "release":    rel,
+        "users":      users,
+        "link_query": link_query,
+    })
+    time.sleep(0.5)
+
+
 # ── Build JS data ─────────────────────────────────────────────────────────────
 
 months_js = json.dumps([
@@ -551,6 +580,19 @@ watchdog_release_js = json.dumps([
         "query":  r["link_query"],
     }
     for r in all_watchdog_release_results
+], indent=2)
+
+
+mapbox_release_js = json.dumps([
+    {
+        "label":  r["release"]["label"],
+        "short":  r["release"]["short"],
+        "users":  r["users"],
+        "start":  MAPBOX_WINDOW_START,
+        "end":    MAPBOX_WINDOW_END,
+        "query":  r["link_query"],
+    }
+    for r in all_mapbox_release_results
 ], indent=2)
 
 
@@ -684,6 +726,7 @@ html = f"""<!DOCTYPE html>
   <div class="tab" data-panel="releases">Release Trend</div>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
   <div class="tab" data-panel="watchdog-releases">Watchdog by Release</div>
+  <div class="tab" data-panel="mapbox-releases">Mapbox by Release</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -778,6 +821,25 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
+<div class="panel" id="panel-mapbox-releases">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Mapbox crashes per release — last 90 days &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query for that release
+  </p>
+  <div class="weekly-summary" id="mapbox-releases-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="mapbox-releases-chart"></canvas>
+  </div>
+  <table class="compare-table" id="mapbox-releases-table">
+    <thead>
+      <tr id="mapbox-releases-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="mapbox-releases-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -797,6 +859,7 @@ const WEEKS           = {weeks_js};
 const RELEASES        = {releases_js};
 const RELEASE_WEEKLY    = {release_weekly_js};
 const WATCHDOG_RELEASES = {watchdog_release_js};
+const MAPBOX_RELEASES   = {mapbox_release_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -1347,6 +1410,104 @@ MONTHS.forEach(m => {{
         backgroundColor: WATCHDOG_RELEASES.map((_, i) =>
           i === WATCHDOG_RELEASES.length - 1 ? WD_COLOR : WD_COLOR + "99"),
         borderColor:     WD_COLOR,
+        borderWidth:     1,
+        borderRadius:    4,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{ callbacks: {{
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders`
+        }} }}
+      }},
+      scales: {{
+        x: {{ grid: {{ display: false }} }},
+        y: {{ beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
+      }}
+    }}
+  }});
+}})();
+
+// ── Mapbox by Release tab ─────────────────────────────────────────────────────
+(function() {{
+  if (!MAPBOX_RELEASES.length) {{
+    document.getElementById("panel-mapbox-releases").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+    return;
+  }}
+
+  const summary = document.getElementById("mapbox-releases-summary");
+  MAPBOX_RELEASES.forEach(r => {{
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${{r.label}}</div>
+      <div class="week-total">${{r.users.toLocaleString()}}</div>
+      <div class="month-sub">riders impacted</div>`;
+    summary.appendChild(card);
+  }});
+
+  function deltaHTML(a, b) {{
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${{diff.toLocaleString()}} (${{pct}})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${{diff.toLocaleString()}} (${{pct}})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }}
+
+  const headerRow = document.getElementById("mapbox-releases-header-row");
+  MAPBOX_RELEASES.forEach(r => {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  }});
+  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {{
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${{MAPBOX_RELEASES[i].short}} vs ${{MAPBOX_RELEASES[i-1].short}}`;
+    headerRow.appendChild(th);
+  }}
+
+  const tbody = document.getElementById("mapbox-releases-tbody");
+  const tr = document.createElement("tr");
+  const tdLabel = document.createElement("td");
+  tdLabel.innerHTML = '<div class="td-group"><strong>Mapbox Crashes</strong></div>';
+  tr.appendChild(tdLabel);
+
+  MAPBOX_RELEASES.forEach(r => {{
+    const td = document.createElement("td");
+    td.className = "num cell-link";
+    td.title = `Open Mapbox crashes in Sentry — ${{r.label}}`;
+    td.textContent = r.users.toLocaleString();
+    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
+    tr.appendChild(td);
+  }});
+
+  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(MAPBOX_RELEASES[i-1].users, MAPBOX_RELEASES[i].users);
+    tr.appendChild(td);
+  }}
+  tbody.appendChild(tr);
+
+  const MB_COLOR = "#FFD6A5";
+  new Chart(document.getElementById("mapbox-releases-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels:   MAPBOX_RELEASES.map(r => r.label),
+      datasets: [{{
+        label:           "Mapbox Crashes",
+        data:            MAPBOX_RELEASES.map(r => r.users),
+        backgroundColor: MAPBOX_RELEASES.map((_, i) =>
+          i === MAPBOX_RELEASES.length - 1 ? MB_COLOR : MB_COLOR + "99"),
+        borderColor:     MB_COLOR,
         borderWidth:     1,
         borderRadius:    4,
       }}]
