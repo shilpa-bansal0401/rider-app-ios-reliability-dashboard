@@ -722,9 +722,9 @@ html = f"""<!DOCTYPE html>
 <div class="tabs" id="tabs">
   <div class="tab active" data-panel="overview">Overview</div>
 {month_tabs_html}
-  <div class="tab" data-panel="weekly">Weekly Trend</div>
+  <!-- <div class="tab" data-panel="weekly">Weekly Trend</div> -->
   <div class="tab" data-panel="releases">Release Trend</div>
-  <div class="tab" data-panel="release-weekly">Release Weekly</div>
+  <!-- <div class="tab" data-panel="release-weekly">Release Weekly</div> -->
   <div class="tab" data-panel="watchdog-releases">Watchdog by Release</div>
   <div class="tab" data-panel="mapbox-releases">Mapbox by Release</div>
 </div>
