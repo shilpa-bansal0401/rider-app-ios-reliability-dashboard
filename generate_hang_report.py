@@ -31,14 +31,15 @@ OUT_DIR = "hang_report"
 # Each entry needs a version string and the Sentry dist (build number).
 # Set to [] to auto-fetch the most recent releases from Sentry instead.
 PINNED_RELEASES = [
-    {"version": "4.2615.1", "dist": "948"},
     {"version": "4.2617.3", "dist": "960"},
     {"version": "4.2618.1", "dist": "968"},
     {"version": "4.2619.5", "dist": "978"},
+    {"version": "4.2620.2", "dist": "981"},
+    {"version": "4.2621.1", "dist": "985"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
-RELEASE_WEEKLY_QUERY = "is:unresolved App hang* detected"
+RELEASE_WEEKLY_QUERY = 'is:unresolved "App Hangs detected"'
 
 if not TOKEN:
     raise SystemExit("ERROR: set SENTRY_AUTH_TOKEN environment variable first.")
@@ -423,12 +424,8 @@ for rel in RELEASES:
     v          = rel["version"]
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
-    if v == "4.2619.5":
-        link_query = f'is:unresolved "App hang* detected" {rel_filter}'.strip()
-        discover_q = f'"App hang* detected" {rel_filter}'.strip()
-    else:
-        link_query = f"{BASE_QUERY} {rel_filter}".strip()
-        discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
+    link_query = f'is:unresolved "App hang* detected" {rel_filter}'.strip()
+    discover_q = f'"App hang* detected" {rel_filter}'.strip()
     print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
     try:
         users = count_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
@@ -445,9 +442,8 @@ for rel in RELEASES:
 
 
 # ── Run release weekly analysis ───────────────────────────────────────────────
-# Excludes 4.2619.5 which has a filtering issue in the weekly view.
 
-RELEASE_WEEKLY_RELEASES = [r for r in RELEASES if r["version"] != "4.2619.5"]
+RELEASE_WEEKLY_RELEASES = RELEASES
 all_release_weekly = []
 
 for rel in RELEASE_WEEKLY_RELEASES:
@@ -459,7 +455,8 @@ for rel in RELEASE_WEEKLY_RELEASES:
 
     week_users = []
     for week in WEEKS:
-        q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
+        phrase = '"App hang* detected"' if v in ("4.2617.3", "4.2618.1") else '"App Hangs detected"'
+        q = f'{phrase} {rel_filter}'.strip()
         try:
             users = count_unique_users(q, week["start"], week["end"])
         except Exception as e:
@@ -962,6 +959,28 @@ MONTHS.forEach(m => {{
     }}
     tbody.appendChild(tr);
   }});
+
+  // Total Hangs row
+  const weekTotals = WEEKS.map((_, wi) =>
+    RELEASE_WEEKLY.reduce((sum, rel) => sum + rel.week_users[wi], 0));
+  const totalRow = document.createElement("tr");
+  totalRow.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  const tdTotalLabel = document.createElement("td");
+  tdTotalLabel.textContent = "Total Hangs";
+  totalRow.appendChild(tdTotalLabel);
+  weekTotals.forEach(t => {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.textContent = t.toLocaleString();
+    totalRow.appendChild(td);
+  }});
+  for (let i = 1; i < WEEKS.length; i++) {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(weekTotals[i-1], weekTotals[i]);
+    totalRow.appendChild(td);
+  }}
+  tbody.appendChild(totalRow);
 
   // Line chart
   const datasets = RELEASE_WEEKLY.map((rel, ri) => ({{

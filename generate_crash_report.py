@@ -32,10 +32,11 @@ if not TOKEN:
 
 # Pin specific releases to compare in the Release Trend and Release Weekly tabs.
 PINNED_RELEASES = [
-    {"version": "4.2615.1", "dist": "948"},
     {"version": "4.2617.3", "dist": "960"},
     {"version": "4.2618.1", "dist": "968"},
     {"version": "4.2619.5", "dist": "978"},
+    {"version": "4.2620.2", "dist": "981"},
+    {"version": "4.2621.1", "dist": "985"},
 ]
 
 # ── Months to analyze ─────────────────────────────────────────────────────────
@@ -87,21 +88,25 @@ def get_last_4_weeks():
     """
     Return the latest 4 weekly trend windows.
 
-    Weeks are Monday-Sunday. If the current week is not complete yet,
-    the latest bucket is Monday-today and is marked as partial.
+    Weeks are Monday-Sunday. The current (partial) week is included only
+    if today is Thursday or later, to avoid misleading early-week numbers.
     """
-    weeks = []
-
     current_week_start = TODAY - datetime.timedelta(days=TODAY.weekday())
-    current_week_end = TODAY
+    include_current = TODAY.weekday() >= 3  # Thursday or later
 
-    # Include current week as the latest bucket. It is partial unless today is Sunday.
+    weeks = []
     for i in range(4):
-        start_dt = current_week_start - datetime.timedelta(days=i * 7)
-        if i == 0:
-            end_dt = current_week_end
-            is_partial = TODAY.weekday() != 6
+        if include_current:
+            start_dt = current_week_start - datetime.timedelta(days=i * 7)
+            if i == 0:
+                end_dt = TODAY
+                is_partial = TODAY.weekday() != 6
+            else:
+                end_dt = start_dt + datetime.timedelta(days=6)
+                is_partial = False
         else:
+            # Skip current week; show 4 completed prior weeks
+            start_dt = current_week_start - datetime.timedelta(days=(i + 1) * 7)
             end_dt = start_dt + datetime.timedelta(days=6)
             is_partial = False
 
@@ -1091,8 +1096,7 @@ MONTHS.forEach(m => {{
     card.innerHTML = `
       <div class="week-name">${{r.label}}</div>
       <div class="week-total">${{r.users.toLocaleString()}}</div>
-      <div class="month-sub">unique riders impacted</div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${{r.issues}} issues</div>`;
+      <div class="month-sub">unique riders impacted</div>`;
     summary.appendChild(card);
   }});
 
@@ -1130,8 +1134,7 @@ MONTHS.forEach(m => {{
     const td = document.createElement("td");
     td.className = "num cell-link";
     td.title = `Open crashes in Sentry — ${{r.label}}`;
-    td.innerHTML = `${{r.users.toLocaleString()}}<br>
-      <span style="font-size:10px;color:#9ca3af">${{r.issues}} issues</span>`;
+    td.textContent = r.users.toLocaleString();
     td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
     tr.appendChild(td);
   }});
@@ -1164,7 +1167,7 @@ MONTHS.forEach(m => {{
       plugins: {{
         legend: {{ display: false }},
         tooltip: {{ callbacks: {{
-          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders (${{RELEASES[ctx.dataIndex].issues}} issues)`
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders`
         }} }}
       }},
       scales: {{
@@ -1283,8 +1286,7 @@ MONTHS.forEach(m => {{
     card.innerHTML = `
       <div class="week-name">${{r.label}}</div>
       <div class="week-total">${{r.users.toLocaleString()}}</div>
-      <div class="month-sub">riders impacted</div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:2px">${{r.issues}} issues</div>`;
+      <div class="month-sub">riders impacted</div>`;
     summary.appendChild(card);
   }});
 
@@ -1321,8 +1323,7 @@ MONTHS.forEach(m => {{
     const td = document.createElement("td");
     td.className = "num cell-link";
     td.title = `Open watchdog crashes in Sentry — ${{r.label}}`;
-    td.innerHTML = `${{r.users.toLocaleString()}}<br>
-      <span style="font-size:10px;color:#9ca3af">${{r.issues}} issues</span>`;
+    td.textContent = r.users.toLocaleString();
     td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
     tr.appendChild(td);
   }});
@@ -1356,7 +1357,7 @@ MONTHS.forEach(m => {{
       plugins: {{
         legend: {{ display: false }},
         tooltip: {{ callbacks: {{
-          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders (${{WATCHDOG_RELEASES[ctx.dataIndex].issues}} issues)`
+          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders`
         }} }}
       }},
       scales: {{
