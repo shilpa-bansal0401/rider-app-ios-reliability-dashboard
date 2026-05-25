@@ -104,7 +104,7 @@
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>is:unresolved error.mechanism:AppHang</code> &nbsp;|&nbsp;
-  Data fetched: 21 May 2026 &nbsp;|&nbsp;
+  Data fetched: 25 May 2026 &nbsp;|&nbsp;
   Months: Mar 2026 · Apr 2026 · May 2026
 </p>
 
@@ -180,7 +180,7 @@
   <br>• <strong>Filter:</strong> <code>error.mechanism:AppHang</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
-  <br>• <strong>May 2026 is a partial month (data up to 21 May 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>May 2026 is a partial month (data up to 25 May 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
 </div>
 
@@ -193,7 +193,7 @@ const MONTHS          = [
   {
     "label": "March 2026",
     "short": "Mar 2026",
-    "total": 27296,
+    "total": 27297,
     "start": "2026-03-01T00:00:00",
     "end": "2026-04-01T00:00:00",
     "categories": [
@@ -231,7 +231,7 @@ const MONTHS          = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 4512,
+        "users": 4513,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -435,15 +435,15 @@ const MONTHS          = [
   {
     "label": "May 2026",
     "short": "May 2026",
-    "total": 14221,
+    "total": 15570,
     "start": "2026-05-01T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 8721,
+        "users": 9433,
         "query": "is:unresolved error.mechanism:AppHang  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -461,7 +461,7 @@ const MONTHS          = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 145,
+        "users": 129,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -473,7 +473,7 @@ const MONTHS          = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 4132,
+        "users": 4651,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -486,7 +486,7 @@ const MONTHS          = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 424,
+        "users": 483,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -498,7 +498,7 @@ const MONTHS          = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 209,
+        "users": 237,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -506,7 +506,7 @@ const MONTHS          = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 186,
+        "users": 213,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -519,7 +519,7 @@ const MONTHS          = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 291,
+        "users": 303,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -531,7 +531,7 @@ const MONTHS          = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 73,
+        "users": 75,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*",
         "culprits": [
           "ARView.init",
@@ -544,7 +544,7 @@ const MONTHS          = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 40,
+        "users": 46,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -555,12 +555,6 @@ const MONTHS          = [
   }
 ];
 const WEEKS           = [
-  {
-    "label": "Apr 27 - May 03",
-    "short": "Apr 27",
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-04T00:00:00"
-  },
   {
     "label": "May 04 - May 10",
     "short": "May 04",
@@ -574,51 +568,57 @@ const WEEKS           = [
     "end": "2026-05-18T00:00:00"
   },
   {
-    "label": "May 18 - May 21 (partial)",
+    "label": "May 18 - May 24",
     "short": "May 18",
     "start": "2026-05-18T00:00:00",
-    "end": "2026-05-22T00:00:00"
+    "end": "2026-05-25T00:00:00"
+  },
+  {
+    "label": "May 25 - May 25 (partial)",
+    "short": "May 25",
+    "start": "2026-05-25T00:00:00",
+    "end": "2026-05-26T00:00:00"
   }
 ];
 const RELEASES        = [
   {
     "label": "4.2617.3",
     "short": "4.2617.3",
-    "users": 6319,
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "users": 3079,
+    "start": "2026-05-04T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:960"
   },
   {
     "label": "4.2618.1",
     "short": "4.2618.1",
-    "users": 6575,
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "users": 5802,
+    "start": "2026-05-04T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:968"
   },
   {
     "label": "4.2619.5",
     "short": "4.2619.5",
-    "users": 2782,
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "users": 3054,
+    "start": "2026-05-04T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:978"
   },
   {
     "label": "4.2620.2",
     "short": "4.2620.2",
-    "users": 2531,
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "users": 3341,
+    "start": "2026-05-04T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:981"
   },
   {
     "label": "4.2621.1",
     "short": "4.2621.1",
-    "users": 618,
-    "start": "2026-04-27T00:00:00",
-    "end": "2026-05-22T00:00:00",
+    "users": 2126,
+    "start": "2026-05-04T00:00:00",
+    "end": "2026-05-26T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:985"
   }
 ];
@@ -627,10 +627,10 @@ const RELEASE_WEEKLY  = [
     "label": "4.2617.3",
     "short": "4.2617.3",
     "week_users": [
-      3960,
       1774,
       990,
-      480
+      735,
+      64
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:960"
   },
@@ -638,10 +638,10 @@ const RELEASE_WEEKLY  = [
     "label": "4.2618.1",
     "short": "4.2618.1",
     "week_users": [
-      1310,
       3313,
       2245,
-      678
+      1052,
+      38
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:968"
   },
@@ -649,10 +649,10 @@ const RELEASE_WEEKLY  = [
     "label": "4.2619.5",
     "short": "4.2619.5",
     "week_users": [
-      0,
       625,
       1791,
-      656
+      943,
+      82
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:978"
   },
@@ -661,9 +661,9 @@ const RELEASE_WEEKLY  = [
     "short": "4.2620.2",
     "week_users": [
       0,
-      0,
-      0,
-      1445
+      1260,
+      2203,
+      134
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:981"
   },
@@ -673,8 +673,8 @@ const RELEASE_WEEKLY  = [
     "week_users": [
       0,
       0,
-      0,
-      618
+      1677,
+      539
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:985"
   }
