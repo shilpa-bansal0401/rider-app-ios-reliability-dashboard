@@ -104,7 +104,7 @@
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>is:unresolved error.mechanism:AppHang</code> &nbsp;|&nbsp;
-  Data fetched: 25 May 2026 &nbsp;|&nbsp;
+  Data fetched: 26 May 2026 &nbsp;|&nbsp;
   Months: Mar 2026 · Apr 2026 · May 2026
 </p>
 
@@ -115,6 +115,7 @@
   <div class="tab" data-panel="month-2">May 2026 (partial)</div>
   <div class="tab" data-panel="releases">By Release</div>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
+  <div class="tab" data-panel="mapbox-releases">Mapbox by Release</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -173,6 +174,25 @@
   </table>
 </div>
 
+<div class="panel" id="panel-mapbox-releases">
+  <p style="font-size:13px;color:#666;margin-bottom:20px;">
+    Mapbox hangs per release — last 90 days &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query for that release
+  </p>
+  <div class="weekly-summary" id="mapbox-releases-summary"></div>
+  <div class="weekly-chart-wrap">
+    <canvas id="mapbox-releases-chart"></canvas>
+  </div>
+  <table class="compare-table" id="mapbox-releases-table">
+    <thead>
+      <tr id="mapbox-releases-header-row">
+        <th>Release</th>
+      </tr>
+    </thead>
+    <tbody id="mapbox-releases-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -180,7 +200,7 @@
   <br>• <strong>Filter:</strong> <code>error.mechanism:AppHang</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
-  <br>• <strong>May 2026 is a partial month (data up to 25 May 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>May 2026 is a partial month (data up to 26 May 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
 </div>
 
@@ -189,11 +209,11 @@ const ORG        = "delivery-hero-pm";
 const PROJECT_ID = "4506937839976448";
 const BASE_URL   = `https://${ORG}.sentry.io/issues/`;
 
-const MONTHS          = [
+const MONTHS            = [
   {
     "label": "March 2026",
     "short": "Mar 2026",
-    "total": 27297,
+    "total": 27158,
     "start": "2026-03-01T00:00:00",
     "end": "2026-04-01T00:00:00",
     "categories": [
@@ -244,7 +264,7 @@ const MONTHS          = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 1702,
+        "users": 1563,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -314,7 +334,7 @@ const MONTHS          = [
   {
     "label": "April 2026",
     "short": "Apr 2026",
-    "total": 22944,
+    "total": 22772,
     "start": "2026-04-01T00:00:00",
     "end": "2026-05-01T00:00:00",
     "categories": [
@@ -365,7 +385,7 @@ const MONTHS          = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 1072,
+        "users": 900,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -435,15 +455,15 @@ const MONTHS          = [
   {
     "label": "May 2026",
     "short": "May 2026",
-    "total": 15570,
+    "total": 15658,
     "start": "2026-05-01T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 9433,
+        "users": 9511,
         "query": "is:unresolved error.mechanism:AppHang  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -473,7 +493,7 @@ const MONTHS          = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 4651,
+        "users": 4732,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -486,7 +506,7 @@ const MONTHS          = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 483,
+        "users": 402,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -498,7 +518,7 @@ const MONTHS          = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 237,
+        "users": 240,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -506,7 +526,7 @@ const MONTHS          = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 213,
+        "users": 219,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -519,7 +539,7 @@ const MONTHS          = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 303,
+        "users": 304,
         "query": "is:unresolved error.mechanism:AppHang !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -554,7 +574,7 @@ const MONTHS          = [
     ]
   }
 ];
-const WEEKS           = [
+const WEEKS             = [
   {
     "label": "May 04 - May 10",
     "short": "May 04",
@@ -574,55 +594,55 @@ const WEEKS           = [
     "end": "2026-05-25T00:00:00"
   },
   {
-    "label": "May 25 - May 25 (partial)",
+    "label": "May 25 - May 26 (partial)",
     "short": "May 25",
     "start": "2026-05-25T00:00:00",
-    "end": "2026-05-26T00:00:00"
+    "end": "2026-05-27T00:00:00"
   }
 ];
-const RELEASES        = [
+const RELEASES          = [
   {
     "label": "4.2617.3",
     "short": "4.2617.3",
-    "users": 3079,
+    "users": 3098,
     "start": "2026-05-04T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:960"
   },
   {
     "label": "4.2618.1",
     "short": "4.2618.1",
-    "users": 5802,
+    "users": 5826,
     "start": "2026-05-04T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:968"
   },
   {
     "label": "4.2619.5",
     "short": "4.2619.5",
-    "users": 3054,
+    "users": 3067,
     "start": "2026-05-04T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:978"
   },
   {
     "label": "4.2620.2",
     "short": "4.2620.2",
-    "users": 3341,
+    "users": 3377,
     "start": "2026-05-04T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:981"
   },
   {
     "label": "4.2621.1",
     "short": "4.2621.1",
-    "users": 2126,
+    "users": 2422,
     "start": "2026-05-04T00:00:00",
-    "end": "2026-05-26T00:00:00",
+    "end": "2026-05-27T00:00:00",
     "query": "is:unresolved \"App hang* detected\" dist:985"
   }
 ];
-const RELEASE_WEEKLY  = [
+const RELEASE_WEEKLY    = [
   {
     "label": "4.2617.3",
     "short": "4.2617.3",
@@ -630,7 +650,7 @@ const RELEASE_WEEKLY  = [
       1774,
       990,
       735,
-      64
+      94
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:960"
   },
@@ -641,7 +661,7 @@ const RELEASE_WEEKLY  = [
       3313,
       2245,
       1052,
-      38
+      78
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:968"
   },
@@ -652,7 +672,7 @@ const RELEASE_WEEKLY  = [
       625,
       1791,
       943,
-      82
+      104
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:978"
   },
@@ -663,7 +683,7 @@ const RELEASE_WEEKLY  = [
       0,
       1260,
       2203,
-      134
+      197
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:981"
   },
@@ -674,9 +694,35 @@ const RELEASE_WEEKLY  = [
       0,
       0,
       1677,
-      539
+      874
     ],
     "link_query": "is:unresolved \"App Hangs detected\" dist:985"
+  }
+];
+const MAPBOX_RELEASES   = [
+  {
+    "label": "4.2617.3",
+    "short": "4.2617.3",
+    "users": 1098,
+    "start": "2026-02-25T00:00:00",
+    "end": "2026-05-26T00:00:00",
+    "query": "is:unresolved error.mechanism:AppHang dist:960 stack.package:*Mapbox*"
+  },
+  {
+    "label": "4.2618.1",
+    "short": "4.2618.1",
+    "users": 1125,
+    "start": "2026-02-25T00:00:00",
+    "end": "2026-05-26T00:00:00",
+    "query": "is:unresolved error.mechanism:AppHang dist:968 stack.package:*Mapbox*"
+  },
+  {
+    "label": "4.2621.1",
+    "short": "4.2621.1",
+    "users": 311,
+    "start": "2026-02-25T00:00:00",
+    "end": "2026-05-26T00:00:00",
+    "query": "is:unresolved \"App Hangs detected\" dist:985 stack.package:*Mapbox*"
   }
 ];
 
@@ -1054,6 +1100,104 @@ MONTHS.forEach(m => {
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { beginAtZero: true,
+               title: { display: true, text: "Riders impacted", font: { size: 11 } } }
+      }
+    }
+  });
+})();
+
+// ── Mapbox by Release tab ─────────────────────────────────────────────────────
+(function() {
+  if (!MAPBOX_RELEASES.length) {
+    document.getElementById("panel-mapbox-releases").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+    return;
+  }
+
+  const summary = document.getElementById("mapbox-releases-summary");
+  MAPBOX_RELEASES.forEach(r => {
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name">${r.label}</div>
+      <div class="week-total">${r.users.toLocaleString()}</div>
+      <div class="month-sub">riders impacted</div>`;
+    summary.appendChild(card);
+  });
+
+  function deltaHTML(a, b) {
+    if (a === 0 && b === 0) return '<span class="delta-neu">—</span>';
+    const diff = b - a;
+    const pct  = a === 0 ? "∞" : Math.abs(Math.round(diff / a * 100)) + "%";
+    if (diff > 0) return `<span class="delta-pos">▲ +${diff.toLocaleString()} (${pct})</span>`;
+    if (diff < 0) return `<span class="delta-neg">▼ ${diff.toLocaleString()} (${pct})</span>`;
+    return '<span class="delta-neu">± 0</span>';
+  }
+
+  const headerRow = document.getElementById("mapbox-releases-header-row");
+  MAPBOX_RELEASES.forEach(r => {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = r.short;
+    headerRow.appendChild(th);
+  });
+  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {
+    const th = document.createElement("th");
+    th.className = "num";
+    th.textContent = `${MAPBOX_RELEASES[i].short} vs ${MAPBOX_RELEASES[i-1].short}`;
+    headerRow.appendChild(th);
+  }
+
+  const tbody = document.getElementById("mapbox-releases-tbody");
+  const tr = document.createElement("tr");
+  const tdLabel = document.createElement("td");
+  tdLabel.innerHTML = '<div class="td-group"><strong>Mapbox Hangs</strong></div>';
+  tr.appendChild(tdLabel);
+
+  MAPBOX_RELEASES.forEach(r => {
+    const td = document.createElement("td");
+    td.className = "num cell-link";
+    td.title = `Open Mapbox hangs in Sentry — ${r.label}`;
+    td.textContent = r.users.toLocaleString();
+    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
+    tr.appendChild(td);
+  });
+
+  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(MAPBOX_RELEASES[i-1].users, MAPBOX_RELEASES[i].users);
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+
+  const MB_COLOR = "#FFB3BA";
+  new Chart(document.getElementById("mapbox-releases-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels:   MAPBOX_RELEASES.map(r => r.label),
+      datasets: [{
+        label:           "Mapbox Hangs",
+        data:            MAPBOX_RELEASES.map(r => r.users),
+        backgroundColor: MAPBOX_RELEASES.map((_, i) =>
+          i === MAPBOX_RELEASES.length - 1 ? MB_COLOR : MB_COLOR + "99"),
+        borderColor:     MB_COLOR,
+        borderWidth:     1,
+        borderRadius:    4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: ctx => ` ${ctx.parsed.y.toLocaleString()} riders`
+        } }
+      },
+      scales: {
+        x: { grid: { display: false } },
         y: { beginAtZero: true,
                title: { display: true, text: "Riders impacted", font: { size: 11 } } }
       }
