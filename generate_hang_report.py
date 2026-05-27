@@ -36,10 +36,11 @@ PINNED_RELEASES = [
     {"version": "4.2619.5", "dist": "978"},
     {"version": "4.2620.2", "dist": "981"},
     {"version": "4.2621.1", "dist": "985"},
+    {"version": "4.2622.1", "dist": "989"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
-RELEASE_WEEKLY_QUERY = 'is:unresolved "App Hangs detected"'
+RELEASE_WEEKLY_QUERY = 'is:unresolved "*App Hang* detected*"'
 
 if not TOKEN:
     raise SystemExit("ERROR: set SENTRY_AUTH_TOKEN environment variable first.")
@@ -139,10 +140,9 @@ NX = {
 def excl(*keys):
     return " ".join(NX[k] for k in keys)
 
-BASE_QUERY = 'is:unresolved error.mechanism:AppHang'
+BASE_QUERY = 'is:unresolved "*App Hang* detected*"'
 # Discover events API doesn't support is:unresolved (issue-level filter).
-# error.mechanism:AppHang is an event-level field and works directly in Discover.
-DISCOVER_BASE_QUERY = 'error.mechanism:AppHang'
+DISCOVER_BASE_QUERY = '"*App Hang* detected*"'
 
 # ── Category definitions ──────────────────────────────────────────────────────
 
@@ -424,8 +424,8 @@ for rel in RELEASES:
     v          = rel["version"]
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
-    link_query = f'is:unresolved "App hang* detected" {rel_filter}'.strip()
-    discover_q = f'"App hang* detected" {rel_filter}'.strip()
+    link_query = f'is:unresolved "*App Hang* detected*" {rel_filter}'.strip()
+    discover_q = f'"*App Hang* detected*" {rel_filter}'.strip()
     print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
     try:
         users = count_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
@@ -455,8 +455,7 @@ for rel in RELEASE_WEEKLY_RELEASES:
 
     week_users = []
     for week in WEEKS:
-        phrase = '"App hang* detected"' if v in ("4.2617.3", "4.2618.1") else '"App Hangs detected"'
-        q = f'{phrase} {rel_filter}'.strip()
+        q = f'"*App Hang* detected*" {rel_filter}'.strip()
         try:
             users = count_unique_users(q, week["start"], week["end"])
         except Exception as e:
@@ -488,13 +487,8 @@ for rel in RELEASES:
         continue
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
-    if v == "4.2621.1":
-        discover_base = '"App Hangs detected"'
-        link_query = f'is:unresolved "App Hangs detected" {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
-    else:
-        discover_base = DISCOVER_BASE_QUERY
-        link_query = f'{BASE_QUERY} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
-    discover_q = f'{discover_base} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
+    link_query = f'{BASE_QUERY} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
+    discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
     print(f"\n── Mapbox Hang Release {v} (dist {d}) ──" if d else f"\n── Mapbox Hang Release {v} ──")
     try:
         users = count_unique_users(discover_q, MAPBOX_HANG_WINDOW_START, MAPBOX_HANG_WINDOW_END)
@@ -701,7 +695,7 @@ html = f"""<!DOCTYPE html>
 
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
-  Filter: <code>is:unresolved error.mechanism:AppHang</code> &nbsp;|&nbsp;
+  Filter: <code>is:unresolved "*App Hang* detected*"</code> &nbsp;|&nbsp;
   Data fetched: {fetch_date} &nbsp;|&nbsp;
   Months: {month_summary_text}
 </p>
@@ -791,7 +785,7 @@ html = f"""<!DOCTYPE html>
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
      Priority: Mapbox › Naver › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
-  <br>• <strong>Filter:</strong> <code>error.mechanism:AppHang</code> — matches all AppHang events reported by the Sentry SDK.
+  <br>• <strong>Filter:</strong> <code>"*App Hang* detected*"</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
   <br>• <strong>{current_month_note}</strong> Earlier months in this report are complete months.
