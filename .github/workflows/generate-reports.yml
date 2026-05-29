@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: Checkout repo
@@ -56,14 +62,17 @@ jobs:
           EOF
 
       - name: Commit updated reports to repo
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add hang_report/index.html crash_report/index.html index.html
-          git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "chore: auto-update reliability reports $(date -u '+%Y-%m-%d')"
-          git push
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "chore: auto-update reliability reports $(date -u '+%Y-%m-%d')" && git push
 
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
