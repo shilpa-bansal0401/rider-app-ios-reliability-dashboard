@@ -31,10 +31,6 @@ OUT_DIR = "hang_report"
 # Each entry needs a version string and the Sentry dist (build number).
 # Set to [] to auto-fetch the most recent releases from Sentry instead.
 PINNED_RELEASES = [
-    {"version": "4.2617.3", "dist": "960"},
-    {"version": "4.2618.1", "dist": "968"},
-    {"version": "4.2619.5", "dist": "978"},
-    {"version": "4.2620.2", "dist": "981"},
     {"version": "4.2621.1", "dist": "985"},
     {"version": "4.2622.1", "dist": "989"},
     {"version": "4.2623.1", "dist": "993"},
@@ -473,36 +469,45 @@ for rel in RELEASE_WEEKLY_RELEASES:
     })
 
 
-# ── Run Mapbox hangs per release analysis ────────────────────────────────────
-# Use a 90-day window to match Sentry's default view and capture full release lifetime.
+# ── Run categories by release analysis ───────────────────────────────────────
+# 90-day window to capture full release lifetime.
+# Uses cumulative exclusions matching the monthly analysis priority order.
 
-MAPBOX_HANG_FILTER = "stack.package:*Mapbox*"
-MAPBOX_HANG_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
-MAPBOX_HANG_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
-MAPBOX_EXCLUDED_RELEASES = {"4.2619.5", "4.2620.2"}
-all_mapbox_hang_release_results = []
+RELEASE_CAT_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
+RELEASE_CAT_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
+all_release_cat_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    if v in MAPBOX_EXCLUDED_RELEASES:
-        continue
     d          = rel.get("dist")
     rel_filter = f"dist:{d}" if d else f"release:{v}"
-    link_query = f'{BASE_QUERY} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
-    discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} {MAPBOX_HANG_FILTER}'.strip()
-    print(f"\n── Mapbox Hang Release {v} (dist {d}) ──" if d else f"\n── Mapbox Hang Release {v} ──")
-    try:
-        users = count_unique_users(discover_q, MAPBOX_HANG_WINDOW_START, MAPBOX_HANG_WINDOW_END)
-    except Exception as e:
-        print(f"  ERROR: {e}")
-        users = 0
-    print(f"  {users} unique users")
-    all_mapbox_hang_release_results.append({
-        "release":    rel,
-        "users":      users,
-        "link_query": link_query,
+    print(f"\n── Categories by Release: {v} (dist {d}) ──" if d else f"\n── Categories by Release: {v} ──")
+
+    cumulative_excl = ""
+    results = []
+    for cat in CATEGORIES:
+        link_filter = cat["link_filter"]
+        link_query  = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
+        discover_q  = f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
+        try:
+            users = count_unique_users(discover_q, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
+        except Exception as e:
+            print(f"  ERROR {cat['label']}: {e}")
+            users = 0
+        print(f"  {cat['label']:30s} {users:6} unique users")
+        results.append({**cat, "users": users, "link_query": link_query})
+        nx_key = cat["key"] if cat["key"] in NX else None
+        if nx_key:
+            cumulative_excl = (cumulative_excl + " " + NX[nx_key]).strip()
+        time.sleep(0.5)
+
+    total = sum(r["users"] for r in results)
+    print(f"  {'TOTAL':30s} {total:6} users")
+    all_release_cat_results.append({
+        "release": rel,
+        "results": results,
+        "total":   total,
     })
-    time.sleep(0.5)
 
 
 # ── Build JS data ─────────────────────────────────────────────────────────────
@@ -565,16 +570,26 @@ release_weekly_js = json.dumps([
 ], indent=2)
 
 
-mapbox_hang_release_js = json.dumps([
+release_categories_js = json.dumps([
     {
         "label":  r["release"]["label"],
         "short":  r["release"]["short"],
-        "users":  r["users"],
-        "start":  MAPBOX_HANG_WINDOW_START,
-        "end":    MAPBOX_HANG_WINDOW_END,
-        "query":  r["link_query"],
+        "total":  r["total"],
+        "start":  RELEASE_CAT_WINDOW_START,
+        "end":    RELEASE_CAT_WINDOW_END,
+        "categories": [
+            {
+                "key":      cat["key"],
+                "label":    cat["label"],
+                "color":    cat["color"],
+                "users":    cat["users"],
+                "query":    cat["link_query"],
+                "culprits": cat.get("culprits", []),
+            }
+            for cat in r["results"]
+        ],
     }
-    for r in all_mapbox_hang_release_results
+    for r in all_release_cat_results
 ], indent=2)
 
 
@@ -706,7 +721,7 @@ html = f"""<!DOCTYPE html>
 {month_tabs_html}
   <div class="tab" data-panel="releases">By Release</div>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
-  <div class="tab" data-panel="mapbox-releases">Mapbox by Release</div>
+  <div class="tab" data-panel="release-categories">Categories by Release</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -763,22 +778,22 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
-<div class="panel" id="panel-mapbox-releases">
+<div class="panel" id="panel-release-categories">
   <p style="font-size:13px;color:#666;margin-bottom:20px;">
-    Mapbox hangs per release — last 90 days &nbsp;|&nbsp;
-    Click any cell to open the matching Sentry query for that release
+    AppHang categories per release — last 90 days &nbsp;|&nbsp;
+    Click any cell to open the matching Sentry query
   </p>
-  <div class="weekly-summary" id="mapbox-releases-summary"></div>
+  <div class="weekly-summary" id="release-categories-summary"></div>
   <div class="weekly-chart-wrap">
-    <canvas id="mapbox-releases-chart"></canvas>
+    <canvas id="release-categories-chart"></canvas>
   </div>
-  <table class="compare-table" id="mapbox-releases-table">
+  <table class="compare-table" id="release-categories-table">
     <thead>
-      <tr id="mapbox-releases-header-row">
-        <th>Release</th>
+      <tr id="release-categories-header-row">
+        <th>Category</th>
       </tr>
     </thead>
-    <tbody id="mapbox-releases-tbody"></tbody>
+    <tbody id="release-categories-tbody"></tbody>
   </table>
 </div>
 
@@ -798,11 +813,11 @@ const ORG        = "{ORG}";
 const PROJECT_ID = "{PROJECT}";
 const BASE_URL   = `https://${{ORG}}.sentry.io/issues/`;
 
-const MONTHS            = {months_js};
-const WEEKS             = {weeks_js};
-const RELEASES          = {releases_js};
-const RELEASE_WEEKLY    = {release_weekly_js};
-const MAPBOX_RELEASES   = {mapbox_hang_release_js};
+const MONTHS              = {months_js};
+const WEEKS               = {weeks_js};
+const RELEASES            = {releases_js};
+const RELEASE_WEEKLY      = {release_weekly_js};
+const RELEASE_CATEGORIES  = {release_categories_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -1185,23 +1200,57 @@ MONTHS.forEach(m => {{
   }});
 }})();
 
-// ── Mapbox by Release tab ─────────────────────────────────────────────────────
+// ── Categories by Release tab ─────────────────────────────────────────────────
 (function() {{
-  if (!MAPBOX_RELEASES.length) {{
-    document.getElementById("panel-mapbox-releases").innerHTML =
-      '<p style="color:#9ca3af;padding:24px;">No release data available.</p>';
+  if (!RELEASE_CATEGORIES.length) {{
+    document.getElementById("panel-release-categories").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No data available — re-run the report generator.</p>';
     return;
   }}
 
-  const summary = document.getElementById("mapbox-releases-summary");
-  MAPBOX_RELEASES.forEach(r => {{
+  const summary = document.getElementById("release-categories-summary");
+  RELEASE_CATEGORIES.forEach(r => {{
     const card = document.createElement("div");
     card.className = "weekly-card";
     card.innerHTML = `
       <div class="week-name">${{r.label}}</div>
-      <div class="week-total">${{r.users.toLocaleString()}}</div>
-      <div class="month-sub">riders impacted</div>`;
+      <div class="week-total">${{r.total.toLocaleString()}}</div>
+      <div class="month-sub">unique riders impacted</div>`;
     summary.appendChild(card);
+  }});
+
+  const catColors = RELEASE_CATEGORIES[0].categories.map(c => c.color);
+  const catLabels = RELEASE_CATEGORIES[0].categories.map(c => c.label);
+
+  const datasets = RELEASE_CATEGORIES.map((r, ri) => ({{
+    label: r.short,
+    data: r.categories.map(c => c.users),
+    backgroundColor: catColors.map(col => col + (ri === RELEASE_CATEGORIES.length - 1 ? "" : "99")),
+    borderColor: catColors.map(col => col),
+    borderWidth: 1,
+    borderRadius: 3,
+  }}));
+
+  new Chart(document.getElementById("release-categories-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{ labels: catLabels, datasets }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ position: "top", labels: {{ font: {{ size: 12 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            label: ctx => ` ${{ctx.dataset.label}}: ${{ctx.parsed.y.toLocaleString()}} riders`
+          }}
+        }}
+      }},
+      scales: {{
+        x: {{ ticks: {{ font: {{ size: 11 }} }}, grid: {{ display: false }} }},
+        y: {{ ticks: {{ font: {{ size: 11 }} }}, beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
+      }}
+    }}
   }});
 
   function deltaHTML(a, b) {{
@@ -1213,74 +1262,72 @@ MONTHS.forEach(m => {{
     return '<span class="delta-neu">± 0</span>';
   }}
 
-  const headerRow = document.getElementById("mapbox-releases-header-row");
-  MAPBOX_RELEASES.forEach(r => {{
+  const headerRow = document.getElementById("release-categories-header-row");
+  RELEASE_CATEGORIES.forEach(r => {{
     const th = document.createElement("th");
     th.className = "num";
     th.textContent = r.short;
     headerRow.appendChild(th);
   }});
-  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {{
+  for (let i = 1; i < RELEASE_CATEGORIES.length; i++) {{
     const th = document.createElement("th");
     th.className = "num";
-    th.textContent = `${{MAPBOX_RELEASES[i].short}} vs ${{MAPBOX_RELEASES[i-1].short}}`;
+    th.textContent = `${{RELEASE_CATEGORIES[i].short}} vs ${{RELEASE_CATEGORIES[i-1].short}}`;
     headerRow.appendChild(th);
   }}
 
-  const tbody = document.getElementById("mapbox-releases-tbody");
-  const tr = document.createElement("tr");
-  const tdLabel = document.createElement("td");
-  tdLabel.innerHTML = '<div class="td-group"><strong>Mapbox Hangs</strong></div>';
-  tr.appendChild(tdLabel);
+  const tbody = document.getElementById("release-categories-tbody");
+  const cats = RELEASE_CATEGORIES[0].categories;
 
-  MAPBOX_RELEASES.forEach(r => {{
-    const td = document.createElement("td");
-    td.className = "num cell-link";
-    td.title = `Open Mapbox hangs in Sentry — ${{r.label}}`;
-    td.textContent = r.users.toLocaleString();
-    td.addEventListener("click", () => window.open(sentryURL(r, r), "_blank"));
-    tr.appendChild(td);
+  cats.forEach((cat, ci) => {{
+    const vals = RELEASE_CATEGORIES.map(r => r.categories[ci].users);
+    const tr = document.createElement("tr");
+
+    const tdLabel = document.createElement("td");
+    tdLabel.innerHTML = `<div class="td-group">
+      <span class="td-swatch" style="background:${{cat.color}}"></span>${{cat.label}}
+    </div>`;
+    tr.appendChild(tdLabel);
+
+    RELEASE_CATEGORIES.forEach((r, ri) => {{
+      const td = document.createElement("td");
+      td.className = "num cell-link";
+      td.title = `Open ${{cat.label}} in Sentry — ${{r.label}}`;
+      td.textContent = vals[ri].toLocaleString();
+      td.addEventListener("click", () =>
+        window.open(sentryURL(r.categories[ci], r), "_blank"));
+      tr.appendChild(td);
+    }});
+
+    for (let i = 1; i < RELEASE_CATEGORIES.length; i++) {{
+      const td = document.createElement("td");
+      td.className = "num";
+      td.innerHTML = deltaHTML(vals[i-1], vals[i]);
+      tr.appendChild(td);
+    }}
+
+    tbody.appendChild(tr);
   }});
 
-  for (let i = 1; i < MAPBOX_RELEASES.length; i++) {{
+  const totals = RELEASE_CATEGORIES.map(r => r.total);
+  const tr = document.createElement("tr");
+  tr.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  const tdTotalLabel = document.createElement("td");
+  tdTotalLabel.textContent = "Total";
+  tr.appendChild(tdTotalLabel);
+  totals.forEach(t => {{
     const td = document.createElement("td");
     td.className = "num";
-    td.innerHTML = deltaHTML(MAPBOX_RELEASES[i-1].users, MAPBOX_RELEASES[i].users);
+    td.textContent = t.toLocaleString();
+    tr.appendChild(td);
+  }});
+  for (let i = 1; i < totals.length; i++) {{
+    const td = document.createElement("td");
+    td.className = "num";
+    td.innerHTML = deltaHTML(totals[i-1], totals[i]);
     tr.appendChild(td);
   }}
   tbody.appendChild(tr);
-
-  const MB_COLOR = "#FFB3BA";
-  new Chart(document.getElementById("mapbox-releases-chart").getContext("2d"), {{
-    type: "bar",
-    data: {{
-      labels:   MAPBOX_RELEASES.map(r => r.label),
-      datasets: [{{
-        label:           "Mapbox Hangs",
-        data:            MAPBOX_RELEASES.map(r => r.users),
-        backgroundColor: MAPBOX_RELEASES.map((_, i) =>
-          i === MAPBOX_RELEASES.length - 1 ? MB_COLOR : MB_COLOR + "99"),
-        borderColor:     MB_COLOR,
-        borderWidth:     1,
-        borderRadius:    4,
-      }}]
-    }},
-    options: {{
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {{
-        legend: {{ display: false }},
-        tooltip: {{ callbacks: {{
-          label: ctx => ` ${{ctx.parsed.y.toLocaleString()}} riders`
-        }} }}
-      }},
-      scales: {{
-        x: {{ grid: {{ display: false }} }},
-        y: {{ beginAtZero: true,
-               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
-      }}
-    }}
-  }});
 }})();
 
 // ── Month detail panels ──────────────────────────────────────────────────────
