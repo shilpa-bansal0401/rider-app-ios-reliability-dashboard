@@ -4,7 +4,7 @@ Adds the next weekly release to PINNED_RELEASES in both report scripts,
 removing the oldest entry. Run every Monday before generating reports.
 
 Version rule:  increment the week number (middle component), patch = 1
-Dist rule:     last dist + 4
+Dist rule:     last dist + 3
 """
 
 import re
@@ -32,7 +32,7 @@ for path in FILES:
     parts[1] = str(int(parts[1]) + 1)
     parts[2] = "1"
     new_ver  = ".".join(parts)
-    new_dist = str(int(last_dist) + 4)
+    new_dist = str(int(last_dist) + 3)
 
     updated = releases[1:] + [(new_ver, new_dist)]
     new_body = "\n" + "".join(
