@@ -355,8 +355,8 @@ def fetch_recent_releases(limit=8):
 
 
 RELEASES            = fetch_recent_releases()
-RELEASE_WINDOW_START = WEEKS[0]["start"]
-RELEASE_WINDOW_END   = WEEKS[-1]["end"]
+RELEASE_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
+RELEASE_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
 
 
 # ── Run analysis for each month ───────────────────────────────────────────────
@@ -762,7 +762,7 @@ html = f"""<!DOCTYPE html>
 
 <div class="panel" id="panel-releases">
   <p style="font-size:13px;color:#666;margin-bottom:20px;">
-    AppHang category breakdown per release — last 4 weeks &nbsp;|&nbsp;
+    AppHang category breakdown per release — last 90 days &nbsp;|&nbsp;
     Click any cell to open the matching Sentry query for that release
   </p>
   <div class="weekly-summary" id="release-summary"></div>
@@ -1105,7 +1105,7 @@ MONTHS.forEach(m => {{
 (function() {{
   if (!RELEASES.length) {{
     document.getElementById("panel-releases").innerHTML =
-      '<p style="color:#9ca3af;padding:24px;">No releases found in the last 4 weeks.</p>';
+      '<p style="color:#9ca3af;padding:24px;">No releases found in the last 90 days.</p>';
     return;
   }}
 
