@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iOS AQS Consolidation Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc; color: #111; padding: 32px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 13px; margin-bottom: 24px; }
+
+    .warning-banner {
+      background: #fffbf0; border: 1px solid #f59e0b;
+      border-left: 4px solid #f59e0b; border-radius: 6px;
+      padding: 12px 16px; font-size: 13px; color: #92400e;
+      font-weight: 600; margin-bottom: 24px;
+    }
+
+    .score-wrap { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+    .score-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
+                   padding: 14px 24px; min-width: 180px; }
+    .score-card .sc-label { font-size: 11px; text-transform: uppercase;
+                              letter-spacing: .05em; color: #6b7280; margin-bottom: 4px; }
+    .score-card .sc-value { font-size: 32px; font-weight: 700; color: #111; }
+    .score-card .sc-sub   { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+    .table-wrap { overflow-x: auto; margin-bottom: 28px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    thead th {
+      text-align: left; padding: 8px 12px;
+      border-bottom: 2px solid #e5e7eb; color: #666; font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+    }
+    thead th.num { text-align: right; }
+
+    tbody tr { border-bottom: 1px solid #f3f4f6; }
+    tbody tr:hover { background: #f9fafb; }
+    tbody td { padding: 9px 12px; vertical-align: middle; white-space: nowrap; text-align: right; }
+    tbody td:first-child { text-align: left; font-weight: 500; }
+
+    tr.row-avg td {
+      background: #f0f9ff !important; font-weight: 700;
+      border-top: 2px solid #bae6fd; color: #0369a1;
+    }
+    tr.row-avg td:first-child { text-align: left; }
+
+    tr.row-aqs td {
+      background: #f0fdf4 !important; font-weight: 700;
+      border-top: 2px solid #bbf7d0; color: #15803d;
+    }
+    tr.row-aqs td:first-child { text-align: left; }
+
+    .footer { margin-top: 32px; font-size: 11px; color: #9ca3af;
+               border-top: 1px solid #e5e7eb; padding-top: 16px; line-height: 1.8; }
+    .footer code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<h1>iOS AQS Consolidation Report</h1>
+<p class="subtitle">
+  Period: 1 Jun – 16 Jun 2026 &nbsp;|&nbsp; Fetched: 17 Jun 2026
+</p>
+
+<div class="warning-banner">
+  ⚠ App size, ASTI and STTI are copied from last month's report. Update these values manually before sharing.
+</div>
+
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Brand</th>
+        <th class="num">Crash Free %</th>
+        <th class="num">App Hangs %</th>
+        <th class="num">App Size (MB)</th>
+        <th class="num">ASTI (s)</th>
+        <th class="num">STTI (s)</th>
+        <th class="num">Frozen Frames %</th>
+        <th class="num">Skipped Frames %</th>
+        <th class="num">Riders</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr style="background:#FFB3BA;">
+        <td style="background:#FFB3BA;font-weight:600;white-space:nowrap;">Foodpanda</td>
+        <td style="background:#FFB3BA;text-align:right;">99.85%</td>
+        <td style="background:#FFB3BA;text-align:right;">99.48%</td>
+        <td style="background:#FFB3BA;text-align:right;">76.1</td>
+        <td style="background:#FFB3BA;text-align:right;">4.42</td>
+        <td style="background:#FFB3BA;text-align:right;">0.92</td>
+        <td style="background:#FFB3BA;text-align:right;">0.60%</td>
+        <td style="background:#FFB3BA;text-align:right;">1.26%</td>
+        <td style="background:#FFB3BA;text-align:right;">78,203</td>
+      </tr>
+      <tr style="background:#BAFFC9;">
+        <td style="background:#BAFFC9;font-weight:600;white-space:nowrap;">Foodora</td>
+        <td style="background:#BAFFC9;text-align:right;">99.90%</td>
+        <td style="background:#BAFFC9;text-align:right;">99.82%</td>
+        <td style="background:#BAFFC9;text-align:right;">80.3</td>
+        <td style="background:#BAFFC9;text-align:right;">4.42</td>
+        <td style="background:#BAFFC9;text-align:right;">0.92</td>
+        <td style="background:#BAFFC9;text-align:right;">0.60%</td>
+        <td style="background:#BAFFC9;text-align:right;">1.26%</td>
+        <td style="background:#BAFFC9;text-align:right;">14,946</td>
+      </tr>
+      <tr style="background:#BAE1FF;">
+        <td style="background:#BAE1FF;font-weight:600;white-space:nowrap;">Talabat</td>
+        <td style="background:#BAE1FF;text-align:right;">99.63%</td>
+        <td style="background:#BAE1FF;text-align:right;">99.07%</td>
+        <td style="background:#BAE1FF;text-align:right;">76.0</td>
+        <td style="background:#BAE1FF;text-align:right;">4.42</td>
+        <td style="background:#BAE1FF;text-align:right;">0.92</td>
+        <td style="background:#BAE1FF;text-align:right;">0.60%</td>
+        <td style="background:#BAE1FF;text-align:right;">1.26%</td>
+        <td style="background:#BAE1FF;text-align:right;">16,988</td>
+      </tr>
+      <tr style="background:#FFFFBA;">
+        <td style="background:#FFFFBA;font-weight:600;white-space:nowrap;">pedidosya</td>
+        <td style="background:#FFFFBA;text-align:right;">99.87%</td>
+        <td style="background:#FFFFBA;text-align:right;">99.78%</td>
+        <td style="background:#FFFFBA;text-align:right;">66.6</td>
+        <td style="background:#FFFFBA;text-align:right;">4.42</td>
+        <td style="background:#FFFFBA;text-align:right;">0.92</td>
+        <td style="background:#FFFFBA;text-align:right;">0.60%</td>
+        <td style="background:#FFFFBA;text-align:right;">1.26%</td>
+        <td style="background:#FFFFBA;text-align:right;">20,641</td>
+      </tr>
+      <tr style="background:#E0BBE4;">
+        <td style="background:#E0BBE4;font-weight:600;white-space:nowrap;">HungerStation</td>
+        <td style="background:#E0BBE4;text-align:right;">99.84%</td>
+        <td style="background:#E0BBE4;text-align:right;">99.55%</td>
+        <td style="background:#E0BBE4;text-align:right;">76.0</td>
+        <td style="background:#E0BBE4;text-align:right;">4.42</td>
+        <td style="background:#E0BBE4;text-align:right;">0.92</td>
+        <td style="background:#E0BBE4;text-align:right;">0.60%</td>
+        <td style="background:#E0BBE4;text-align:right;">1.26%</td>
+        <td style="background:#E0BBE4;text-align:right;">10,630</td>
+      </tr>
+      <tr style="background:#B2F2EF;">
+        <td style="background:#B2F2EF;font-weight:600;white-space:nowrap;">Yemeksepeti</td>
+        <td style="background:#B2F2EF;text-align:right;">100.00%</td>
+        <td style="background:#B2F2EF;text-align:right;">99.99%</td>
+        <td style="background:#B2F2EF;text-align:right;">76.4</td>
+        <td style="background:#B2F2EF;text-align:right;">4.42</td>
+        <td style="background:#B2F2EF;text-align:right;">0.92</td>
+        <td style="background:#B2F2EF;text-align:right;">0.60%</td>
+        <td style="background:#B2F2EF;text-align:right;">1.26%</td>
+        <td style="background:#B2F2EF;text-align:right;">2,186</td>
+      </tr>
+      <tr style="background:#FDFDCC;">
+        <td style="background:#FDFDCC;font-weight:600;white-space:nowrap;">Glovo</td>
+        <td style="background:#FDFDCC;text-align:right;">99.85%</td>
+        <td style="background:#FDFDCC;text-align:right;">99.73%</td>
+        <td style="background:#FDFDCC;text-align:right;">76.2</td>
+        <td style="background:#FDFDCC;text-align:right;">4.42</td>
+        <td style="background:#FDFDCC;text-align:right;">0.92</td>
+        <td style="background:#FDFDCC;text-align:right;">0.60%</td>
+        <td style="background:#FDFDCC;text-align:right;">1.26%</td>
+        <td style="background:#FDFDCC;text-align:right;">46,896</td>
+      </tr>
+      <tr style="background:#97EDEA;">
+        <td style="background:#97EDEA;font-weight:600;white-space:nowrap;">Woowa</td>
+        <td style="background:#97EDEA;text-align:right;">99.97%</td>
+        <td style="background:#97EDEA;text-align:right;">99.71%</td>
+        <td style="background:#97EDEA;text-align:right;">75.9</td>
+        <td style="background:#97EDEA;text-align:right;">4.42</td>
+        <td style="background:#97EDEA;text-align:right;">0.92</td>
+        <td style="background:#97EDEA;text-align:right;">0.60%</td>
+        <td style="background:#97EDEA;text-align:right;">1.26%</td>
+        <td style="background:#97EDEA;text-align:right;">731</td>
+      </tr>
+      <tr style="background:#D3C0B0;">
+        <td style="background:#D3C0B0;font-weight:600;white-space:nowrap;">efood</td>
+        <td style="background:#D3C0B0;text-align:right;">99.79%</td>
+        <td style="background:#D3C0B0;text-align:right;">99.89%</td>
+        <td style="background:#D3C0B0;text-align:right;">66.4</td>
+        <td style="background:#D3C0B0;text-align:right;">4.42</td>
+        <td style="background:#D3C0B0;text-align:right;">0.92</td>
+        <td style="background:#D3C0B0;text-align:right;">0.60%</td>
+        <td style="background:#D3C0B0;text-align:right;">1.26%</td>
+        <td style="background:#D3C0B0;text-align:right;">5,258</td>
+      </tr>
+      <tr style="background:#C9B8F0;">
+        <td style="background:#C9B8F0;font-weight:600;white-space:nowrap;">Foody</td>
+        <td style="background:#C9B8F0;text-align:right;">99.81%</td>
+        <td style="background:#C9B8F0;text-align:right;">99.77%</td>
+        <td style="background:#C9B8F0;text-align:right;">66.3</td>
+        <td style="background:#C9B8F0;text-align:right;">4.42</td>
+        <td style="background:#C9B8F0;text-align:right;">0.92</td>
+        <td style="background:#C9B8F0;text-align:right;">0.60%</td>
+        <td style="background:#C9B8F0;text-align:right;">1.26%</td>
+        <td style="background:#C9B8F0;text-align:right;">729</td>
+      </tr>
+      <tr class="row-avg">
+        <td>Weighted AVG</td>
+        <td>99.85%</td>
+        <td>99.59%</td>
+        <td>75.15</td>
+        <td>4.42</td>
+        <td>0.92</td>
+        <td>0.60%</td>
+        <td>1.26%</td>
+        <td></td>
+      </tr>
+      <tr class="row-aqs">
+        <td>AQS Score</td>
+        <td style="text-align:right;">30.6250</td><td style="text-align:right;">5.6250</td><td style="text-align:right;">0.9900</td><td style="text-align:right;">3.9500</td><td style="text-align:right;">7.9000</td><td style="text-align:right;">13.0000</td><td style="text-align:right;">4.3500</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="score-wrap">
+  <div class="score-card">
+    <div class="sc-label">Final AQS Score</div>
+    <div class="sc-value">66.44</div>
+    <div class="sc-sub">1 Jun – 16 Jun 2026</div>
+  </div>
+</div>
+
+<div class="footer">
+  <strong>Notes:</strong><br>
+  &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
+    (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+    against BQ daily user counts for the period.<br>
+  &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
+    applied to all brands equally.<br>
+  &bull; <strong>App Size, ASTI, STTI</strong> — static values copied from last month's report; update manually.<br>
+  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+  &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
+  &bull; BQ_AVAILABLE = <code>True</code> &nbsp;|&nbsp;
+    Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+  &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
+</div>
+
+</body>
+</html>

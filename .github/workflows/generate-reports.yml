@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install Python dependencies
+        run: pip install google-cloud-bigquery openpyxl gspread
+
       - name: Rotate releases (Mondays only)
         run: |
           if [ "$(date +%u)" = "1" ]; then
@@ -41,6 +44,17 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: python3 generate_crash_report.py
+
+      - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Generate sentry data and consolidation report
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: python3 fetch_sentry_data.py
 
       - name: Create Pages index
         run: |
@@ -62,6 +76,7 @@ jobs:
             <p>Auto-updated daily at 8:00 AM CST</p>
             <a href="crash_report/index.html">Crash Report</a>
             <a href="hang_report/index.html">Hang Report</a>
+            <a href="consolidation_report/index.html">Consolidation Report</a>
           </body>
           </html>
           EOF
@@ -70,7 +85,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add hang_report/index.html crash_report/index.html index.html
+          git add hang_report/index.html crash_report/index.html consolidation_report/index.html consolidation_report/sentry_data.xlsx index.html
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "chore: auto-update reliability reports $(date -u '+%Y-%m-%d')" && git push
 
       - name: Upload Pages artifact
