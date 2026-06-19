@@ -87,16 +87,16 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 76.1, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.85, "hang_fallback": 99.6,  "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.3, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.91, "hang_fallback": 99.87, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 76.0, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.62, "hang_fallback": 99.22, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.6, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.89, "hang_fallback": 99.82, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 76.0, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.83, "hang_fallback": 99.71, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 76.4, "asti": 4.42, "stti": 0.92, "cfu_fallback": 100.0, "hang_fallback": 99.99, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 76.2, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.87, "hang_fallback": 99.7,  "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.86, "hang_fallback": 99.57, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 66.4, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.8,  "hang_fallback": 99.96, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 66.3, "asti": 4.42, "stti": 0.92, "cfu_fallback": 99.43, "hang_fallback": 99.86, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 76.1, "asti": 4.43, "stti": 0.95, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.3, "asti": 4.43, "stti": 0.95, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 76.0, "asti": 4.43, "stti": 0.95, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.6, "asti": 4.43, "stti": 0.95, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 76.0, "asti": 4.43, "stti": 0.95, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 76.4, "asti": 4.43, "stti": 0.95, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 76.2, "asti": 4.43, "stti": 0.95, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.43, "stti": 0.95, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 66.4, "asti": 4.43, "stti": 0.95, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 66.3, "asti": 4.43, "stti": 0.95, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -132,12 +132,12 @@ THIN_BOX   = Border(left=_THIN,   right=_THIN,   top=_THIN,   bottom=_THIN)
 MEDIUM_BOX = Border(left=_MEDIUM, right=_MEDIUM, top=_MEDIUM, bottom=_MEDIUM)
 
 # Raw data column positions — must match the SUMIFS formulas in the dashboard:
-#   D =SUMIFS(V:V,  U:U,  "*"&$B$10&"*", T:T,  C{row})  → BQ at T(20)-V(22)
-#   E =SUMIFS(X:X,  AA:AA,"*"&$B$10&"*", Y:Y,  C{row})  → Crash at X(24)-AA(27)
-#   K =SUMIFS(AC:AC,AF:AF,"*"&$B$10&"*", AD:AD,C{row})  → Hang at AC(29)-AF(32)
+#   D =SUMIFS(V:V,  U:U, "*"&$B$10&"*", T:T,  C{row})  → BQ at T(20)-V(22)
+#   E =SUMIFS(X:X,  Z:Z, "*"&$B$10&"*", Y:Y,  C{row})  → Crash at X(24)-Z(26)
+#   K =SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{row})  → Hang at AB(28)-AD(30)
 BQ_START_COL    = 20   # T
 CRASH_START_COL = 24   # X
-HANG_START_COL  = 29   # AC
+HANG_START_COL  = 28   # AB
 
 
 # ── Data fetching ──────────────────────────────────────────────────────────────
@@ -253,16 +253,18 @@ FROM frames_percentages_calc
         return {}
 
 
-def fetch_discover(query, environment=None):
+def fetch_discover(query, environment=None, start=None, end=None):
     rows = []
     cursor = None
+    _start = start or START
+    _end   = end   or END
 
     while True:
         params = [
             ("project",  PROJECT),
             ("query",    query),
-            ("start",    START),
-            ("end",      END),
+            ("start",    _start),
+            ("end",      _end),
             ("field",    "timestamp.to_day"),
             ("field",    "Brand"),
             ("field",    "count_unique(user)"),
@@ -304,6 +306,45 @@ def fetch_discover(query, environment=None):
     return rows
 
 
+def fetch_discover_max(query, environment=None, start=None, end=None):
+    """Run the Discover query twice and return rows with the max count_unique(user)
+    per (Brand, day) pair, so intermittent Sentry under-counts are corrected."""
+    run1 = fetch_discover(query, environment=environment, start=start, end=end)
+    run2 = fetch_discover(query, environment=environment, start=start, end=end)
+
+    best = {}  # (brand, day) → (max_count, row)
+    for rows in (run1, run2):
+        for row in rows:
+            brand = (row.get("Brand") or "")
+            day   = (row.get("timestamp.to_day") or "")[:10]
+            count = int(row.get("count_unique(user)", 0) or 0)
+            key   = (brand.lower(), day)
+            if key not in best or count > best[key][0]:
+                best[key] = (count, row)
+
+    result = []
+    for (_, _), (count, row) in best.items():
+        merged = dict(row)
+        merged["count_unique(user)"] = count
+        result.append(merged)
+    return result
+
+
+def fetch_discover_per_brand(query, environment=None):
+    """Run a separate Discover query per brand with an explicit Brand filter.
+    Merges all results into a single list. More reliable than a single query
+    since Sentry can silently drop or zero-out brand rows in grouped results."""
+    all_rows = []
+    for brand in BRANDS:
+        skey = brand["sentry_key"]
+        brand_query = f'{query} Brand:*{skey}*'
+        rows = fetch_discover(brand_query, environment=environment)
+        total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+        print(f"    {skey}: {total} users across {len(rows)} day-rows")
+        all_rows.extend(rows)
+    return all_rows
+
+
 def shape_rows(raw, user_col):
     rows = [
         {
@@ -317,21 +358,43 @@ def shape_rows(raw, user_col):
     return sorted(rows, key=lambda r: r["timestamp.to_day"])
 
 
-def aggregate_by_brand(raw_sentry_rows):
-    """Aggregate count_unique(user) from raw Discover rows by brand (substring match on sentry_key).
+def aggregate_by_brand(rows, user_col="count_unique(user)"):
+    """Aggregate user counts from Sentry rows by brand (substring match on sentry_key).
 
+    Accepts either raw Discover rows (user_col="count_unique(user)") or
+    shaped rows (user_col="CRASH_USERS" / "HANG_USERS").
     Returns dict: {sentry_key_lower: total_count} for each brand in BRANDS.
     """
     totals = {}
     for brand in BRANDS:
         skey = brand["sentry_key"].lower()
         total = 0
-        for row in raw_sentry_rows:
+        for row in rows:
             brand_field = (row.get("Brand") or "").lower()
             if skey in brand_field:
-                total += int(row.get("count_unique(user)", 0) or 0)
+                total += int(row.get(user_col, 0) or 0)
         totals[skey] = total
     return totals
+
+
+def backfill_zero_rows(rows, user_col, query, environment=None):
+    """For any row where user_col is 0, re-query Sentry for that day to get the real count."""
+    zero_days = {row["day"] for row in rows if row[user_col] == 0}
+    for day in sorted(zero_days):
+        print(f"  Re-querying {user_col} for {day} (row had 0 count)...")
+        day_raw = fetch_discover(
+            query, environment=environment,
+            start=f"{day}T00:00:00.000",
+            end=f"{day}T23:59:59.999",
+        )
+        day_counts = {}
+        for r in day_raw:
+            brand = (r.get("Brand") or "").lower()
+            day_counts[brand] = day_counts.get(brand, 0) + int(r.get("count_unique(user)", 0) or 0)
+        for row in rows:
+            if row["day"] == day and row[user_col] == 0:
+                brand = (row.get("Brand") or "").lower()
+                row[user_col] = day_counts.get(brand, 0)
 
 
 # ── AQS formula ────────────────────────────────────────────────────────────────
@@ -350,10 +413,10 @@ def aqs_score(value, col_key):
 
 def color_cfu(v):
     if v >= 99.9:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v >= 99.7:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 def color_hang(v):
@@ -362,42 +425,42 @@ def color_hang(v):
 
 def color_app_size(v):
     if v <= 60:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v <= 75:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 def color_asti(v):
     if v <= 2:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v <= 4:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 def color_stti(v):
     if v <= 0.5:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v <= 1.5:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 def color_frozen(v):
     if v <= 1:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v <= 3:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 def color_skipped(v):
     if v <= 1:
-        return "#C6EFCE"
+        return "#E8F5EA"
     elif v <= 2:
-        return "#FFEB9C"
-    return "#FFC7CE"
+        return "#FFF8E1"
+    return "#FFE4E6"
 
 
 COLOR_FNS = {
@@ -410,18 +473,18 @@ COLOR_FNS = {
     "skipped":  color_skipped,
 }
 
-# Pastel brand colors — same palette as the hang/crash report category swatches
+# Pastel brand colors — soft, muted tones
 BRAND_COLORS = [
-    "#FFB3BA",  # Foodpanda    — Pastel Rose
-    "#BAFFC9",  # Foodora      — Pastel Mint
-    "#BAE1FF",  # Talabat      — Pastel Sky Blue
-    "#FFFFBA",  # pedidosya    — Pastel Lemon
-    "#E0BBE4",  # HungerStation — Pastel Lavender
-    "#B2F2EF",  # Yemeksepeti  — Pastel Turquoise
-    "#FDFDCC",  # Glovo        — Pastel Cream
-    "#97EDEA",  # Woowa        — Pastel Aqua
-    "#D3C0B0",  # efood        — Pastel Taupe
-    "#C9B8F0",  # Foody        — Pastel Purple
+    "#FFE8EA",  # Foodpanda    — Soft Rose
+    "#E6FAF0",  # Foodora      — Soft Mint
+    "#E4F1FF",  # Talabat      — Soft Sky Blue
+    "#FEFEE8",  # pedidosya    — Soft Lemon
+    "#F2E8F6",  # HungerStation — Soft Lavender
+    "#E4F9F8",  # Yemeksepeti  — Soft Turquoise
+    "#FEFEF2",  # Glovo        — Soft Cream
+    "#DFF8F7",  # Woowa        — Soft Aqua
+    "#EEE8E2",  # efood        — Soft Taupe
+    "#EAE4FA",  # Foody        — Soft Purple
 ]
 
 
@@ -457,11 +520,11 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         hangs   = hang_by_brand.get(skey, 0)
 
         if users > 0:
-            cfu  = round((1 - crashes / users) * 100, 2)
-            hang = round((1 - hangs   / users) * 100, 2)
+            cfu  = int((1 - crashes / users) * 10000) / 100
+            hang = int((1 - hangs   / users) * 10000) / 100
         else:
-            cfu  = brand["cfu_fallback"]
-            hang = brand["hang_fallback"]
+            cfu  = 0
+            hang = 0
 
         frozen  = firebase_data.get("frozen",  0.58)
         skipped = firebase_data.get("skipped", 1.2)
@@ -491,7 +554,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     # ── Weighted averages ──────────────────────────────────────────────────────
     def weighted_avg(key):
         values = [m[key] for m in brand_metrics]
-        return round(sum(v * w for v, w in zip(values, WEIGHTS)), 2)
+        return int(sum(v * w for v, w in zip(values, WEIGHTS)) * 100) / 100
 
     avg_metrics = {
         "cfu":      weighted_avg("cfu"),
@@ -609,14 +672,14 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     tbody td:first-child {{ text-align: left; font-weight: 500; }}
 
     tr.row-avg td {{
-      background: #f0f9ff !important; font-weight: 700;
-      border-top: 2px solid #bae6fd; color: #0369a1;
+      background: #f5fbff !important; font-weight: 700;
+      border-top: 2px solid #dbeafe; color: #3b82f6;
     }}
     tr.row-avg td:first-child {{ text-align: left; }}
 
     tr.row-aqs td {{
-      background: #f0fdf4 !important; font-weight: 700;
-      border-top: 2px solid #bbf7d0; color: #15803d;
+      background: #f6fef8 !important; font-weight: 700;
+      border-top: 2px solid #d1fae5; color: #34d399;
     }}
     tr.row-aqs td:first-child {{ text-align: left; }}
 
@@ -633,7 +696,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
 </p>
 
 <div class="warning-banner">
-  ⚠ App size, ASTI and STTI are copied from last month's report. Update these values manually before sharing.
+  ⚠ App size, ASTI and STTI have the older values, not recently updated. Update these columns manually before sharing. For the accurate AQS score, update these values.
 </div>
 {bq_status_note}
 
@@ -689,7 +752,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     against BQ daily user counts for the period.<br>
   &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
     applied to all brands equally.<br>
-  &bull; <strong>App Size, ASTI, STTI</strong> — static values copied from last month's report; update manually.<br>
+  &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated; update manually for accurate AQS score.<br>
   &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{'True' if BQ_AVAILABLE else 'False'}</code> &nbsp;|&nbsp;
@@ -774,12 +837,12 @@ def add_consolidation_sheet(wb, firebase_data=None):
 
         # B: Crash free % — SUMIFS on Dashboard raw data (no B10 dependency)
         styled(2).value = (
-            f'=ROUND((1-SUMIFS(Dashboard!$X:$X,Dashboard!$AA:$AA,"*"&$A{r}&"*")'
+            f'=TRUNC((1-SUMIFS(Dashboard!$X:$X,Dashboard!$Z:$Z,"*"&$A{r}&"*")'
             f'/SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"))*100,2)'
         )
         # C: Hang free %
         styled(3).value = (
-            f'=ROUND((1-SUMIFS(Dashboard!$AC:$AC,Dashboard!$AF:$AF,"*"&$A{r}&"*")'
+            f'=TRUNC((1-SUMIFS(Dashboard!$AB:$AB,Dashboard!$AD:$AD,"*"&$A{r}&"*")'
             f'/SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"))*100,2)'
         )
         styled(4, app_size)
@@ -822,19 +885,20 @@ def add_consolidation_sheet(wb, firebase_data=None):
     for ci in range(2, 9):
         cl = get_column_letter(ci)
         cell = ws.cell(AVG_ROW, ci)
-        cell.value = (f"=ROUND(SUMPRODUCT({cl}{DATA_START}:{cl}{DATA_END},"
+        cell.value = (f"=TRUNC(SUMPRODUCT({cl}{DATA_START}:{cl}{DATA_END},"
                       f"{wcol}{DATA_START}:{wcol}{DATA_END}),2)")
         cell.font = BOLD; cell.fill = SUMMARY_LBL_FILL; cell.border = THIN_BOX
+        cell.number_format = "0.00"   # plain number, no % sign
 
     # ── AQS row (row 13) ─────────────────────────────────────────────────────
     aqs_formulas = {
-        2: f"=MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*35%",
-        3: f"=MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*25%",
-        4: f"=MIN(100,MAX(0,(((D{AVG_ROW}-75)/(60-75))*50)+50))*2%",
-        5: f"=MIN(100,MAX(0,(((E{AVG_ROW}-4)/(2-4))*50)+50))*10%",
-        6: f"=MIN(100,MAX(0,(((F{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*10%",
-        7: f"=MIN(100,MAX(0,(((G{AVG_ROW}-3)/(1-3))*50)+50))*13%",
-        8: f"=MIN(100,MAX(0,(((H{AVG_ROW}-2)/(1-2))*50)+50))*5%",
+        2: f"=ROUND(MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*0.35,2)",
+        3: f"=ROUND(MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*0.25,2)",
+        4: f"=ROUND(MIN(100,MAX(0,(((D{AVG_ROW}-75)/(60-75))*50)+50))*0.02,2)",
+        5: f"=ROUND(MIN(100,MAX(0,(((E{AVG_ROW}-4)/(2-4))*50)+50))*0.10,2)",
+        6: f"=ROUND(MIN(100,MAX(0,(((F{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*0.10,2)",
+        7: f"=ROUND(MIN(100,MAX(0,(((G{AVG_ROW}-3)/(1-3))*50)+50))*0.13,2)",
+        8: f"=ROUND(MIN(100,MAX(0,(((H{AVG_ROW}-2)/(1-2))*50)+50))*0.05,2)",
     }
     ws.cell(AQS_ROW, 1, value="AQS").font = BOLD
     ws.cell(AQS_ROW, 1).fill = SUMMARY_VAL_FILL
@@ -842,6 +906,7 @@ def add_consolidation_sheet(wb, firebase_data=None):
     for ci, val in aqs_formulas.items():
         cell = ws.cell(AQS_ROW, ci, value=val)
         cell.font = BOLD; cell.fill = SUMMARY_VAL_FILL; cell.border = THIN_BOX
+        cell.number_format = "0.00"   # plain number, no % sign
 
     # M13: sum of M column data rows
     m13 = ws.cell(AQS_ROW, 13, value=f"=SUM(M{DATA_START}:M{DATA_END})")
@@ -859,14 +924,17 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ws.cell(FINAL_ROW, 1).border = MEDIUM_BOX
     ws.cell(FINAL_ROW, 1).alignment = Alignment(horizontal="right")
 
-    ws.cell(FINAL_ROW, 2).value = f"=SUM(B{AQS_ROW}:H{AQS_ROW})"
-    ws.cell(FINAL_ROW, 2).font = Font(bold=True, color="FFFFFF", size=13)
-    ws.cell(FINAL_ROW, 2).fill = FINAL_BLUE
-    ws.cell(FINAL_ROW, 2).border = MEDIUM_BOX
+    final_cell = ws.cell(FINAL_ROW, 2)
+    final_cell.value = f"=ROUND(SUM(B{AQS_ROW}:H{AQS_ROW}),2)"
+    final_cell.font = Font(bold=True, color="FFFFFF", size=13)
+    final_cell.fill = FINAL_BLUE
+    final_cell.border = MEDIUM_BOX
+    final_cell.number_format = "0.00"
 
     # ── Manual-data note ──────────────────────────────────────────────────────
-    NOTE_TEXT = ("⚠  App size, ASTI and STTI are copied from last month's report. "
-                 "Update these columns manually before sharing.")
+    NOTE_TEXT = ("⚠  App size, ASTI and STTI have the older values, not recently updated. "
+                 "Update these columns manually before sharing. "
+                 "For the accurate AQS score, update these values.")
     NOTE_FILL = PatternFill("solid", fgColor="FFEB9C")   # amber
     NOTE_FONT = Font(bold=True, color="9C5700")           # dark orange
 
@@ -881,8 +949,8 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ws.row_dimensions[NOTE_ROW].height = 30
 
     # Also attach pop-up comments to the D, E, F column headers
-    MANUAL_COMMENT = ("Data copied from last month.\n"
-                      "Update manually each month.")
+    MANUAL_COMMENT = ("Older values, not recently updated.\n"
+                      "Update manually for accurate AQS score.")
     for col_letter in ("D", "E", "F"):
         ws[f"{col_letter}1"].comment = Comment(MANUAL_COMMENT, "Script")
 
@@ -902,13 +970,13 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     ws.title = "Dashboard"
 
     bq_cols    = ["dt", "appId", "user_count"]
-    crash_cols = ["CRASH_USERS", "day", "timestamp.to_day", "Brand"]
-    hang_cols  = ["HANG_USERS",  "day", "timestamp.to_day", "Brand"]
+    crash_cols = ["CRASH_USERS", "day", "Brand"]
+    hang_cols  = ["HANG_USERS",  "day", "Brand"]
 
-    # ── Raw data (T-AF) ────────────────────────────────────────────────────────
+    # ── Raw data (T-AD) ────────────────────────────────────────────────────────
     # BQ:    T(20)=dt, U(21)=appId, V(22)=user_count
-    # Crash: X(24)=CRASH_USERS, Y(25)=day, Z(26)=timestamp.to_day, AA(27)=Brand
-    # Hang:  AC(29)=HANG_USERS, AD(30)=day, AE(31)=timestamp.to_day, AF(32)=Brand
+    # Crash: X(24)=CRASH_USERS, Y(25)=day, Z(26)=Brand
+    # Hang:  AB(28)=HANG_USERS, AC(29)=day, AD(30)=Brand
 
     for ci, name in enumerate(bq_cols, start=BQ_START_COL):
         cell = ws.cell(row=1, column=ci, value=name)
@@ -940,10 +1008,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     for ci in range(BQ_START_COL, BQ_START_COL + 3):
         ws.column_dimensions[get_column_letter(ci)].width = 22
     ws.column_dimensions["W"].width = 4   # spacer between BQ and Crash sections
-    for ci in range(CRASH_START_COL, CRASH_START_COL + 4):
+    for ci in range(CRASH_START_COL, CRASH_START_COL + 3):
         ws.column_dimensions[get_column_letter(ci)].width = 22
-    ws.column_dimensions["AB"].width = 4  # spacer between Crash and Hang sections
-    for ci in range(HANG_START_COL, HANG_START_COL + 4):
+    ws.column_dimensions["AA"].width = 4  # spacer between Crash and Hang sections
+    for ci in range(HANG_START_COL, HANG_START_COL + 3):
         ws.column_dimensions[get_column_letter(ci)].width = 22
 
     # ── Dashboard (A-N) ────────────────────────────────────────────────────────
@@ -985,10 +1053,8 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
         4:  "Total users count (ios_User_Count)",
         5:  "Crashed users count (Query)",
         7:  "CFU %",
-        8:  "CFU AQS Score",
         11: "Hang user count (Query)",
         12: "Hang free %",
-        13: "Hang-free AQS score",
         14: "Projected AQS including hangs",
     }
     for col, header in col_headers.items():
@@ -1007,10 +1073,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     # Per-day formulas only for rows with actual data (day 1 → yesterday)
     for r in range(2, FORMULA_END + 1):
         ws.cell(r, 4).value  = f'=SUMIFS(V:V,U:U,"*"&$B$10&"*",T:T,C{r})'
-        ws.cell(r, 5).value  = f'=SUMIFS(X:X,AA:AA,"*"&$B$10&"*",Y:Y,C{r})'
+        ws.cell(r, 5).value  = f'=SUMIFS(X:X,Z:Z,"*"&$B$10&"*",Y:Y,C{r})'
         ws.cell(r, 7).value  = f'=ROUND((1-E{r}/D{r})*100,2)'
         ws.cell(r, 8).value  = f'=MIN(1,(G{r}-$B$3)/($B$4-$B$3))*$B$1'
-        ws.cell(r, 11).value = f'=SUMIFS(AC:AC,AF:AF,"*"&$B$10&"*",AD:AD,C{r})'
+        ws.cell(r, 11).value = f'=SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{r})'
         ws.cell(r, 12).value = f'=ROUND(100*(1-K{r}/D{r}),2)'
         ws.cell(r, 13).value = f'=MAX(0,(L{r}-$B$6)/($B$7-$B$6)*$B$8)'
         ws.cell(r, 14).value = f'=$B$2+H{r}+M{r}'
@@ -1022,18 +1088,26 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
 
     summaries = [
         (4,  None,                            f"=AVERAGE(D2:D{FORMULA_END})"),
-        (7,  "AVG CFU",                       f"=AVERAGE(G2:G{FORMULA_END})"),
-        (8,  "CFU AQS Score",                 f"=AVERAGE(H2:H{FORMULA_END})"),
-        (9,  f"{month_name} AQS score",       f"=$B$2+AVERAGE(H2:H{FORMULA_END})"),
-        (12, "AVG Hang-free",                 f"=AVERAGE(L2:L{FORMULA_END})"),
-        (13, "Hang-free AQS",                 f"=AVERAGE(M2:M{FORMULA_END})"),
-        (14, "Projected AQS including hangs", f"=$B$2+AVERAGE(H2:H{FORMULA_END})+AVERAGE(M2:M{FORMULA_END})"),
+        (7,  "AVG CFU",                       f'=TRUNC((1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/SUMIFS(V:V,U:U,"*"&$B$10&"*"))*100,2)'),
+        (8,  None,                            f"=AVERAGE(H2:H{FORMULA_END})"),
+        (9,  f"{month_name} AQS score",       f"=$B$2+H{VAL}"),
+        (12, "AVG Hang-free",                 f'=TRUNC((1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/SUMIFS(V:V,U:U,"*"&$B$10&"*"))*100,2)'),
+        (13, None,                            f"=MAX(0,(L{VAL}-$B$6)/($B$7-$B$6)*$B$8)"),
+        (14, "Projected AQS including hangs", f"=$B$2+MAX(0,(G{VAL}-$B$3)/($B$4-$B$3)*($B$1-$B$8))+M{VAL}"),
     ]
     for col, label, formula in summaries:
         if label:
             lc = ws.cell(row=LBL, column=col, value=label)
             lc.font = BOLD
         ws.cell(row=VAL, column=col, value=formula)
+
+    ws.cell(row=VAL, column=4).number_format  = "0"      # rider count — integer
+    ws.cell(row=VAL, column=7).number_format  = "0.##"   # AVG CFU % — up to 2 decimal places
+    ws.cell(row=VAL, column=8).number_format  = "0.00"   # AVG CFU AQS (hidden helper)
+    ws.cell(row=VAL, column=9).number_format  = "0.00"   # month AQS score
+    ws.cell(row=VAL, column=12).number_format = "0.##"   # AVG Hang-free % — up to 2 decimal places
+    ws.cell(row=VAL, column=13).number_format = "0.00"   # Hang-free AQS (hidden helper)
+    ws.cell(row=VAL, column=14).number_format = "0.00"   # Projected AQS
 
     # ── Borders, alternating rows & summary colors ───────────────────────────────
 
@@ -1074,8 +1148,8 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     # Raw data section (T-AF): header + data borders with alternating rows
     max_raw = max(len(bq_rows), len(crash_rows), len(hang_rows)) + 1
     raw_cols = (list(range(BQ_START_COL, BQ_START_COL + 3)) +
-                list(range(CRASH_START_COL, CRASH_START_COL + 4)) +
-                list(range(HANG_START_COL, HANG_START_COL + 4)))
+                list(range(CRASH_START_COL, CRASH_START_COL + 3)) +
+                list(range(HANG_START_COL, HANG_START_COL + 3)))
     for r in range(1, max_raw + 1):
         for c in raw_cols:
             cell = ws.cell(r, c)
@@ -1094,12 +1168,12 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     ws.column_dimensions["E"].width = 28
     ws.column_dimensions["F"].width = 4   # spacer
     ws.column_dimensions["G"].width = 12
-    ws.column_dimensions["H"].width = 16
+    ws.column_dimensions["H"].hidden = True   # CFU AQS Score — hidden helper for col N
     ws.column_dimensions["I"].width = 22
     ws.column_dimensions["J"].width = 4   # spacer
     ws.column_dimensions["K"].width = 24
     ws.column_dimensions["L"].width = 14
-    ws.column_dimensions["M"].width = 20
+    ws.column_dimensions["M"].hidden = True   # Hang-free AQS — hidden helper for col N
     ws.column_dimensions["N"].width = 30
     ws.row_dimensions[1].height = 45
 
@@ -1120,13 +1194,15 @@ def main():
     print("Fetching BigQuery iOS user counts...")
     bq_rows = fetch_bigquery()
 
-    print("Fetching Sentry hangs...")
-    raw_hang_rows = fetch_discover(HANGS_QUERY)
+    print("Fetching Sentry hangs (per-brand queries)...")
+    raw_hang_rows = fetch_discover_per_brand(HANGS_QUERY)
     hang_rows = shape_rows(raw_hang_rows, "HANG_USERS")
+    backfill_zero_rows(hang_rows, "HANG_USERS", HANGS_QUERY)
 
-    print("Fetching Sentry crashes...")
-    raw_crash_rows = fetch_discover(CRASHES_QUERY, environment="production")
+    print("Fetching Sentry crashes (per-brand queries)...")
+    raw_crash_rows = fetch_discover_per_brand(CRASHES_QUERY, environment="production")
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS")
+    backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
     print("Fetching Firebase Performance frames...")
     firebase_data = fetch_firebase_frames()
@@ -1137,8 +1213,8 @@ def main():
         key = (row["appId"] or "").lower()
         bq_users_by_brand[key] = bq_users_by_brand.get(key, 0) + row["user_count"]
 
-    crash_by_brand = aggregate_by_brand(raw_crash_rows)
-    hang_by_brand  = aggregate_by_brand(raw_hang_rows)
+    crash_by_brand = aggregate_by_brand(crash_rows, "CRASH_USERS")
+    hang_by_brand  = aggregate_by_brand(hang_rows,  "HANG_USERS")
 
     os.makedirs("consolidation_report", exist_ok=True)
     write_excel(bq_rows, hang_rows, crash_rows, "consolidation_report/sentry_data.xlsx", firebase_data=firebase_data)
