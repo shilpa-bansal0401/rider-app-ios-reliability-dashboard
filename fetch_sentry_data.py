@@ -146,7 +146,6 @@ def fetch_bigquery():
     if not BQ_AVAILABLE:
         print("WARNING: google-cloud-bigquery not installed, skipping BQ fetch.", file=sys.stderr)
         return []
-    client = bq_client.Client(project="logistics-rider-staging")
     query = f"""
         SELECT partition_date as dt, appId, count(distinct clientId) as user_count
         FROM `fulfillment-dwh-production.curated_data_shared_coredata_tracking.perseus_events_rider_app`
@@ -155,15 +154,20 @@ def fetch_bigquery():
         GROUP BY ALL
         ORDER BY appId, dt ASC
     """
-    rows = list(client.query(query))
-    return [
-        {
-            "dt":         str(row.dt),
-            "appId":      row.appId or "",
-            "user_count": row.user_count,
-        }
-        for row in rows
-    ]
+    try:
+        client = bq_client.Client(project="logistics-rider-staging")
+        rows = list(client.query(query))
+        return [
+            {
+                "dt":         str(row.dt),
+                "appId":      row.appId or "",
+                "user_count": row.user_count,
+            }
+            for row in rows
+        ]
+    except Exception as exc:
+        print(f"WARNING: BigQuery fetch failed, skipping BQ data: {exc}", file=sys.stderr)
+        return []
 
 
 def fetch_firebase_frames():
