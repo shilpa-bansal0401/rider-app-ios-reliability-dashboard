@@ -12,6 +12,8 @@ jobs:
       contents: write
       pages: write
       id-token: write
+    env:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
     environment:
       name: github-pages
@@ -46,7 +48,7 @@ jobs:
         run: python3 generate_crash_report.py
 
       - name: Authenticate to Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY != ''
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
