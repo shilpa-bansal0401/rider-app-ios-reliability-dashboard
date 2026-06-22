@@ -35,6 +35,7 @@ PINNED_RELEASES = [
     {"version": "4.2623.1", "dist": "993"},
     {"version": "4.2624.1", "dist": "996"},
     {"version": "4.2625.3", "dist": "1002"},
+    {"version": "4.2626.1", "dist": "1006"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
