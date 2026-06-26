@@ -527,8 +527,9 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
             cfu  = int((1 - crashes / users) * 10000) / 100
             hang = int((1 - hangs   / users) * 10000) / 100
         else:
-            cfu  = 0
-            hang = 0
+            fallback_users = brand["riders"]
+            cfu  = int((1 - crashes / fallback_users) * 10000) / 100
+            hang = int((1 - hangs   / fallback_users) * 10000) / 100
 
         frozen  = firebase_data.get("frozen",  0.58)
         skipped = firebase_data.get("skipped", 1.2)
@@ -1166,12 +1167,12 @@ def add_consolidation_sheet(wb, firebase_data=None):
         # B: Crash free % — SUMIFS on Dashboard raw data (no B10 dependency)
         styled(2).value = (
             f'=TRUNC((1-SUMIFS(Dashboard!$X:$X,Dashboard!$Z:$Z,"*"&$A{r}&"*")'
-            f'/SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"))*100,2)'
+            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),M{r}))*100,2)'
         )
         # C: Hang free %
         styled(3).value = (
             f'=TRUNC((1-SUMIFS(Dashboard!$AB:$AB,Dashboard!$AD:$AD,"*"&$A{r}&"*")'
-            f'/SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"))*100,2)'
+            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),M{r}))*100,2)'
         )
         styled(4, app_size)
         styled(5, asti)
@@ -1402,10 +1403,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     for r in range(2, FORMULA_END + 1):
         ws.cell(r, 4).value  = f'=SUMIFS(V:V,U:U,"*"&$B$10&"*",T:T,C{r})'
         ws.cell(r, 5).value  = f'=SUMIFS(X:X,Z:Z,"*"&$B$10&"*",Y:Y,C{r})'
-        ws.cell(r, 7).value  = f'=ROUND((1-E{r}/D{r})*100,2)'
+        ws.cell(r, 7).value  = f'=ROUND((1-E{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100,2)'
         ws.cell(r, 8).value  = f'=MIN(1,(G{r}-$B$3)/($B$4-$B$3))*$B$1'
         ws.cell(r, 11).value = f'=SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{r})'
-        ws.cell(r, 12).value = f'=ROUND(100*(1-K{r}/D{r}),2)'
+        ws.cell(r, 12).value = f'=ROUND(100*(1-K{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})),2)'
         ws.cell(r, 13).value = f'=MAX(0,(L{r}-$B$6)/($B$7-$B$6)*$B$8)'
         ws.cell(r, 14).value = f'=$B$2+H{r}+M{r}'
 
@@ -1416,10 +1417,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
 
     summaries = [
         (4,  None,                            f"=AVERAGE(D2:D{FORMULA_END})"),
-        (7,  "AVG CFU",                       f'=TRUNC((1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/SUMIFS(V:V,U:U,"*"&$B$10&"*"))*100,2)'),
+        (7,  "AVG CFU",                       f'=TRUNC((1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")))*100,2)'),
         (8,  None,                            f"=AVERAGE(H2:H{FORMULA_END})"),
         (9,  f"{month_name} AQS score",       f"=$B$2+H{VAL}"),
-        (12, "AVG Hang-free",                 f'=TRUNC((1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/SUMIFS(V:V,U:U,"*"&$B$10&"*"))*100,2)'),
+        (12, "AVG Hang-free",                 f'=TRUNC((1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")))*100,2)'),
         (13, None,                            f"=MAX(0,(L{VAL}-$B$6)/($B$7-$B$6)*$B$8)"),
         (14, "Projected AQS including hangs", f"=$B$2+MAX(0,(G{VAL}-$B$3)/($B$4-$B$3)*($B$1-$B$8))+M{VAL}"),
     ]
