@@ -509,6 +509,11 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     date_range = f"{START_DATE.strftime('%-d %b')} – {END_DATE.strftime('%-d %b %Y')}"
 
     # ── Per-brand metrics ──────────────────────────────────────────────────────
+    # Crash/hang counts from Sentry are summed daily unique users (user-days).
+    # BQ user counts are also summed daily (user-days) — same unit, ratio is valid.
+    # Fallback uses riders × days to approximate user-days when BQ is unavailable.
+    days_in_period = (END_DATE - START_DATE).days + 1
+
     brand_metrics = []
     for brand in BRANDS:
         skey = brand["sentry_key"].lower()
@@ -524,12 +529,13 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         hangs   = hang_by_brand.get(skey, 0)
 
         if users > 0:
-            cfu  = int((1 - crashes / users) * 10000) / 100
-            hang = int((1 - hangs   / users) * 10000) / 100
+            cfu  = max(0.0, min(100.0, int((1 - crashes / users) * 10000) / 100))
+            hang = max(0.0, min(100.0, int((1 - hangs   / users) * 10000) / 100))
         else:
-            fallback_users = brand["riders"]
-            cfu  = int((1 - crashes / fallback_users) * 10000) / 100
-            hang = int((1 - hangs   / fallback_users) * 10000) / 100
+            # Scale riders by days to match the user-days unit of crash/hang counts
+            fallback_user_days = brand["riders"] * days_in_period
+            cfu  = max(0.0, min(100.0, int((1 - crashes / fallback_user_days) * 10000) / 100))
+            hang = max(0.0, min(100.0, int((1 - hangs   / fallback_user_days) * 10000) / 100))
 
         frozen  = firebase_data.get("frozen",  0.58)
         skipped = firebase_data.get("skipped", 1.2)
@@ -1135,6 +1141,8 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ]
     brands = [row[0] for row in static_cols]
 
+    month_days = calendar.monthrange(START_DATE.year, START_DATE.month)[1]
+
     DATA_START = 2
     DATA_END   = DATA_START + len(brands) - 1   # row 11
     AVG_ROW    = DATA_END + 1                   # row 12
@@ -1165,14 +1173,19 @@ def add_consolidation_sheet(wb, firebase_data=None):
         styled(1, brand).font = BOLD
 
         # B: Crash free % — SUMIFS on Dashboard raw data (no B10 dependency)
+        # Fallback uses M (riders) × month_days to approximate user-days when BQ is unavailable.
         styled(2).value = (
-            f'=TRUNC((1-SUMIFS(Dashboard!$X:$X,Dashboard!$Z:$Z,"*"&$A{r}&"*")'
-            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),M{r}))*100,2)'
+            f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(Dashboard!$X:$X,Dashboard!$Z:$Z,"*"&$A{r}&"*")'
+            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,'
+            f'SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),'
+            f'M{r}*{month_days}))*100)),2)'
         )
         # C: Hang free %
         styled(3).value = (
-            f'=TRUNC((1-SUMIFS(Dashboard!$AB:$AB,Dashboard!$AD:$AD,"*"&$A{r}&"*")'
-            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),M{r}))*100,2)'
+            f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(Dashboard!$AB:$AB,Dashboard!$AD:$AD,"*"&$A{r}&"*")'
+            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,'
+            f'SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),'
+            f'M{r}*{month_days}))*100)),2)'
         )
         styled(4, app_size)
         styled(5, asti)
@@ -1403,10 +1416,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     for r in range(2, FORMULA_END + 1):
         ws.cell(r, 4).value  = f'=SUMIFS(V:V,U:U,"*"&$B$10&"*",T:T,C{r})'
         ws.cell(r, 5).value  = f'=SUMIFS(X:X,Z:Z,"*"&$B$10&"*",Y:Y,C{r})'
-        ws.cell(r, 7).value  = f'=ROUND((1-E{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100,2)'
+        ws.cell(r, 7).value  = f'=ROUND(MAX(0,MIN(100,(1-E{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100)),2)'
         ws.cell(r, 8).value  = f'=MIN(1,(G{r}-$B$3)/($B$4-$B$3))*$B$1'
         ws.cell(r, 11).value = f'=SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{r})'
-        ws.cell(r, 12).value = f'=ROUND(100*(1-K{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})),2)'
+        ws.cell(r, 12).value = f'=ROUND(MAX(0,MIN(100,100*(1-K{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})))),2)'
         ws.cell(r, 13).value = f'=MAX(0,(L{r}-$B$6)/($B$7-$B$6)*$B$8)'
         ws.cell(r, 14).value = f'=$B$2+H{r}+M{r}'
 
@@ -1417,10 +1430,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
 
     summaries = [
         (4,  None,                            f"=AVERAGE(D2:D{FORMULA_END})"),
-        (7,  "AVG CFU",                       f'=TRUNC((1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")))*100,2)'),
+        (7,  "AVG CFU",                       f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
         (8,  None,                            f"=AVERAGE(H2:H{FORMULA_END})"),
         (9,  f"{month_name} AQS score",       f"=$B$2+H{VAL}"),
-        (12, "AVG Hang-free",                 f'=TRUNC((1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")))*100,2)'),
+        (12, "AVG Hang-free",                 f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
         (13, None,                            f"=MAX(0,(L{VAL}-$B$6)/($B$7-$B$6)*$B$8)"),
         (14, "Projected AQS including hangs", f"=$B$2+MAX(0,(G{VAL}-$B$3)/($B$4-$B$3)*($B$1-$B$8))+M{VAL}"),
     ]
