@@ -108,16 +108,16 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.7, "asti": 4.47, "stti": 1.01, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 77.6, "asti": 4.47, "stti": 1.01, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.8, "asti": 4.47, "stti": 1.01, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 77.6, "asti": 4.47, "stti": 1.01, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.47, "stti": 1.01, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 67.7, "asti": 4.47, "stti": 1.01, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 67.7, "asti": 4.47, "stti": 1.01, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 77.5, "asti": 4.47, "stti": 0.90, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.7, "asti": 4.47, "stti": 0.90, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 77.6, "asti": 4.47, "stti": 0.90, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.8, "asti": 4.47, "stti": 0.90, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 77.6, "asti": 4.47, "stti": 0.90, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 77.5, "asti": 4.47, "stti": 0.90, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 77.5, "asti": 4.47, "stti": 0.90, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.47, "stti": 0.90, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 67.7, "asti": 4.47, "stti": 0.90, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 67.7, "asti": 4.47, "stti": 0.90, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
