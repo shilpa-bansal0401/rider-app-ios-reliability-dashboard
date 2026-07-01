@@ -53,14 +53,35 @@ PROJECT = "4506937839976448"
 if not TOKEN:
     raise SystemExit("ERROR: set SENTRY_AUTH_TOKEN environment variable first.")
 
-TODAY      = datetime.date.today()
-END_DATE   = TODAY - datetime.timedelta(days=1)          # yesterday
-START_DATE = TODAY.replace(day=1)                        # 1st of current month
+TODAY = datetime.date.today()
+
+if TODAY.day < 3:
+    # On day 1-2 of the month, report on the previous full month
+    first_of_current = TODAY.replace(day=1)
+    END_DATE   = first_of_current - datetime.timedelta(days=1)  # last day of prev month
+    START_DATE = END_DATE.replace(day=1)                         # 1st of prev month
+else:
+    # From day 3 onwards, report on the current month up to yesterday
+    END_DATE   = TODAY - datetime.timedelta(days=1)
+    START_DATE = TODAY.replace(day=1)
 
 START    = START_DATE.strftime("%Y-%m-%dT00:00:00.000")
 END      = END_DATE.strftime("%Y-%m-%dT23:59:59.999")
 BQ_START = START_DATE.strftime("%Y-%m-%d")
 BQ_END   = END_DATE.strftime("%Y-%m-%d")
+
+# On days 3-6: also show the previous full month as a second HTML tab
+SHOW_PREV_TAB = 3 <= TODAY.day <= 6
+if SHOW_PREV_TAB:
+    _prev_last      = TODAY.replace(day=1) - datetime.timedelta(days=1)
+    PREV_START_DATE = _prev_last.replace(day=1)
+    PREV_END_DATE   = _prev_last
+    PREV_START    = PREV_START_DATE.strftime("%Y-%m-%dT00:00:00.000")
+    PREV_END      = PREV_END_DATE.strftime("%Y-%m-%dT23:59:59.999")
+    PREV_BQ_START = PREV_START_DATE.strftime("%Y-%m-%d")
+    PREV_BQ_END   = PREV_END_DATE.strftime("%Y-%m-%d")
+else:
+    PREV_START_DATE = PREV_END_DATE = PREV_START = PREV_END = PREV_BQ_START = PREV_BQ_END = None
 
 HANGS_QUERY   = '!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"'
 CRASHES_QUERY = "level:fatal handled:no"
@@ -87,16 +108,16 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 76.1, "asti": 4.43, "stti": 0.95, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.3, "asti": 4.43, "stti": 0.95, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 76.0, "asti": 4.43, "stti": 0.95, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.6, "asti": 4.43, "stti": 0.95, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 76.0, "asti": 4.43, "stti": 0.95, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 76.4, "asti": 4.43, "stti": 0.95, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 76.2, "asti": 4.43, "stti": 0.95, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.43, "stti": 0.95, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 66.4, "asti": 4.43, "stti": 0.95, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 66.3, "asti": 4.43, "stti": 0.95, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.7, "asti": 4.47, "stti": 1.01, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 77.6, "asti": 4.47, "stti": 1.01, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 66.8, "asti": 4.47, "stti": 1.01, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 77.6, "asti": 4.47, "stti": 1.01, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 77.5, "asti": 4.47, "stti": 1.01, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 75.9, "asti": 4.47, "stti": 1.01, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 67.7, "asti": 4.47, "stti": 1.01, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 67.7, "asti": 4.47, "stti": 1.01, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -142,14 +163,16 @@ HANG_START_COL  = 28   # AB
 
 # ── Data fetching ──────────────────────────────────────────────────────────────
 
-def fetch_bigquery():
+def fetch_bigquery(bq_start=None, bq_end=None):
     if not BQ_AVAILABLE:
         print("WARNING: google-cloud-bigquery not installed, skipping BQ fetch.", file=sys.stderr)
         return []
+    _bq_start = bq_start or BQ_START
+    _bq_end   = bq_end   or BQ_END
     query = f"""
         SELECT partition_date as dt, appId, count(distinct clientId) as user_count
         FROM `fulfillment-dwh-production.curated_data_shared_coredata_tracking.perseus_events_rider_app`
-        WHERE partition_date BETWEEN '{BQ_START}' AND '{BQ_END}'
+        WHERE partition_date BETWEEN '{_bq_start}' AND '{_bq_end}'
           AND platform = 'iOS'
         GROUP BY ALL
         ORDER BY appId, dt ASC
@@ -170,19 +193,20 @@ def fetch_bigquery():
         return []
 
 
-def fetch_firebase_frames():
+def fetch_firebase_frames(bq_start=None, bq_end=None):
     """Return {"frozen": float, "skipped": float} aggregated across ALL brands.
 
     Runs a single query that UNIONs all brand tables — same structure as the
     reference SQL — and returns one row.  The same values are applied to every
     brand row in the Consolidation sheet.
-
-    Date window: 1st of current month (inclusive) → yesterday (inclusive).
     """
     if not BQ_AVAILABLE:
         print("WARNING: google-cloud-bigquery not available, skipping Firebase frames fetch.",
               file=sys.stderr)
         return {}
+
+    _bq_start = bq_start or BQ_START
+    _bq_end   = bq_end   or BQ_END
 
     selects = "\n  UNION ALL".join(
         f"""
@@ -193,8 +217,8 @@ def fetch_firebase_frames():
     trace_info.screen_info,
     trace_info.metric_info
   FROM `logistics-54934.firebase_performance.{table}`
-  WHERE TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) >= TIMESTAMP('{BQ_START}')
-    AND TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) <= TIMESTAMP('{BQ_END}')"""
+  WHERE TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) >= TIMESTAMP('{_bq_start}')
+    AND TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) <= TIMESTAMP('{_bq_end}')"""
         for _, table in FIREBASE_BRANDS
     )
 
@@ -334,7 +358,7 @@ def fetch_discover_max(query, environment=None, start=None, end=None):
     return result
 
 
-def fetch_discover_per_brand(query, environment=None):
+def fetch_discover_per_brand(query, environment=None, start=None, end=None):
     """Run a separate Discover query per brand with an explicit Brand filter.
     Merges all results into a single list. More reliable than a single query
     since Sentry can silently drop or zero-out brand rows in grouped results."""
@@ -342,7 +366,7 @@ def fetch_discover_per_brand(query, environment=None):
     for brand in BRANDS:
         skey = brand["sentry_key"]
         brand_query = f'{query} Brand:*{skey}*'
-        rows = fetch_discover(brand_query, environment=environment)
+        rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
         print(f"    {skey}: {total} users across {len(rows)} day-rows")
         all_rows.extend(rows)
@@ -494,52 +518,26 @@ BRAND_COLORS = [
 
 # ── HTML report generation ─────────────────────────────────────────────────────
 
-def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data):
-    """Generate consolidation_report/index.html from pre-fetched data.
-
-    Args:
-        bq_users_by_brand: dict {appid_lower: total_user_count}
-        crash_by_brand:    dict {sentry_key_lower: total_crash_users}
-        hang_by_brand:     dict {sentry_key_lower: total_hang_users}
-        firebase_data:     dict {"frozen": float, "skipped": float} (may be empty)
-    """
-    OUT_DIR = "consolidation_report"
-
-    fetch_date = TODAY.strftime("%-d %b %Y")
-    date_range = f"{START_DATE.strftime('%-d %b')} – {END_DATE.strftime('%-d %b %Y')}"
-
-    # ── Per-brand metrics ──────────────────────────────────────────────────────
-    # Crash/hang counts from Sentry are summed daily unique users (user-days).
-    # BQ user counts are also summed daily (user-days) — same unit, ratio is valid.
-    # Fallback uses riders × days to approximate user-days when BQ is unavailable.
-    days_in_period = (END_DATE - START_DATE).days + 1
-
+def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data, start_date, end_date):
+    """Returns (brand_metrics, avg_metrics, aqs_scores, final_aqs)."""
+    days_in_period = (end_date - start_date).days + 1
     brand_metrics = []
     for brand in BRANDS:
         skey = brand["sentry_key"].lower()
         bkey = brand["bq_key"].lower()
-
-        # Sum BQ users for this brand (substring match on appId)
         users = 0
         for appid, count in bq_users_by_brand.items():
             if bkey in appid:
                 users += count
-
         crashes = crash_by_brand.get(skey, 0)
         hangs   = hang_by_brand.get(skey, 0)
-
         if users > 0:
             cfu  = max(0.0, min(100.0, int((1 - crashes / users) * 10000) / 100))
-            hang = max(0.0, min(100.0, int((1 - hangs   / users) * 10000) / 100))
+            hang = max(0.0, min(100.0, int((1 - hangs / users) * 10000) / 100))
         else:
-            # Scale riders by days to match the user-days unit of crash/hang counts
-            fallback_user_days = brand["riders"] * days_in_period
-            cfu  = max(0.0, min(100.0, int((1 - crashes / fallback_user_days) * 10000) / 100))
-            hang = max(0.0, min(100.0, int((1 - hangs   / fallback_user_days) * 10000) / 100))
-
-        frozen  = firebase_data.get("frozen",  0.58)
-        skipped = firebase_data.get("skipped", 1.2)
-
+            fallback = brand["riders"] * days_in_period
+            cfu  = max(0.0, min(100.0, int((1 - crashes / fallback) * 10000) / 100))
+            hang = max(0.0, min(100.0, int((1 - hangs / fallback) * 10000) / 100))
         brand_metrics.append({
             "name":     brand["name"],
             "riders":   brand["riders"],
@@ -551,35 +549,319 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
             "app_size": brand["app_size"],
             "asti":     brand["asti"],
             "stti":     brand["stti"],
-            "frozen":   frozen,
-            "skipped":  skipped,
+            "frozen":   firebase_data.get("frozen",  0.58),
+            "skipped":  firebase_data.get("skipped", 1.2),
             "fallback": users == 0,
         })
+
+    def weighted_avg(key):
+        return int(sum(m[key] * w for m, w in zip(brand_metrics, WEIGHTS)) * 100) / 100
+
+    avg_metrics = {k: weighted_avg(k) for k in ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]}
+    aqs_scores  = {k: round(aqs_score(avg_metrics[k], k), 4) for k in AQS_CONFIG}
+    final_aqs   = round(sum(aqs_scores.values()), 2)
+    return brand_metrics, avg_metrics, aqs_scores, final_aqs
+
+
+def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data,
+                          prev_bq_users=None, prev_crash=None, prev_hang=None, prev_firebase=None):
+    """Generate consolidation_report/index.html from pre-fetched data.
+
+    Args:
+        bq_users_by_brand: dict {appid_lower: total_user_count}
+        crash_by_brand:    dict {sentry_key_lower: total_crash_users}
+        hang_by_brand:     dict {sentry_key_lower: total_hang_users}
+        firebase_data:     dict {"frozen": float, "skipped": float} (may be empty)
+        prev_bq_users:     same shape as bq_users_by_brand for previous month (optional)
+        prev_crash:        same shape as crash_by_brand for previous month (optional)
+        prev_hang:         same shape as hang_by_brand for previous month (optional)
+        prev_firebase:     same shape as firebase_data for previous month (optional)
+    """
+    OUT_DIR = "consolidation_report"
+
+    fetch_date = TODAY.strftime("%-d %b %Y")
+    date_range = f"{START_DATE.strftime('%-d %b')} – {END_DATE.strftime('%-d %b %Y')}"
+
+    # ── Two-month path ─────────────────────────────────────────────────────────
+    if prev_bq_users is not None:
+        curr_metrics, curr_avg, curr_aqs, curr_final = _compute_metrics(
+            bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data, START_DATE, END_DATE
+        )
+        prev_metrics, prev_avg, prev_aqs, prev_final = _compute_metrics(
+            prev_bq_users, prev_crash, prev_hang, prev_firebase or {}, PREV_START_DATE, PREV_END_DATE
+        )
+
+        print("\nBrand metrics:")
+        for m in curr_metrics:
+            flag = " (fallback)" if m["fallback"] else ""
+            print(f"  {m['name']:15s}  users={m['users']:>8,}  crashes={m['crashes']:>5}  hangs={m['hangs']:>5}"
+                  f"  cfu={m['cfu']:.2f}%  hang={m['hang']:.2f}%{flag}")
+
+        print(f"\nWeighted averages: {curr_avg}")
+        print(f"AQS scores:        {curr_aqs}")
+        print(f"FINAL AQS:         {curr_final}")
+
+        print(f"\nPrev month brand metrics ({PREV_START_DATE.strftime('%-d %b')} – {PREV_END_DATE.strftime('%-d %b %Y')}):")
+        for m in prev_metrics:
+            flag = " (fallback)" if m["fallback"] else ""
+            print(f"  {m['name']:15s}  users={m['users']:>8,}  crashes={m['crashes']:>5}  hangs={m['hangs']:>5}"
+                  f"  cfu={m['cfu']:.2f}%  hang={m['hang']:.2f}%{flag}")
+
+        print(f"\nPrev weighted averages: {prev_avg}")
+        print(f"Prev AQS scores:        {prev_aqs}")
+        print(f"PREV FINAL AQS:         {prev_final}")
+
+        prev_month_label = PREV_START_DATE.strftime("%B %Y")
+        curr_month_label = START_DATE.strftime("%B %Y")
+        prev_date_range  = f"{PREV_START_DATE.strftime('%-d %b')} – {PREV_END_DATE.strftime('%-d %b %Y')}"
+        curr_date_range  = date_range
+
+        def _build_aqs_table_html(brand_metrics, avg_metrics, aqs_scores, final_aqs, period_date_range):
+            fmt_pct = lambda v: f"{v:.2f}%"
+            fmt_mb  = lambda v: f"{v}"
+            fmt_s   = lambda v: f"{v}"
+
+            brand_rows_html = ""
+            for i, m in enumerate(brand_metrics):
+                row_color = BRAND_COLORS[i % len(BRAND_COLORS)]
+                fallback_note = (' <span style="font-size:10px;color:#6b7280;" title="BQ unavailable — using fallback">*</span>'
+                                 if m["fallback"] else "")
+                cell_style = f'background:{row_color};'
+                brand_rows_html += f"""
+      <tr style="background:{row_color};">
+        <td style="{cell_style}font-weight:600;white-space:nowrap;">{m['name']}{fallback_note}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['cfu'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['hang'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_mb(m['app_size'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_s(m['asti'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_s(m['stti'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['frozen'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['skipped'])}</td>
+        <td style="{cell_style}text-align:right;">{m['riders']:,}</td>
+      </tr>"""
+
+            aqs_col_order = ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]
+            aqs_cells_html = "".join(
+                f'<td style="text-align:right;">{aqs_scores[k]:.4f}</td>'
+                for k in aqs_col_order
+            )
+
+            return f"""
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Brand</th>
+        <th class="num">Crash Free %</th>
+        <th class="num">App Hangs %</th>
+        <th class="num">App Size (MB)</th>
+        <th class="num">ASTI (s)</th>
+        <th class="num">STTI (s)</th>
+        <th class="num">Frozen Frames %</th>
+        <th class="num">Skipped Frames %</th>
+        <th class="num">Riders</th>
+      </tr>
+    </thead>
+    <tbody>
+      {brand_rows_html}
+      <tr class="row-avg">
+        <td>Weighted AVG</td>
+        <td>{avg_metrics['cfu']:.2f}%</td>
+        <td>{avg_metrics['hang']:.2f}%</td>
+        <td>{avg_metrics['app_size']}</td>
+        <td>{avg_metrics['asti']}</td>
+        <td>{avg_metrics['stti']}</td>
+        <td>{avg_metrics['frozen']:.2f}%</td>
+        <td>{avg_metrics['skipped']:.2f}%</td>
+        <td></td>
+      </tr>
+      <tr class="row-aqs">
+        <td>AQS Score</td>
+        {aqs_cells_html}
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="score-wrap">
+  <div class="score-card">
+    <div class="sc-label">Final AQS Score</div>
+    <div class="sc-value">{final_aqs}</div>
+    <div class="sc-sub">{period_date_range}</div>
+  </div>
+</div>"""
+
+        prev_panel_html = _build_aqs_table_html(prev_metrics, prev_avg, prev_aqs, prev_final, prev_date_range)
+        curr_panel_html = _build_aqs_table_html(curr_metrics, curr_avg, curr_aqs, curr_final, curr_date_range)
+
+        bq_status_note = ""
+        if not BQ_AVAILABLE:
+            bq_status_note = """
+    <div style="margin-top:12px;padding:10px 16px;background:#FFF3CD;border:1px solid #ffc107;
+                border-radius:6px;font-size:13px;color:#856404;">
+      ⚠ Using fallback data (BigQuery unavailable). Install <code>google-cloud-bigquery</code>
+      and authenticate to fetch live data.
+    </div>"""
+
+        bq_available_str = 'True' if BQ_AVAILABLE else 'False'
+
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iOS AQS Consolidation Report</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc; color: #111; padding: 32px; }}
+    h1 {{ font-size: 22px; font-weight: 700; margin-bottom: 4px; }}
+    .subtitle {{ color: #666; font-size: 13px; margin-bottom: 24px; }}
+    .warning-banner {{
+      background: #fffbf0; border: 1px solid #f59e0b;
+      border-left: 4px solid #f59e0b; border-radius: 6px;
+      padding: 12px 16px; font-size: 13px; color: #92400e;
+      font-weight: 600; margin-bottom: 16px;
+    }}
+
+    /* ── Tabs ── */
+    .tabs {{ display: flex; gap: 4px; margin-bottom: 0; border-bottom: 2px solid #e5e7eb; }}
+    .tab {{ padding: 9px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+             border-radius: 6px 6px 0 0; border: 1px solid transparent;
+             border-bottom: none; color: #6b7280; background: transparent;
+             position: relative; top: 2px; transition: color .15s; }}
+    .tab:hover {{ color: #111; }}
+    .tab.active {{ color: #111; background: #fff; border-color: #e5e7eb;
+                   border-bottom-color: #fff; }}
+    .panel {{ display: none; background: #fff; border: 1px solid #e5e7eb;
+               border-top: none; border-radius: 0 6px 6px 6px; padding: 28px; }}
+    .panel.active {{ display: block; }}
+
+    /* ── AQS Table panel ── */
+    .score-wrap {{ display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }}
+    .score-card {{ background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
+                   padding: 14px 24px; min-width: 180px; }}
+    .score-card .sc-label {{ font-size: 11px; text-transform: uppercase;
+                              letter-spacing: .05em; color: #6b7280; margin-bottom: 4px; }}
+    .score-card .sc-value {{ font-size: 32px; font-weight: 700; color: #111; }}
+    .score-card .sc-sub   {{ font-size: 11px; color: #9ca3af; margin-top: 2px; }}
+    .table-wrap {{ overflow-x: auto; margin-bottom: 28px; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+    thead th {{
+      text-align: left; padding: 8px 12px;
+      border-bottom: 2px solid #e5e7eb; color: #666; font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+    }}
+    thead th.num {{ text-align: right; }}
+    tbody tr {{ border-bottom: 1px solid #f3f4f6; }}
+    tbody tr:hover {{ background: #f9fafb; }}
+    tbody td {{ padding: 9px 12px; vertical-align: middle; white-space: nowrap; text-align: right; }}
+    tbody td:first-child {{ text-align: left; font-weight: 500; }}
+    tr.row-avg td {{
+      background: #f5fbff !important; font-weight: 700;
+      border-top: 2px solid #dbeafe; color: #3b82f6;
+    }}
+    tr.row-avg td:first-child {{ text-align: left; }}
+    tr.row-aqs td {{
+      background: #f6fef8 !important; font-weight: 700;
+      border-top: 2px solid #d1fae5; color: #34d399;
+    }}
+    tr.row-aqs td:first-child {{ text-align: left; }}
+
+    .footer {{ margin-top: 32px; font-size: 11px; color: #9ca3af;
+               border-top: 1px solid #e5e7eb; padding-top: 16px; line-height: 1.8; }}
+    .footer code {{ background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11px; }}
+  </style>
+</head>
+<body>
+
+<h1>iOS AQS Consolidation Report</h1>
+<p class="subtitle">
+  Fetched: {fetch_date}
+</p>
+
+{bq_status_note}
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-panel="prev-month">{prev_month_label}</div>
+  <div class="tab" data-panel="curr-month">{curr_month_label}</div>
+</div>
+
+<!-- Panel: prev month -->
+<div class="panel active" id="panel-prev-month">
+  {prev_panel_html}
+
+  <div class="footer">
+    <strong>Notes:</strong><br>
+    &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
+      (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      against BQ daily user counts for the period.<br>
+    &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
+      applied to all brands equally.<br>
+    &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+    &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
+    &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
+      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+    &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
+  </div>
+</div>
+
+<!-- Panel: curr month -->
+<div class="panel" id="panel-curr-month">
+  <div class="warning-banner">
+    ⚠ App size, ASTI and STTI have the older values, not recently updated. Update these columns manually before sharing. For the accurate AQS score, update these values.
+  </div>
+  {curr_panel_html}
+
+  <div class="footer">
+    <strong>Notes:</strong><br>
+    &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
+      (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      against BQ daily user counts for the period.<br>
+    &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
+      applied to all brands equally.<br>
+    &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated; update manually for accurate AQS score.<br>
+    &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+    &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
+    &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
+      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+    &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
+  </div>
+</div>
+
+<script>
+document.getElementById('tabs').addEventListener('click', function(e) {{
+  var t = e.target.closest('.tab');
+  if (!t) return;
+  document.querySelectorAll('.tab').forEach(function(x) {{ x.classList.remove('active'); }});
+  document.querySelectorAll('.panel').forEach(function(x) {{ x.classList.remove('active'); }});
+  t.classList.add('active');
+  document.getElementById('panel-' + t.dataset.panel).classList.add('active');
+}});
+</script>
+
+</body>
+</html>"""
+
+        os.makedirs(OUT_DIR, exist_ok=True)
+        out_path = os.path.join(OUT_DIR, "index.html")
+        with open(out_path, "w") as f:
+            f.write(html)
+
+        print(f"\nReport written to: {out_path}")
+        return
+
+    # ── Single-month path ──────────────────────────────────────────────────────
+    brand_metrics, avg_metrics, aqs_scores, final_aqs = _compute_metrics(
+        bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data, START_DATE, END_DATE
+    )
 
     print("\nBrand metrics:")
     for m in brand_metrics:
         flag = " (fallback)" if m["fallback"] else ""
         print(f"  {m['name']:15s}  users={m['users']:>8,}  crashes={m['crashes']:>5}  hangs={m['hangs']:>5}"
               f"  cfu={m['cfu']:.2f}%  hang={m['hang']:.2f}%{flag}")
-
-    # ── Weighted averages ──────────────────────────────────────────────────────
-    def weighted_avg(key):
-        values = [m[key] for m in brand_metrics]
-        return int(sum(v * w for v, w in zip(values, WEIGHTS)) * 100) / 100
-
-    avg_metrics = {
-        "cfu":      weighted_avg("cfu"),
-        "hang":     weighted_avg("hang"),
-        "app_size": weighted_avg("app_size"),
-        "asti":     weighted_avg("asti"),
-        "stti":     weighted_avg("stti"),
-        "frozen":   weighted_avg("frozen"),
-        "skipped":  weighted_avg("skipped"),
-    }
-
-    # ── AQS scores ────────────────────────────────────────────────────────────
-    aqs_scores = {k: round(aqs_score(avg_metrics[k], k), 4) for k in AQS_CONFIG}
-    final_aqs  = round(sum(aqs_scores.values()), 2)
 
     print(f"\nWeighted averages: {avg_metrics}")
     print(f"AQS scores:        {aqs_scores}")
@@ -655,6 +937,20 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     ], indent=2)
 
     bq_available_str = 'True' if BQ_AVAILABLE else 'False'
+
+    stale_warning_html = (
+        '<div class="warning-banner">\n'
+        '  ⚠ App size, ASTI and STTI have the older values, not recently updated.'
+        ' Update these columns manually before sharing.'
+        ' For the accurate AQS score, update these values.\n'
+        '</div>'
+        if TODAY.day >= 3 else ""
+    )
+    stale_footer_note = (
+        '  &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated;'
+        ' update manually for accurate AQS score.<br>\n'
+        if TODAY.day >= 3 else ""
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -780,9 +1076,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
   Period: {date_range} &nbsp;|&nbsp; Fetched: {fetch_date}
 </p>
 
-<div class="warning-banner">
-  ⚠ App size, ASTI and STTI have the older values, not recently updated. Update these columns manually before sharing. For the accurate AQS score, update these values.
-</div>
+{stale_warning_html}
 {bq_status_note}
 
 <div class="tabs" id="tabs">
@@ -845,8 +1139,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     against BQ daily user counts for the period.<br>
   &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
     applied to all brands equally.<br>
-  &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated; update manually for accurate AQS score.<br>
-  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+{stale_footer_note}  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
     Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
@@ -1273,28 +1566,28 @@ def add_consolidation_sheet(wb, firebase_data=None):
     final_cell.border = MEDIUM_BOX
     final_cell.number_format = "0.00"
 
-    # ── Manual-data note ──────────────────────────────────────────────────────
-    NOTE_TEXT = ("⚠  App size, ASTI and STTI have the older values, not recently updated. "
-                 "Update these columns manually before sharing. "
-                 "For the accurate AQS score, update these values.")
-    NOTE_FILL = PatternFill("solid", fgColor="FFEB9C")   # amber
-    NOTE_FONT = Font(bold=True, color="9C5700")           # dark orange
+    # ── Manual-data note (current month only — prev month values are final) ──────
+    if TODAY.day >= 3:
+        NOTE_TEXT = ("⚠  App size, ASTI and STTI have the older values, not recently updated. "
+                     "Update these columns manually before sharing. "
+                     "For the accurate AQS score, update these values.")
+        NOTE_FILL = PatternFill("solid", fgColor="FFEB9C")   # amber
+        NOTE_FONT = Font(bold=True, color="9C5700")           # dark orange
 
-    NOTE_ROW = FINAL_ROW + 2
-    note_cell = ws.cell(NOTE_ROW, 1, value=NOTE_TEXT)
-    note_cell.font = NOTE_FONT
-    note_cell.fill = NOTE_FILL
-    note_cell.border = MEDIUM_BOX
-    note_cell.alignment = Alignment(wrap_text=True)
-    ws.merge_cells(start_row=NOTE_ROW, start_column=1,
-                   end_row=NOTE_ROW,   end_column=8)
-    ws.row_dimensions[NOTE_ROW].height = 30
+        NOTE_ROW = FINAL_ROW + 2
+        note_cell = ws.cell(NOTE_ROW, 1, value=NOTE_TEXT)
+        note_cell.font = NOTE_FONT
+        note_cell.fill = NOTE_FILL
+        note_cell.border = MEDIUM_BOX
+        note_cell.alignment = Alignment(wrap_text=True)
+        ws.merge_cells(start_row=NOTE_ROW, start_column=1,
+                       end_row=NOTE_ROW,   end_column=8)
+        ws.row_dimensions[NOTE_ROW].height = 30
 
-    # Also attach pop-up comments to the D, E, F column headers
-    MANUAL_COMMENT = ("Older values, not recently updated.\n"
-                      "Update manually for accurate AQS score.")
-    for col_letter in ("D", "E", "F"):
-        ws[f"{col_letter}1"].comment = Comment(MANUAL_COMMENT, "Script")
+        MANUAL_COMMENT = ("Older values, not recently updated.\n"
+                          "Update manually for accurate AQS score.")
+        for col_letter in ("D", "E", "F"):
+            ws[f"{col_letter}1"].comment = Comment(MANUAL_COMMENT, "Script")
 
     # ── Column widths & freeze ────────────────────────────────────────────────
     ws.column_dimensions["A"].width = 18
@@ -1561,7 +1854,38 @@ def main():
     os.makedirs("consolidation_report", exist_ok=True)
     write_excel(bq_rows, hang_rows, crash_rows, "consolidation_report/sentry_data.xlsx", firebase_data=firebase_data)
 
-    generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data)
+    # Fetch previous month data when showing dual-month tabs (days 3-6)
+    prev_bq_users_by_brand = prev_crash_by_brand = prev_hang_by_brand = prev_firebase_data = None
+    if SHOW_PREV_TAB:
+        print(f"\nFetching previous month data ({PREV_BQ_START} → {PREV_BQ_END})...")
+        prev_bq_rows = fetch_bigquery(PREV_BQ_START, PREV_BQ_END)
+
+        print("Fetching Sentry hangs for previous month...")
+        prev_raw_hang = fetch_discover_per_brand(HANGS_QUERY, start=PREV_START, end=PREV_END)
+        prev_hang_shaped = shape_rows(prev_raw_hang, "HANG_USERS")
+
+        print("Fetching Sentry crashes for previous month...")
+        prev_raw_crash = fetch_discover_per_brand(CRASHES_QUERY, environment="production",
+                                                   start=PREV_START, end=PREV_END)
+        prev_crash_shaped = shape_rows(prev_raw_crash, "CRASH_USERS")
+
+        prev_firebase_data = fetch_firebase_frames(PREV_BQ_START, PREV_BQ_END)
+
+        prev_bq_users_by_brand = {}
+        for row in prev_bq_rows:
+            key = (row["appId"] or "").lower()
+            prev_bq_users_by_brand[key] = prev_bq_users_by_brand.get(key, 0) + row["user_count"]
+
+        prev_crash_by_brand = aggregate_by_brand(prev_crash_shaped, "CRASH_USERS")
+        prev_hang_by_brand  = aggregate_by_brand(prev_hang_shaped,  "HANG_USERS")
+
+    generate_html_report(
+        bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data,
+        prev_bq_users=prev_bq_users_by_brand,
+        prev_crash=prev_crash_by_brand,
+        prev_hang=prev_hang_by_brand,
+        prev_firebase=prev_firebase_data,
+    )
 
 
 if __name__ == "__main__":
