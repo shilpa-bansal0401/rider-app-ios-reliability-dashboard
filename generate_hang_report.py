@@ -31,8 +31,6 @@ OUT_DIR = "hang_report"
 # Each entry needs a version string and the Sentry dist (build number).
 # Set to [] to auto-fetch the most recent releases from Sentry instead.
 PINNED_RELEASES = [
-    {"version": "4.2621.1", "dist": "985"},
-    {"version": "4.2622.1", "dist": "989"},
     {"version": "4.2623.1", "dist": "993"},
     {"version": "4.2624.1", "dist": "996"},
     {"version": "4.2625.3", "dist": "1002"},
