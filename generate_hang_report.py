@@ -20,6 +20,13 @@ import os
 import time
 import datetime
 
+try:
+    from google.cloud import bigquery as _bq
+    BQ_AVAILABLE = True
+except ImportError:
+    BQ_AVAILABLE = False
+    print("WARNING: google-cloud-bigquery not installed — device class fleet totals will be skipped.")
+
 # ── Config ────────────────────────────────────────────────────────────────────
 
 TOKEN   = os.environ.get("SENTRY_AUTH_TOKEN", "")
@@ -33,9 +40,9 @@ OUT_DIR = "hang_report"
 PINNED_RELEASES = [
     {"version": "4.2623.1", "dist": "993"},
     {"version": "4.2624.1", "dist": "996"},
-    {"version": "4.2625.3", "dist": "1002"},
     {"version": "4.2626.1", "dist": "1006"},
     {"version": "4.2627.1", "dist": "1010"},
+    {"version": "4.2628.1", "dist": "1014"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
@@ -328,6 +335,59 @@ def count_unique_users(query, start, end):
     return int(rows[0].get("count_unique(user)", 0)) if rows else 0
 
 
+# ── Device class helpers ──────────────────────────────────────────────────────
+# Uses Sentry's native device.class field: high | medium | low
+
+DEVICE_TIERS = [
+    {"key": "high",   "label": "High-end",  "color": "#6366f1"},
+    {"key": "medium", "label": "Mid-range", "color": "#f59e0b"},
+    {"key": "low",    "label": "Low-end",   "color": "#94a3b8"},
+]
+
+
+def fetch_bq_device_class_totals():
+    """
+    Distinct iOS riders per device class for yesterday.
+    Returns {"high": N, "medium": N, "low": N} or all zeros if BQ is unavailable.
+    """
+    if not BQ_AVAILABLE:
+        return {"high": 0, "medium": 0, "low": 0}
+    query = """
+        SELECT
+          CASE
+            WHEN NOT REGEXP_CONTAINS(device.mobileDeviceMarketingName, r'iPhone') THEN 'medium'
+            -- SE 3rd gen has A15 chip (= iPhone 13 class) → high
+            WHEN REGEXP_CONTAINS(device.mobileDeviceMarketingName, r'iPhone SE.*3rd') THEN 'high'
+            -- iPhone X era (X, XR, XS, XS Max): no clean model number → medium
+            WHEN REGEXP_CONTAINS(device.mobileDeviceMarketingName, r'iPhone X') THEN 'medium'
+            -- Matches Sentry device.class: high = A15+ (iPhone 13+), medium = A13–A14 (11–12), low = A12 and below
+            WHEN SAFE_CAST(
+              SUBSTR(REGEXP_REPLACE(device.mobileDeviceMarketingName, r'[^0-9]', ''), 1, 2) AS INT64
+            ) >= 13 THEN 'high'
+            WHEN SAFE_CAST(
+              SUBSTR(REGEXP_REPLACE(device.mobileDeviceMarketingName, r'[^0-9]', ''), 1, 2) AS INT64
+            ) >= 11 THEN 'medium'
+            ELSE 'low'
+          END AS device_class,
+          COUNT(DISTINCT clientId) AS daily_count
+        FROM `fulfillment-dwh-production.curated_data_shared_coredata_tracking.perseus_events_rider_app`
+        WHERE partition_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
+          AND platform = 'iOS'
+        GROUP BY device_class
+    """
+    try:
+        client = _bq.Client(project="logistics-rider-staging")
+        rows = list(client.query(query).result())
+        totals = {"high": 0, "medium": 0, "low": 0}
+        for row in rows:
+            if row.device_class in totals:
+                totals[row.device_class] = row.daily_count
+        return totals
+    except Exception as e:
+        print(f"WARNING: BigQuery device class fetch failed: {e}")
+        return {"high": 0, "medium": 0, "low": 0}
+
+
 def fetch_recent_releases(limit=8):
     """Return PINNED_RELEASES if configured, otherwise fetch from Sentry API."""
     if PINNED_RELEASES:
@@ -512,6 +572,40 @@ for rel in RELEASES:
     })
 
 
+# ── Overall hang-impacted riders per device class ─────────────────────────────
+# Yesterday only; single query per device class — no category breakdown.
+# Uses Sentry's native device.class field (high | medium | low).
+
+YESTERDAY           = (TODAY - datetime.timedelta(days=1))
+DEVICE_WINDOW_START = YESTERDAY.strftime("%Y-%m-%dT00:00:00")
+DEVICE_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
+device_class_sentry = {}
+
+print(f"\n── Device Class: overall hang-impacted riders ({YESTERDAY}) ──")
+for tier in DEVICE_TIERS:
+    discover_q = f'{DISCOVER_BASE_QUERY} device.class:{tier["key"]}'.strip()
+    link_q     = f'{BASE_QUERY} device.class:{tier["key"]}'.strip()
+    try:
+        users = count_unique_users(discover_q, DEVICE_WINDOW_START, DEVICE_WINDOW_END)
+        time.sleep(0.3)
+    except Exception as e:
+        print(f"  ERROR {tier['key']}: {e}")
+        users = 0
+    device_class_sentry[tier["key"]] = {"users": users, "query": link_q}
+    print(f"  {tier['key']:<10} {users:,} riders impacted")
+
+# Fetch total iOS riders per device class from BigQuery (yesterday's partition).
+print(f"\n── BigQuery: iOS riders per device class ({YESTERDAY}) ──")
+bq_device_totals = fetch_bq_device_class_totals()
+print(f"  {'Class':<10} {'Total riders':>14} {'Hang-impacted':>14} {'Impact rate':>12}")
+print(f"  {'-'*52}")
+for tier in DEVICE_TIERS:
+    total    = bq_device_totals[tier["key"]]
+    impacted = device_class_sentry[tier["key"]]["users"]
+    rate     = f"{impacted / total * 100:.2f}%" if total > 0 else "—"
+    print(f"  {tier['key']:<10} {total:>14,} {impacted:>14,} {rate:>12}")
+
+
 # ── Build JS data ─────────────────────────────────────────────────────────────
 
 months_js = json.dumps([
@@ -594,6 +688,18 @@ release_categories_js = json.dumps([
     for r in all_release_cat_results
 ], indent=2)
 
+
+device_class_js = json.dumps([
+    {
+        "key":            tier["key"],
+        "label":          tier["label"],
+        "color":          tier["color"],
+        "impacted_users": device_class_sentry[tier["key"]]["users"],
+        "query":          device_class_sentry[tier["key"]]["query"],
+        "total_riders":   bq_device_totals[tier["key"]],
+    }
+    for tier in DEVICE_TIERS
+], indent=2)
 
 month_tabs_html = "\n".join(
     f'  <div class="tab" data-panel="month-{i}">{m["short"]}{" (partial)" if i == len(MONTHS) - 1 else ""}</div>'
@@ -724,6 +830,7 @@ html = f"""<!DOCTYPE html>
   <div class="tab" data-panel="releases">By Release</div>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
   <div class="tab" data-panel="release-categories">Categories by Release</div>
+  <div class="tab" data-panel="device-class">Device Class</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -799,6 +906,33 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
+<div class="panel" id="panel-device-class">
+  <p style="font-size:13px;color:#666;margin-bottom:16px;">
+    Overall hang-impacted riders per device class — last 30 days &nbsp;|&nbsp;
+    <strong>High-end:</strong> iPhone 13+ (A15+) &nbsp;·&nbsp;
+    <strong>Mid-range:</strong> iPhone 11–12 &amp; X/XR/XS (A11–A14) &nbsp;·&nbsp;
+    <strong>Low-end:</strong> iPhone 10 &amp; older &nbsp;|&nbsp;
+    Riders from BigQuery (yesterday) · Hang-impacted from Sentry device.class (yesterday) · Click count to open Sentry
+  </p>
+
+  <div class="weekly-summary" id="device-class-fleet-summary"></div>
+
+  <div class="weekly-chart-wrap">
+    <canvas id="device-class-chart"></canvas>
+  </div>
+  <table class="compare-table" id="device-class-table">
+    <thead>
+      <tr>
+        <th>Device Class</th>
+        <th class="num">Avg Daily Riders</th>
+        <th class="num">Hang-impacted</th>
+        <th class="num">Impact Rate</th>
+      </tr>
+    </thead>
+    <tbody id="device-class-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -807,7 +941,9 @@ html = f"""<!DOCTYPE html>
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
   <br>• <strong>{current_month_note}</strong> Earlier months in this report are complete months.
+  <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
+  <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
 </div>
 
 <script>
@@ -820,6 +956,7 @@ const WEEKS               = {weeks_js};
 const RELEASES            = {releases_js};
 const RELEASE_WEEKLY      = {release_weekly_js};
 const RELEASE_CATEGORIES  = {release_categories_js};
+const DEVICE_CLASS        = {device_class_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -1460,6 +1597,129 @@ MONTHS.forEach((month, mi) => {{
     renderTable(month.categories);
   }});
 }});
+
+// ── Device Class Distribution tab ────────────────────────────────────────────
+(function() {{
+  if (!DEVICE_CLASS.length) {{
+    document.getElementById("panel-device-class").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No device class data available — re-run the report generator.</p>';
+    return;
+  }}
+
+  function openSentry(tier) {{
+    const p = new URLSearchParams({{
+      environment: "production",
+      project: PROJECT_ID,
+      query: tier.query,
+      start: "{DEVICE_WINDOW_START}",
+      end:   "{DEVICE_WINDOW_END}",
+    }});
+    window.open(BASE_URL + "?" + p.toString(), "_blank");
+  }}
+
+  // ── Fleet summary cards ────────────────────────────────────────────────────
+  const fleetSummary = document.getElementById("device-class-fleet-summary");
+  DEVICE_CLASS.forEach(tier => {{
+    const total    = tier.total_riders;
+    const impacted = tier.impacted_users;
+    const rate     = total > 0 ? (impacted / total * 100).toFixed(2) + "%" : "—";
+    const card = document.createElement("div");
+    card.className = "weekly-card";
+    card.innerHTML = `
+      <div class="week-name" style="color:${{tier.color}};font-weight:700">${{tier.label}}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:6px;line-height:1.8">
+        <span style="display:block">Avg daily riders: <strong>${{total > 0 ? total.toLocaleString() : "—"}}</strong></span>
+        <span style="display:block">Hang-impacted: <strong>${{impacted.toLocaleString()}}</strong></span>
+        <span style="display:block;margin-top:4px;font-size:14px;font-weight:700;color:#111">
+          ${{rate}} hang rate
+        </span>
+      </div>`;
+    fleetSummary.appendChild(card);
+  }});
+
+  // ── Simple 3-bar chart ─────────────────────────────────────────────────────
+  new Chart(document.getElementById("device-class-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels: DEVICE_CLASS.map(t => t.label),
+      datasets: [{{
+        label: "Hang-impacted riders",
+        data: DEVICE_CLASS.map(t => t.impacted_users),
+        backgroundColor: DEVICE_CLASS.map(t => t.color),
+        borderColor: DEVICE_CLASS.map(t => t.color),
+        borderWidth: 1,
+        borderRadius: 4,
+      }}],
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{
+          callbacks: {{
+            label: ctx => {{
+              const tier = DEVICE_CLASS[ctx.dataIndex];
+              const rate = tier.total_riders > 0
+                ? ` (${{(ctx.parsed.y / tier.total_riders * 100).toFixed(2)}}% of fleet)`
+                : "";
+              return ` ${{ctx.parsed.y.toLocaleString()}} riders impacted${{rate}}`;
+            }}
+          }}
+        }}
+      }},
+      scales: {{
+        x: {{ grid: {{ display: false }}, ticks: {{ font: {{ size: 12 }} }} }},
+        y: {{ beginAtZero: true,
+               title: {{ display: true, text: "Riders impacted", font: {{ size: 11 }} }} }}
+      }},
+      onClick: (evt, elements) => {{
+        if (elements.length) openSentry(DEVICE_CLASS[elements[0].index]);
+      }}
+    }}
+  }});
+
+  // ── 3-row table: Device Class | Total Riders | Hang-impacted | Impact Rate ─
+  const tbody = document.getElementById("device-class-tbody");
+  DEVICE_CLASS.forEach(tier => {{
+    const total    = tier.total_riders;
+    const impacted = tier.impacted_users;
+    const rate     = total > 0 ? (impacted / total * 100).toFixed(2) + "%" : "—";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><div class="td-group">
+        <span class="swatch" style="background:${{tier.color}}"></span>
+        <span style="font-weight:600;color:${{tier.color}}">${{tier.label}}</span>
+      </div></td>
+      <td class="num">${{total > 0 ? total.toLocaleString() : "—"}}</td>
+      <td class="num cell-link" title="Open ${{tier.label}} hangs in Sentry">
+        ${{impacted.toLocaleString()}}
+      </td>
+      <td class="num">
+        <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
+          ${{rate}}
+        </span>
+      </td>`;
+    tr.querySelectorAll("td")[2].addEventListener("click", () => openSentry(tier));
+    tbody.appendChild(tr);
+  }});
+
+  const grandTotal    = DEVICE_CLASS.reduce((s, t) => s + t.total_riders,   0);
+  const grandImpacted = DEVICE_CLASS.reduce((s, t) => s + t.impacted_users, 0);
+  const grandRate     = grandTotal > 0 ? (grandImpacted / grandTotal * 100).toFixed(2) + "%" : "—";
+  const trTotal = document.createElement("tr");
+  trTotal.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  trTotal.innerHTML = `
+    <td>Total</td>
+    <td class="num">${{grandTotal > 0 ? grandTotal.toLocaleString() : "—"}}</td>
+    <td class="num">${{grandImpacted.toLocaleString()}}</td>
+    <td class="num">
+      <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
+        ${{grandRate}}
+      </span>
+    </td>`;
+  tbody.appendChild(trTotal);
+}})();
 </script>
 </body>
 </html>"""
