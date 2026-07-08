@@ -1527,13 +1527,13 @@ def add_consolidation_sheet(wb, firebase_data=None):
 
     # ── AQS row (row 13) ─────────────────────────────────────────────────────
     aqs_formulas = {
-        2: f"=ROUND(MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*0.35,2)",
-        3: f"=ROUND(MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*0.25,2)",
-        4: f"=ROUND(MIN(100,MAX(0,(((D{AVG_ROW}-75)/(60-75))*50)+50))*0.02,2)",
-        5: f"=ROUND(MIN(100,MAX(0,(((E{AVG_ROW}-4)/(2-4))*50)+50))*0.10,2)",
-        6: f"=ROUND(MIN(100,MAX(0,(((F{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*0.10,2)",
-        7: f"=ROUND(MIN(100,MAX(0,(((G{AVG_ROW}-3)/(1-3))*50)+50))*0.13,2)",
-        8: f"=ROUND(MIN(100,MAX(0,(((H{AVG_ROW}-2)/(1-2))*50)+50))*0.05,2)",
+        2: f"=MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*35%",
+        3: f"=MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*25%",
+        4: f"=MIN(100,MAX(0,(((D{AVG_ROW}-75)/(60-75))*50)+50))*2%",
+        5: f"=MIN(100,MAX(0,(((E{AVG_ROW}-4)/(2-4))*50)+50))*10%",
+        6: f"=MIN(100,MAX(0,(((F{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*10%",
+        7: f"=MIN(100,MAX(0,(((G{AVG_ROW}-3)/(1-3))*50)+50))*13%",
+        8: f"=MIN(100,MAX(0,(((H{AVG_ROW}-2)/(1-2))*50)+50))*5%",
     }
     ws.cell(AQS_ROW, 1, value="AQS").font = BOLD
     ws.cell(AQS_ROW, 1).fill = SUMMARY_VAL_FILL

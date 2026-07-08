@@ -219,7 +219,7 @@ CATEGORIES = [
         "key":      "location",
         "label":    "Location",
         "color":    "#B2F2EF", # Pastel Turquoise
-        "filters":  ["stack.package:*CoreLocation*", "stack.function:*CLLocation*"],
+        "filters":  ["stack.package:*CoreLocation*", "stack.function:*CLLocation*", "stack.function:*CLClientCreateWithBundleIdentifierAndPathWithWebsiteOnSilo*"],
         "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreLocation*",
         "culprits": [
@@ -248,7 +248,7 @@ CATEGORIES = [
         "color":    "#97EDEA", # Pastel Aqua
         "filters":  [
             "stack.package:*ARKit*", "stack.function:*ARSession*",
-            "stack.function:*CameraProvider*",
+            "stack.function:*CameraProvider*", "stack.function:*QRScanCameraOverlayView*",
         ],
         "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*ARKit*",
