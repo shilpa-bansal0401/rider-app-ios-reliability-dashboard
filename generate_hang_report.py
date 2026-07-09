@@ -42,7 +42,7 @@ PINNED_RELEASES = [
     {"version": "4.2624.1", "dist": "996"},
     {"version": "4.2626.1", "dist": "1006"},
     {"version": "4.2627.1", "dist": "1010"},
-    {"version": "4.2628.1", "dist": "1014"},
+    {"version": "4.2628", "dists": ["1014", "1016"]},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
@@ -388,14 +388,31 @@ def fetch_bq_device_class_totals():
         return {"high": 0, "medium": 0, "low": 0}
 
 
+def rel_filter_str(rel):
+    """Build Sentry filter for a release entry (handles single dist or multiple dists)."""
+    dists = rel.get("dists")
+    d = rel.get("dist")
+    v = rel.get("version")
+    if dists:
+        return "(" + " OR ".join(f"dist:{dd}" for dd in dists) + ")"
+    elif d:
+        return f"dist:{d}"
+    return f"release:{v}"
+
+
 def fetch_recent_releases(limit=8):
     """Return PINNED_RELEASES if configured, otherwise fetch from Sentry API."""
     if PINNED_RELEASES:
-        return [
-            {"version": r["version"], "dist": r["dist"],
-             "label": r["version"], "short": r["version"]}
-            for r in PINNED_RELEASES
-        ]
+        result = []
+        for r in PINNED_RELEASES:
+            entry = {"version": r["version"], "label": r["version"], "short": r["version"]}
+            if r.get("dists"):
+                entry["dist"] = None
+                entry["dists"] = r["dists"]
+            else:
+                entry["dist"] = r.get("dist")
+            result.append(entry)
+        return result
     params = urllib.parse.urlencode([
         ("project", PROJECT),
         ("limit",   str(limit)),
@@ -481,11 +498,11 @@ all_release_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f'is:unresolved "*App Hang* detected*" {rel_filter}'.strip()
     discover_q = f'"*App Hang* detected*" {rel_filter}'.strip()
-    print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
+    dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
+    print(f"\n── Release {v} (dist {dists_str}) ──")
     try:
         users = count_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
         time.sleep(0.5)
@@ -507,8 +524,7 @@ all_release_weekly = []
 
 for rel in RELEASE_WEEKLY_RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f'{RELEASE_WEEKLY_QUERY} {rel_filter}'.strip()
     print(f"\n── Release weekly: {v} ──")
 
@@ -541,9 +557,9 @@ all_release_cat_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
-    print(f"\n── Categories by Release: {v} (dist {d}) ──" if d else f"\n── Categories by Release: {v} ──")
+    rel_filter = rel_filter_str(rel)
+    dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
+    print(f"\n── Categories by Release: {v} (dist {dists_str}) ──")
 
     cumulative_excl = ""
     results = []

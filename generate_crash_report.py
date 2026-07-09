@@ -43,7 +43,7 @@ PINNED_RELEASES = [
     {"version": "4.2624.1", "dist": "996"},
     {"version": "4.2626.1", "dist": "1006"},
     {"version": "4.2627.1", "dist": "1010"},
-    {"version": "4.2628.1", "dist": "1014"},
+    {"version": "4.2628", "dists": ["1014", "1016"]},
 ]
 
 # ── Months to analyze ─────────────────────────────────────────────────────────
@@ -132,14 +132,31 @@ def get_last_4_weeks():
 WEEKS = get_last_4_weeks()
 
 
+def rel_filter_str(rel):
+    """Build Sentry filter for a release entry (handles single dist or multiple dists)."""
+    dists = rel.get("dists")
+    d = rel.get("dist")
+    v = rel.get("version")
+    if dists:
+        return "(" + " OR ".join(f"dist:{dd}" for dd in dists) + ")"
+    elif d:
+        return f"dist:{d}"
+    return f"release:{v}"
+
+
 def fetch_recent_releases(limit=8):
     """Return PINNED_RELEASES if configured, otherwise fetch from Sentry API."""
     if PINNED_RELEASES:
-        return [
-            {"version": r["version"], "dist": r["dist"],
-             "label": r["version"], "short": r["version"]}
-            for r in PINNED_RELEASES
-        ]
+        result = []
+        for r in PINNED_RELEASES:
+            entry = {"version": r["version"], "label": r["version"], "short": r["version"]}
+            if r.get("dists"):
+                entry["dist"] = None
+                entry["dists"] = r["dists"]
+            else:
+                entry["dist"] = r.get("dist")
+            result.append(entry)
+        return result
     params = urllib.parse.urlencode([
         ("project", PROJECT),
         ("limit",   str(limit)),
@@ -446,11 +463,11 @@ all_release_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f"{BASE_QUERY} {rel_filter}".strip()
     discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
-    print(f"\n── Release {v} (dist {d}) ──" if d else f"\n── Release {v} ──")
+    dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
+    print(f"\n── Release {v} (dist {dists_str}) ──")
     try:
         users = fetch_unique_users(discover_q, RELEASE_WINDOW_START, RELEASE_WINDOW_END)
     except Exception as e:
@@ -472,8 +489,7 @@ all_release_weekly = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f"{BASE_QUERY} {rel_filter}".strip()
     discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter}".strip()
     print(f"\n── Release weekly: {v} ──")
@@ -506,11 +522,11 @@ all_watchdog_release_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f"{BASE_QUERY} {rel_filter} {WATCHDOG_FILTER}".strip()
     discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter} {WATCHDOG_FILTER}".strip()
-    print(f"\n── Watchdog Release {v} (dist {d}) ──" if d else f"\n── Watchdog Release {v} ──")
+    dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
+    print(f"\n── Watchdog Release {v} (dist {dists_str}) ──")
     try:
         users = fetch_unique_users(discover_q, WATCHDOG_WINDOW_START, WATCHDOG_WINDOW_END)
     except Exception as e:
@@ -536,11 +552,11 @@ all_mapbox_release_results = []
 
 for rel in RELEASES:
     v          = rel["version"]
-    d          = rel.get("dist")
-    rel_filter = f"dist:{d}" if d else f"release:{v}"
+    rel_filter = rel_filter_str(rel)
     link_query = f"{BASE_QUERY} {rel_filter} Mapbox".strip()
     discover_q = f"{DISCOVER_BASE_QUERY} {rel_filter} {MAPBOX_FILTER}".strip()
-    print(f"\n── Mapbox Release {v} (dist {d}) ──" if d else f"\n── Mapbox Release {v} ──")
+    dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
+    print(f"\n── Mapbox Release {v} (dist {dists_str}) ──")
     try:
         users = fetch_unique_users(discover_q, MAPBOX_WINDOW_START, MAPBOX_WINDOW_END)
     except Exception as e:
