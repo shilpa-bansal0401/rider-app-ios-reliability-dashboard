@@ -104,7 +104,7 @@
 <h1>Fatal Crash Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>level:fatal handled:no</code> &nbsp;|&nbsp;
-  Data fetched: 10 Jul 2026 &nbsp;|&nbsp;
+  Data fetched: 11 Jul 2026 &nbsp;|&nbsp;
   Months: Apr 2026 · May 2026 · Jun 2026 · Jul 2026
 </p>
 
@@ -268,7 +268,7 @@
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
      Priority: QUIC Protocol › Data Sync Upload › Watchdog/Fatal Hangs › Mapbox › Location › Core Logic/Concurrency › UIKit/Foundation.
   <br>• <strong>Filter:</strong> <code>level:fatal handled:no</code> — actionable unresolved fatal crashes where the event is unhandled.
-  <br>• <strong>Jul 2026 is a partial month (data up to 10 Jul 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>Jul 2026 is a partial month (data up to 11 Jul 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Device Class tab:</strong> both crash-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
   <br>• <strong>Delta arrows:</strong> ▲ = more users impacted (worse), ▼ = fewer (better).
   <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
@@ -283,7 +283,7 @@ const MONTHS          = [
   {
     "label": "April 2026",
     "short": "Apr 2026",
-    "total": 2952,
+    "total": 2850,
     "start": "2026-04-01T00:00:00",
     "end": "2026-05-01T00:00:00",
     "categories": [
@@ -291,7 +291,7 @@ const MONTHS          = [
         "key": "quic",
         "label": "QUIC Protocol",
         "color": "#A0C4FF",
-        "users": 590,
+        "users": 568,
         "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
         "culprits": [
           "QUIC protocol errors",
@@ -303,7 +303,7 @@ const MONTHS          = [
         "key": "data_sync",
         "label": "Data Sync Upload",
         "color": "#BDE0FE",
-        "users": 256,
+        "users": 244,
         "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
         "culprits": [
           "Data sync upload",
@@ -315,7 +315,7 @@ const MONTHS          = [
         "key": "watchdog",
         "label": "Watchdog / Fatal Hangs",
         "color": "#FFADAD",
-        "users": 1139,
+        "users": 1104,
         "query": "is:unresolved level:fatal handled:no  error.mechanism:watchdog_termination",
         "culprits": [
           "Watchdog termination",
@@ -327,7 +327,7 @@ const MONTHS          = [
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFD6A5",
-        "users": 964,
+        "users": 931,
         "query": "is:unresolved level:fatal handled:no  Mapbox",
         "culprits": [
           "Mapbox SDK",
@@ -565,15 +565,15 @@ const MONTHS          = [
   {
     "label": "July 2026",
     "short": "Jul 2026",
-    "total": 1725,
+    "total": 1866,
     "start": "2026-07-01T00:00:00",
-    "end": "2026-07-11T00:00:00",
+    "end": "2026-07-12T00:00:00",
     "categories": [
       {
         "key": "quic",
         "label": "QUIC Protocol",
         "color": "#A0C4FF",
-        "users": 112,
+        "users": 122,
         "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
         "culprits": [
           "QUIC protocol errors",
@@ -597,7 +597,7 @@ const MONTHS          = [
         "key": "watchdog",
         "label": "Watchdog / Fatal Hangs",
         "color": "#FFADAD",
-        "users": 1591,
+        "users": 1710,
         "query": "is:unresolved level:fatal handled:no  error.mechanism:watchdog_termination",
         "culprits": [
           "Watchdog termination",
@@ -609,7 +609,7 @@ const MONTHS          = [
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFD6A5",
-        "users": 11,
+        "users": 23,
         "query": "is:unresolved level:fatal handled:no  Mapbox",
         "culprits": [
           "Mapbox SDK",
@@ -941,17 +941,17 @@ const WEEKS           = [
     ]
   },
   {
-    "label": "Jul 06 - Jul 10 (partial)",
+    "label": "Jul 06 - Jul 11 (partial)",
     "short": "Jul 06",
-    "total": 831,
+    "total": 982,
     "start": "2026-07-06T00:00:00",
-    "end": "2026-07-11T00:00:00",
+    "end": "2026-07-12T00:00:00",
     "categories": [
       {
         "key": "quic",
         "label": "QUIC Protocol",
         "color": "#A0C4FF",
-        "users": 54,
+        "users": 64,
         "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
         "culprits": [
           "QUIC protocol errors",
@@ -975,7 +975,7 @@ const WEEKS           = [
         "key": "watchdog",
         "label": "Watchdog / Fatal Hangs",
         "color": "#FFADAD",
-        "users": 770,
+        "users": 902,
         "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* error.mechanism:watchdog_termination",
         "culprits": [
           "Watchdog termination",
@@ -987,7 +987,7 @@ const WEEKS           = [
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFD6A5",
-        "users": 2,
+        "users": 11,
         "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination Mapbox",
         "culprits": [
           "Mapbox SDK",
@@ -1039,46 +1039,46 @@ const RELEASES        = [
   {
     "label": "4.2623.1",
     "short": "4.2623.1",
-    "users": 2152,
+    "users": 2156,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:993"
   },
   {
     "label": "4.2624.1",
     "short": "4.2624.1",
-    "users": 3186,
+    "users": 3194,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:996"
   },
   {
     "label": "4.2626.1",
     "short": "4.2626.1",
-    "users": 2760,
+    "users": 2791,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1006"
   },
   {
     "label": "4.2627.1",
     "short": "4.2627.1",
-    "users": 1155,
+    "users": 1269,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1010"
   },
   {
     "label": "4.2628",
     "short": "4.2628",
-    "users": 199,
+    "users": 285,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no (dist:1014 OR dist:1016)"
   }
 ];
@@ -1090,7 +1090,7 @@ const RELEASE_WEEKLY    = [
       264,
       139,
       84,
-      41
+      44
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:993"
   },
@@ -1101,7 +1101,7 @@ const RELEASE_WEEKLY    = [
       1458,
       1165,
       242,
-      73
+      83
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:996"
   },
@@ -1110,9 +1110,9 @@ const RELEASE_WEEKLY    = [
     "short": "4.2626.1",
     "week_users": [
       0,
-      1437,
+      1438,
       1102,
-      309
+      345
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1006"
   },
@@ -1123,7 +1123,7 @@ const RELEASE_WEEKLY    = [
       0,
       0,
       567,
-      709
+      810
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1010"
   },
@@ -1134,7 +1134,7 @@ const RELEASE_WEEKLY    = [
       0,
       0,
       0,
-      250
+      327
     ],
     "link_query": "is:unresolved level:fatal handled:no (dist:1014 OR dist:1016)"
   }
@@ -1145,44 +1145,44 @@ const WATCHDOG_RELEASES = [
     "short": "4.2623.1",
     "users": 1011,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:993 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2624.1",
     "short": "4.2624.1",
-    "users": 1488,
+    "users": 1492,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:996 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2626.1",
     "short": "4.2626.1",
-    "users": 796,
+    "users": 807,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1006 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2627.1",
     "short": "4.2627.1",
-    "users": 631,
+    "users": 694,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1010 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2628",
     "short": "4.2628",
-    "users": 81,
+    "users": 123,
     "issues": 0,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no (dist:1014 OR dist:1016) error.mechanism:watchdog_termination"
   }
 ];
@@ -1190,41 +1190,41 @@ const MAPBOX_RELEASES   = [
   {
     "label": "4.2623.1",
     "short": "4.2623.1",
-    "users": 234,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "users": 235,
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:993 Mapbox"
   },
   {
     "label": "4.2624.1",
     "short": "4.2624.1",
-    "users": 489,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "users": 491,
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:996 Mapbox"
   },
   {
     "label": "4.2626.1",
     "short": "4.2626.1",
-    "users": 262,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "users": 266,
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1006 Mapbox"
   },
   {
     "label": "4.2627.1",
     "short": "4.2627.1",
-    "users": 25,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "users": 29,
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1010 Mapbox"
   },
   {
     "label": "4.2628",
     "short": "4.2628",
-    "users": 3,
-    "start": "2026-04-11T00:00:00",
-    "end": "2026-07-10T00:00:00",
+    "users": 4,
+    "start": "2026-04-12T00:00:00",
+    "end": "2026-07-11T00:00:00",
     "query": "is:unresolved level:fatal handled:no (dist:1014 OR dist:1016) Mapbox"
   }
 ];
@@ -1233,7 +1233,7 @@ const DEVICE_CLASS      = [
     "key": "high",
     "label": "High-end",
     "color": "#6366f1",
-    "impacted_users": 209,
+    "impacted_users": 156,
     "query": "is:unresolved level:fatal handled:no device.class:high",
     "total_riders": 0
   },
@@ -1241,7 +1241,7 @@ const DEVICE_CLASS      = [
     "key": "medium",
     "label": "Mid-range",
     "color": "#f59e0b",
-    "impacted_users": 169,
+    "impacted_users": 150,
     "query": "is:unresolved level:fatal handled:no device.class:medium",
     "total_riders": 0
   },
@@ -1249,7 +1249,7 @@ const DEVICE_CLASS      = [
     "key": "low",
     "label": "Low-end",
     "color": "#94a3b8",
-    "impacted_users": 3,
+    "impacted_users": 2,
     "query": "is:unresolved level:fatal handled:no device.class:low",
     "total_riders": 0
   }
@@ -1937,8 +1937,8 @@ MONTHS.forEach(m => {
       environment: "production",
       project: PROJECT_ID,
       query: tier.query,
-      start: "2026-07-09T00:00:00",
-      end:   "2026-07-10T00:00:00",
+      start: "2026-07-10T00:00:00",
+      end:   "2026-07-11T00:00:00",
     });
     window.open(BASE_URL + "?" + p.toString(), "_blank");
   }
