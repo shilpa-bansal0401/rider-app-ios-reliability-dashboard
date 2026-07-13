@@ -913,11 +913,11 @@ html = f"""<!DOCTYPE html>
 {month_tabs_html}
   <!-- <div class="tab" data-panel="weekly">Weekly Trend</div> -->
   <div class="tab" data-panel="releases">Release Trend</div>
+  <div class="tab" data-panel="country">By Country</div>
   <!-- <div class="tab" data-panel="release-weekly">Release Weekly</div> -->
   <div class="tab" data-panel="watchdog-releases">Watchdog by Release</div>
   <div class="tab" data-panel="mapbox-releases">Mapbox by Release</div>
   <div class="tab" data-panel="device-class">Device Class</div>
-  <div class="tab" data-panel="country">By Country</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -1905,7 +1905,11 @@ MONTHS.forEach(m => {{
     return;
   }}
 
-  const countries   = COUNTRY_DATA.countries;
+  const countries   = [...COUNTRY_DATA.countries].sort((a, b) => {{
+    const rateA = a.total_riders > 0 ? a.users / a.total_riders : 0;
+    const rateB = b.total_riders > 0 ? b.users / b.total_riders : 0;
+    return rateB - rateA;
+  }});
   const totalImpact = countries.reduce((s, c) => s + c.users, 0);
   const totalRiders = countries.reduce((s, c) => s + c.total_riders, 0);
   const top         = countries.slice(0, 30);
@@ -1928,8 +1932,8 @@ MONTHS.forEach(m => {{
     data: {{
       labels: top.map(c => c.country_code),
       datasets: [{{
-        label: "Crash-impacted riders",
-        data:  top.map(c => c.users),
+        label: "Crash impact rate (%)",
+        data:  top.map(c => c.total_riders > 0 ? parseFloat((c.users / c.total_riders * 100).toFixed(2)) : 0),
         backgroundColor: top.map((_, i) => PALETTE[i % PALETTE.length]),
         borderRadius: 3,
         borderWidth: 0,
@@ -1944,17 +1948,16 @@ MONTHS.forEach(m => {{
         tooltip: {{
           callbacks: {{
             label: ctx => {{
-              const c    = top[ctx.dataIndex];
+              const c = top[ctx.dataIndex];
               const rate = impactRate(c.users, c.total_riders);
-              const riders = c.total_riders > 0 ? ` of ${{c.total_riders.toLocaleString()}} (rate: ${{rate}})` : "";
-              return ` ${{ctx.parsed.x.toLocaleString()}} impacted${{riders}}`;
+              return ` ${{rate}} (${{c.users.toLocaleString()}} of ${{c.total_riders.toLocaleString()}} riders)`;
             }}
           }}
         }}
       }},
       scales: {{
         x: {{ beginAtZero: true,
-               title: {{ display: true, text: "Crash-impacted riders", font: {{ size: 11 }} }},
+               title: {{ display: true, text: "Crash impact rate (%)", font: {{ size: 11 }} }},
                ticks: {{ font: {{ size: 11 }} }} }},
         y: {{ ticks: {{ font: {{ size: 11 }} }}, grid: {{ display: false }} }}
       }},
