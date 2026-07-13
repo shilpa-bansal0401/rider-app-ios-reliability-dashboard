@@ -622,6 +622,68 @@ for tier in DEVICE_TIERS:
     print(f"  {tier['key']:<10} {total:>14,} {impacted:>14,} {rate:>12}")
 
 
+# ── Hang-impacted riders by country for current month ─────────────────────────
+CURRENT_MONTH        = MONTHS[-1]
+COUNTRY_WINDOW_START = CURRENT_MONTH["start"]
+COUNTRY_WINDOW_END   = CURRENT_MONTH["end"]
+
+
+def fetch_bq_country_totals():
+    """iOS rider count per country_code from BigQuery — same window as Sentry hang data."""
+    if not BQ_AVAILABLE:
+        return {}
+    month_start = COUNTRY_WINDOW_START[:10]
+    month_end   = COUNTRY_WINDOW_END[:10]
+    query = f"""
+        SELECT
+          country_code,
+          COUNT(DISTINCT rider_id) AS rider_count
+        FROM `fulfillment-dwh-production.cl.rider_devices` d
+        WHERE d.created_date >= "{month_start}"
+          AND d.created_date < "{month_end}"
+          AND device.operating_system LIKE "%iOS%"
+        GROUP BY country_code
+        ORDER BY rider_count DESC
+    """
+    try:
+        client = _bq.Client(project="logistics-rider-staging")
+        rows = list(client.query(query).result())
+        return {row.country_code: row.rider_count for row in rows if row.country_code}
+    except Exception as e:
+        print(f"WARNING: BigQuery country totals fetch failed: {e}")
+        return {}
+
+
+print(f"\n── BigQuery: iOS riders per country ({CURRENT_MONTH['label']}) ──")
+bq_country_totals = fetch_bq_country_totals()
+print(f"  {len(bq_country_totals)} countries found in BigQuery")
+
+print(f"\n── Country breakdown: hang-impacted riders ({CURRENT_MONTH['label']}) ──")
+print(f"  {'Country':<6} {'Total riders':>14} {'Hang-impacted':>14} {'Impact rate':>12}")
+print(f"  {'-'*50}")
+country_breakdown = []
+for code, total_riders in sorted(bq_country_totals.items(), key=lambda x: -x[1]):
+    code_lower = code.lower()
+    discover_q = f'{DISCOVER_BASE_QUERY} country:{code_lower}'
+    link_q     = f'{BASE_QUERY} country:{code_lower}'
+    try:
+        users = count_unique_users(discover_q, COUNTRY_WINDOW_START, COUNTRY_WINDOW_END)
+        time.sleep(0.3)
+    except Exception as e:
+        print(f"  ERROR {code_lower}: {e}")
+        users = 0
+    rate = f"{users / total_riders * 100:.2f}%" if total_riders > 0 else "—"
+    print(f"  {code_lower:<6} {total_riders:>14,} {users:>14,} {rate:>12}")
+    country_breakdown.append({
+        "country_code": code_lower,
+        "users":        users,
+        "total_riders": total_riders,
+        "query":        link_q,
+    })
+
+country_breakdown.sort(key=lambda x: -x["users"])
+
+
 # ── Build JS data ─────────────────────────────────────────────────────────────
 
 months_js = json.dumps([
@@ -716,6 +778,14 @@ device_class_js = json.dumps([
     }
     for tier in DEVICE_TIERS
 ], indent=2)
+
+
+country_js = json.dumps({
+    "month": CURRENT_MONTH["label"],
+    "start": COUNTRY_WINDOW_START,
+    "end":   COUNTRY_WINDOW_END,
+    "countries": country_breakdown,
+}, indent=2)
 
 month_tabs_html = "\n".join(
     f'  <div class="tab" data-panel="month-{i}">{m["short"]}{" (partial)" if i == len(MONTHS) - 1 else ""}</div>'
@@ -847,6 +917,7 @@ html = f"""<!DOCTYPE html>
   <div class="tab" data-panel="release-weekly">Release Weekly</div>
   <div class="tab" data-panel="release-categories">Categories by Release</div>
   <div class="tab" data-panel="device-class">Device Class</div>
+  <div class="tab" data-panel="country">By Country</div>
 </div>
 
 <div class="panel active" id="panel-overview">
@@ -949,6 +1020,28 @@ html = f"""<!DOCTYPE html>
   </table>
 </div>
 
+<div class="panel" id="panel-country">
+  <p style="font-size:13px;color:#666;margin-bottom:16px;">
+    Hang-impacted riders by <code>country_code</code> — {CURRENT_MONTH["label"]} (partial, data up to {fetch_date}) &nbsp;|&nbsp;
+    Total riders from BigQuery (<code>rider_devices</code>, iOS, {COUNTRY_WINDOW_START[:10]} – {COUNTRY_WINDOW_END[:10]}) &nbsp;|&nbsp;
+    Click any row to open Sentry filtered by that country
+  </p>
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin-bottom:24px;overflow:auto;">
+    <canvas id="country-chart" style="max-width:100%;height:600px !important;"></canvas>
+  </div>
+  <table class="compare-table" id="country-table">
+    <thead>
+      <tr>
+        <th>Country Code</th>
+        <th class="num">Total iOS Riders</th>
+        <th class="num">Hang-impacted</th>
+        <th class="num">Impact Rate</th>
+      </tr>
+    </thead>
+    <tbody id="country-tbody"></tbody>
+  </table>
+</div>
+
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
@@ -973,6 +1066,7 @@ const RELEASES            = {releases_js};
 const RELEASE_WEEKLY      = {release_weekly_js};
 const RELEASE_CATEGORIES  = {release_categories_js};
 const DEVICE_CLASS        = {device_class_js};
+const COUNTRY_DATA        = {country_js};
 
 function sentryURL(row, month) {{
   const p = new URLSearchParams({{
@@ -1729,6 +1823,125 @@ MONTHS.forEach((month, mi) => {{
     <td>Total</td>
     <td class="num">${{grandTotal > 0 ? grandTotal.toLocaleString() : "—"}}</td>
     <td class="num">${{grandImpacted.toLocaleString()}}</td>
+    <td class="num">
+      <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
+        ${{grandRate}}
+      </span>
+    </td>`;
+  tbody.appendChild(trTotal);
+}})();
+
+// ── By Country tab ───────────────────────────────────────────────────────────
+(function() {{
+  if (!COUNTRY_DATA.countries || !COUNTRY_DATA.countries.length) {{
+    document.getElementById("panel-country").innerHTML =
+      '<p style="color:#9ca3af;padding:24px;">No country data available — re-run the report generator.</p>';
+    return;
+  }}
+
+  const countries    = COUNTRY_DATA.countries;
+  const totalImpact  = countries.reduce((s, c) => s + c.users, 0);
+  const totalRiders  = countries.reduce((s, c) => s + c.total_riders, 0);
+  const top          = countries.slice(0, 30);
+
+  const PALETTE = [
+    "#6366f1","#f59e0b","#10b981","#ef4444","#8b5cf6",
+    "#0ea5e9","#f97316","#14b8a6","#ec4899","#64748b",
+    "#84cc16","#a78bfa","#fb923c","#34d399","#f472b6",
+    "#38bdf8","#fbbf24","#4ade80","#f87171","#a3e635",
+    "#818cf8","#fb7185","#2dd4bf","#facc15","#c084fc",
+    "#60a5fa","#fca5a1","#6ee7b7","#fde68a","#93c5fd",
+  ];
+
+  function impactRate(impacted, total) {{
+    return total > 0 ? (impacted / total * 100).toFixed(2) + "%" : "—";
+  }}
+
+  new Chart(document.getElementById("country-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels: top.map(c => c.country_code),
+      datasets: [{{
+        label: "Hang-impacted riders",
+        data:  top.map(c => c.users),
+        backgroundColor: top.map((_, i) => PALETTE[i % PALETTE.length]),
+        borderRadius: 3,
+        borderWidth: 0,
+      }}],
+    }},
+    options: {{
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{
+          callbacks: {{
+            label: ctx => {{
+              const c    = top[ctx.dataIndex];
+              const rate = impactRate(c.users, c.total_riders);
+              const riders = c.total_riders > 0 ? ` of ${{c.total_riders.toLocaleString()}} (rate: ${{rate}})` : "";
+              return ` ${{ctx.parsed.x.toLocaleString()}} impacted${{riders}}`;
+            }}
+          }}
+        }}
+      }},
+      scales: {{
+        x: {{ beginAtZero: true,
+               title: {{ display: true, text: "Hang-impacted riders", font: {{ size: 11 }} }},
+               ticks: {{ font: {{ size: 11 }} }} }},
+        y: {{ ticks: {{ font: {{ size: 11 }} }}, grid: {{ display: false }} }}
+      }},
+      onClick: (evt, elements) => {{
+        if (!elements.length) return;
+        const c = top[elements[0].index];
+        const p = new URLSearchParams({{
+          environment: "production",
+          project: PROJECT_ID,
+          query: c.query,
+          start: COUNTRY_DATA.start,
+          end:   COUNTRY_DATA.end,
+        }});
+        window.open(BASE_URL + "?" + p.toString(), "_blank");
+      }}
+    }}
+  }});
+
+  const tbody = document.getElementById("country-tbody");
+  countries.forEach(c => {{
+    const rate = impactRate(c.users, c.total_riders);
+    const tr   = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    tr.title = `Open ${{c.country_code}} hangs in Sentry`;
+    tr.innerHTML = `
+      <td style="font-weight:600">${{c.country_code}}</td>
+      <td class="num">${{c.total_riders > 0 ? c.total_riders.toLocaleString() : "—"}}</td>
+      <td class="num cell-link">${{c.users.toLocaleString()}}</td>
+      <td class="num">
+        <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
+          ${{rate}}
+        </span>
+      </td>`;
+    tr.addEventListener("click", () => {{
+      const p = new URLSearchParams({{
+        environment: "production",
+        project: PROJECT_ID,
+        query: c.query,
+        start: COUNTRY_DATA.start,
+        end:   COUNTRY_DATA.end,
+      }});
+      window.open(BASE_URL + "?" + p.toString(), "_blank");
+    }});
+    tbody.appendChild(tr);
+  }});
+
+  const grandRate = impactRate(totalImpact, totalRiders);
+  const trTotal   = document.createElement("tr");
+  trTotal.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
+  trTotal.innerHTML = `
+    <td>Total</td>
+    <td class="num">${{totalRiders > 0 ? totalRiders.toLocaleString() : "—"}}</td>
+    <td class="num">${{totalImpact.toLocaleString()}}</td>
     <td class="num">
       <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
         ${{grandRate}}
