@@ -84,7 +84,7 @@ else:
     PREV_START_DATE = PREV_END_DATE = PREV_START = PREV_END = PREV_BQ_START = PREV_BQ_END = None
 
 HANGS_QUERY   = '!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"'
-CRASHES_QUERY = "level:fatal handled:no"
+CRASHES_QUERY = "level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ"
 
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 
@@ -795,7 +795,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
   <div class="footer">
     <strong>Notes:</strong><br>
     &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
-      (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
       against BQ daily user counts for the period.<br>
     &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
       applied to all brands equally.<br>
@@ -817,7 +817,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
   <div class="footer">
     <strong>Notes:</strong><br>
     &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
-      (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
       against BQ daily user counts for the period.<br>
     &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
       applied to all brands equally.<br>
@@ -1135,7 +1135,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 <div class="footer">
   <strong>Notes:</strong><br>
   &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
-    (<code>level:fatal handled:no</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+    (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
     against BQ daily user counts for the period.<br>
   &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
     applied to all brands equally.<br>
