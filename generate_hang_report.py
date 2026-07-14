@@ -1021,7 +1021,7 @@ html = f"""<!DOCTYPE html>
 
 <div class="panel" id="panel-country">
   <p style="font-size:13px;color:#666;margin-bottom:16px;">
-    Hang-impacted riders by <code>country_code</code> — {CURRENT_MONTH["label"]} (partial, data up to {fetch_date}) &nbsp;|&nbsp;
+    Hang-impacted riders by <code>country_code</code> — {CURRENT_MONTH['label']} (partial, data up to {fetch_date}) &nbsp;|&nbsp;
     Total riders from BigQuery (<code>rider_devices</code>, iOS, {COUNTRY_WINDOW_START[:10]} – {COUNTRY_WINDOW_END[:10]}) &nbsp;|&nbsp;
     Click any row to open Sentry filtered by that country
   </p>
