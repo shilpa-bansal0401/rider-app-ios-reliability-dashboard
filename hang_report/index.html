@@ -104,7 +104,7 @@
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>is:unresolved "*App Hang* detected*"</code> &nbsp;|&nbsp;
-  Data fetched: 14 Jul 2026 &nbsp;|&nbsp;
+  Data fetched: 17 Jul 2026 &nbsp;|&nbsp;
   Months: Apr 2026 · May 2026 · Jun 2026 · Jul 2026
 </p>
 
@@ -225,8 +225,8 @@
 
 <div class="panel" id="panel-country">
   <p style="font-size:13px;color:#666;margin-bottom:16px;">
-    Hang-impacted riders by <code>country_code</code> — July 2026 (partial, data up to 14 Jul 2026) &nbsp;|&nbsp;
-    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-07-01 – 2026-07-15) &nbsp;|&nbsp;
+    Hang-impacted riders by <code>country_code</code> — July 2026 (partial, data up to 17 Jul 2026) &nbsp;|&nbsp;
+    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-07-01 – 2026-07-18) &nbsp;|&nbsp;
     Click any row to open Sentry filtered by that country
   </p>
   <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin-bottom:24px;overflow:auto;">
@@ -252,7 +252,7 @@
   <br>• <strong>Filter:</strong> <code>"*App Hang* detected*"</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
-  <br>• <strong>Jul 2026 is a partial month (data up to 14 Jul 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>Jul 2026 is a partial month (data up to 17 Jul 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
   <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
@@ -267,7 +267,7 @@ const MONTHS              = [
   {
     "label": "April 2026",
     "short": "Apr 2026",
-    "total": 10104,
+    "total": 8363,
     "start": "2026-04-01T00:00:00",
     "end": "2026-05-01T00:00:00",
     "categories": [
@@ -275,7 +275,7 @@ const MONTHS              = [
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 7989,
+        "users": 6652,
         "query": "is:unresolved \"*App Hang* detected*\"  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -293,7 +293,7 @@ const MONTHS              = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 128,
+        "users": 113,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -305,7 +305,7 @@ const MONTHS              = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 848,
+        "users": 668,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -318,7 +318,7 @@ const MONTHS              = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 377,
+        "users": 299,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -330,7 +330,7 @@ const MONTHS              = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 185,
+        "users": 142,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -338,7 +338,7 @@ const MONTHS              = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 27,
+        "users": 24,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -351,7 +351,7 @@ const MONTHS              = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 460,
+        "users": 385,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -363,7 +363,7 @@ const MONTHS              = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 35,
+        "users": 32,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*",
         "culprits": [
           "ARView.init",
@@ -376,7 +376,7 @@ const MONTHS              = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 55,
+        "users": 48,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -630,15 +630,15 @@ const MONTHS              = [
   {
     "label": "July 2026",
     "short": "Jul 2026",
-    "total": 11980,
+    "total": 15217,
     "start": "2026-07-01T00:00:00",
-    "end": "2026-07-15T00:00:00",
+    "end": "2026-07-18T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 8690,
+        "users": 11783,
         "query": "is:unresolved \"*App Hang* detected*\"  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -656,7 +656,7 @@ const MONTHS              = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 131,
+        "users": 154,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -668,7 +668,7 @@ const MONTHS              = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 2112,
+        "users": 1888,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -681,7 +681,7 @@ const MONTHS              = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 193,
+        "users": 253,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -693,7 +693,7 @@ const MONTHS              = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 207,
+        "users": 266,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -701,7 +701,7 @@ const MONTHS              = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 160,
+        "users": 207,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -714,7 +714,7 @@ const MONTHS              = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 20,
+        "users": 23,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -726,7 +726,7 @@ const MONTHS              = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 424,
+        "users": 517,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*ARKit*",
         "culprits": [
           "ARView.init",
@@ -739,7 +739,7 @@ const MONTHS              = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 43,
+        "users": 126,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -769,51 +769,51 @@ const WEEKS               = [
     "end": "2026-07-13T00:00:00"
   },
   {
-    "label": "Jul 13 - Jul 14 (partial)",
+    "label": "Jul 13 - Jul 17 (partial)",
     "short": "Jul 13",
     "start": "2026-07-13T00:00:00",
-    "end": "2026-07-15T00:00:00"
+    "end": "2026-07-18T00:00:00"
   }
 ];
 const RELEASES            = [
   {
     "label": "4.2624.1",
     "short": "4.2624.1",
-    "users": 7317,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "users": 7368,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:996"
   },
   {
     "label": "4.2626.1",
     "short": "4.2626.1",
-    "users": 5355,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "users": 5461,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1006"
   },
   {
     "label": "4.2627.1",
     "short": "4.2627.1",
-    "users": 4790,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "users": 5052,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1010"
   },
   {
     "label": "4.2628",
     "short": "4.2628",
-    "users": 2407,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "users": 4306,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016)"
   },
   {
     "label": "4.2629.1",
     "short": "4.2629.1",
-    "users": 80,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "users": 866,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1020"
   }
 ];
@@ -825,7 +825,7 @@ const RELEASE_WEEKLY      = [
       2367,
       533,
       238,
-      45
+      130
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:996"
   },
@@ -836,7 +836,7 @@ const RELEASE_WEEKLY      = [
       1251,
       3298,
       1200,
-      109
+      255
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1006"
   },
@@ -847,7 +847,7 @@ const RELEASE_WEEKLY      = [
       0,
       1656,
       3256,
-      248
+      556
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1010"
   },
@@ -858,7 +858,7 @@ const RELEASE_WEEKLY      = [
       0,
       0,
       1836,
-      854
+      2995
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016)"
   },
@@ -869,7 +869,7 @@ const RELEASE_WEEKLY      = [
       0,
       0,
       0,
-      118
+      1075
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1020"
   }
@@ -878,15 +878,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2624.1",
     "short": "4.2624.1",
-    "total": 4337,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "total": 4371,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 1036,
+        "users": 1044,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -916,7 +916,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 602,
+        "users": 605,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -929,7 +929,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 115,
+        "users": 116,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -941,7 +941,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 1800,
+        "users": 1817,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -949,7 +949,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 709,
+        "users": 713,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -987,7 +987,7 @@ const RELEASE_CATEGORIES  = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 15,
+        "users": 16,
         "query": "is:unresolved \"*App Hang* detected*\" dist:996 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -999,15 +999,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2626.1",
     "short": "4.2626.1",
-    "total": 3377,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "total": 3445,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 674,
+        "users": 691,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -1025,7 +1025,7 @@ const RELEASE_CATEGORIES  = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 41,
+        "users": 42,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -1037,7 +1037,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 693,
+        "users": 707,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -1050,7 +1050,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 72,
+        "users": 73,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -1062,7 +1062,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 1423,
+        "users": 1451,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -1070,7 +1070,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 467,
+        "users": 474,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1006 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -1120,15 +1120,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2627.1",
     "short": "4.2627.1",
-    "total": 2849,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "total": 3062,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 786,
+        "users": 826,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -1146,7 +1146,7 @@ const RELEASE_CATEGORIES  = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 0,
+        "users": 50,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -1158,7 +1158,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 721,
+        "users": 753,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -1171,7 +1171,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 46,
+        "users": 54,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -1183,7 +1183,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 848,
+        "users": 904,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -1191,7 +1191,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 435,
+        "users": 462,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1010 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -1241,15 +1241,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2628",
     "short": "4.2628",
-    "total": 1451,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "total": 2571,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 430,
+        "users": 779,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016)  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -1267,7 +1267,7 @@ const RELEASE_CATEGORIES  = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 91,
+        "users": 154,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -1279,7 +1279,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 263,
+        "users": 468,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -1292,7 +1292,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 34,
+        "users": 55,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -1304,7 +1304,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 433,
+        "users": 791,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -1312,7 +1312,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 195,
+        "users": 317,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -1350,7 +1350,7 @@ const RELEASE_CATEGORIES  = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 5,
+        "users": 7,
         "query": "is:unresolved \"*App Hang* detected*\" (dist:1014 OR dist:1016) !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -1362,15 +1362,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2629.1",
     "short": "4.2629.1",
-    "total": 43,
-    "start": "2026-04-15T00:00:00",
-    "end": "2026-07-14T00:00:00",
+    "total": 506,
+    "start": "2026-04-18T00:00:00",
+    "end": "2026-07-17T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 5,
+        "users": 152,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020  stack.package:*Mapbox*",
         "culprits": [
           "MetalView.draw",
@@ -1388,7 +1388,7 @@ const RELEASE_CATEGORIES  = [
         "key": "naver",
         "label": "Naver",
         "color": "#BAFFC9",
-        "users": 2,
+        "users": 19,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* stack.function:*NavigationMapView*",
         "culprits": [
           "NavigationMapView.subscribeToNavigatonUpdates",
@@ -1400,7 +1400,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 6,
+        "users": 75,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -1413,7 +1413,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 1,
+        "users": 9,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -1425,7 +1425,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 12,
+        "users": 120,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -1433,7 +1433,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 4,
+        "users": 56,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -1471,7 +1471,7 @@ const RELEASE_CATEGORIES  = [
         "key": "storage",
         "label": "Storage",
         "color": "#D3C0B0",
-        "users": 13,
+        "users": 75,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1020 !stack.package:*Mapbox* !message:*Mapbox* !stack.function:*NavigationMapView* !stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView* !message:*FIRCLS* !message:*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreData*",
         "culprits": [
           "PersistentDataActorImpl.__allocating_init",
@@ -1486,468 +1486,468 @@ const DEVICE_CLASS        = [
     "key": "high",
     "label": "High-end",
     "color": "#6366f1",
-    "impacted_users": 378,
+    "impacted_users": 456,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:high",
-    "total_riders": 148746
+    "total_riders": 153777
   },
   {
     "key": "medium",
     "label": "Mid-range",
     "color": "#f59e0b",
-    "impacted_users": 751,
+    "impacted_users": 865,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:medium",
-    "total_riders": 53459
+    "total_riders": 56403
   },
   {
     "key": "low",
     "label": "Low-end",
     "color": "#94a3b8",
-    "impacted_users": 31,
+    "impacted_users": 34,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:low",
-    "total_riders": 6152
+    "total_riders": 6654
   }
 ];
 const COUNTRY_DATA        = {
   "month": "July 2026",
   "start": "2026-07-01T00:00:00",
-  "end": "2026-07-15T00:00:00",
+  "end": "2026-07-18T00:00:00",
   "countries": [
     {
       "country_code": "tw",
-      "users": 2504,
-      "total_riders": 54662,
+      "users": 3133,
+      "total_riders": 56814,
       "query": "is:unresolved \"*App Hang* detected*\" country:tw"
     },
     {
       "country_code": "ph",
-      "users": 901,
-      "total_riders": 15701,
+      "users": 1114,
+      "total_riders": 17156,
       "query": "is:unresolved \"*App Hang* detected*\" country:ph"
     },
     {
       "country_code": "gv-ma",
-      "users": 851,
-      "total_riders": 7650,
+      "users": 1044,
+      "total_riders": 7980,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-ma"
     },
     {
       "country_code": "my",
-      "users": 676,
-      "total_riders": 23041,
+      "users": 872,
+      "total_riders": 24853,
       "query": "is:unresolved \"*App Hang* detected*\" country:my"
     },
     {
       "country_code": "jo",
-      "users": 594,
-      "total_riders": 8111,
+      "users": 738,
+      "total_riders": 8461,
       "query": "is:unresolved \"*App Hang* detected*\" country:jo"
     },
     {
       "country_code": "sa",
-      "users": 531,
-      "total_riders": 17810,
+      "users": 660,
+      "total_riders": 19400,
       "query": "is:unresolved \"*App Hang* detected*\" country:sa"
     },
     {
       "country_code": "eg",
-      "users": 501,
-      "total_riders": 3829,
+      "users": 599,
+      "total_riders": 4114,
       "query": "is:unresolved \"*App Hang* detected*\" country:eg"
     },
     {
       "country_code": "hk",
-      "users": 497,
-      "total_riders": 17722,
+      "users": 588,
+      "total_riders": 18835,
       "query": "is:unresolved \"*App Hang* detected*\" country:hk"
     },
     {
       "country_code": "iq",
-      "users": 410,
-      "total_riders": 3089,
+      "users": 498,
+      "total_riders": 3203,
       "query": "is:unresolved \"*App Hang* detected*\" country:iq"
     },
     {
       "country_code": "ar",
-      "users": 367,
-      "total_riders": 25170,
+      "users": 466,
+      "total_riders": 27294,
       "query": "is:unresolved \"*App Hang* detected*\" country:ar"
     },
     {
       "country_code": "om",
-      "users": 365,
-      "total_riders": 6094,
+      "users": 415,
+      "total_riders": 6369,
       "query": "is:unresolved \"*App Hang* detected*\" country:om"
     },
     {
-      "country_code": "gv-ua",
-      "users": 322,
-      "total_riders": 6651,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ua"
-    },
-    {
       "country_code": "gv-pl",
-      "users": 304,
-      "total_riders": 14655,
+      "users": 406,
+      "total_riders": 15771,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-pl"
     },
     {
+      "country_code": "gv-ua",
+      "users": 386,
+      "total_riders": 7006,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ua"
+    },
+    {
       "country_code": "gv-es",
-      "users": 297,
-      "total_riders": 13134,
+      "users": 369,
+      "total_riders": 13954,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-es"
     },
     {
       "country_code": "sg",
-      "users": 207,
-      "total_riders": 14209,
+      "users": 257,
+      "total_riders": 14956,
       "query": "is:unresolved \"*App Hang* detected*\" country:sg"
     },
     {
       "country_code": "cl",
-      "users": 196,
-      "total_riders": 7936,
+      "users": 246,
+      "total_riders": 8756,
       "query": "is:unresolved \"*App Hang* detected*\" country:cl"
     },
     {
       "country_code": "ae",
-      "users": 172,
-      "total_riders": 1566,
+      "users": 211,
+      "total_riders": 1737,
       "query": "is:unresolved \"*App Hang* detected*\" country:ae"
     },
     {
       "country_code": "gv-it",
-      "users": 158,
-      "total_riders": 12328,
+      "users": 199,
+      "total_riders": 12881,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-it"
     },
     {
       "country_code": "kh",
-      "users": 151,
-      "total_riders": 1552,
+      "users": 196,
+      "total_riders": 1613,
       "query": "is:unresolved \"*App Hang* detected*\" country:kh"
     },
     {
       "country_code": "cz",
-      "users": 144,
-      "total_riders": 5731,
+      "users": 182,
+      "total_riders": 6027,
       "query": "is:unresolved \"*App Hang* detected*\" country:cz"
     },
     {
+      "country_code": "gr",
+      "users": 171,
+      "total_riders": 8002,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gr"
+    },
+    {
       "country_code": "se",
-      "users": 138,
-      "total_riders": 4358,
+      "users": 167,
+      "total_riders": 4483,
       "query": "is:unresolved \"*App Hang* detected*\" country:se"
     },
     {
       "country_code": "gv-pt",
-      "users": 130,
-      "total_riders": 7791,
+      "users": 163,
+      "total_riders": 8237,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-pt"
     },
     {
-      "country_code": "gr",
-      "users": 106,
-      "total_riders": 7701,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gr"
-    },
-    {
       "country_code": "hu",
-      "users": 106,
-      "total_riders": 3983,
+      "users": 144,
+      "total_riders": 4169,
       "query": "is:unresolved \"*App Hang* detected*\" country:hu"
     },
     {
       "country_code": "do",
-      "users": 104,
-      "total_riders": 2500,
+      "users": 123,
+      "total_riders": 2774,
       "query": "is:unresolved \"*App Hang* detected*\" country:do"
     },
     {
-      "country_code": "gv-ge",
-      "users": 85,
-      "total_riders": 3058,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ge"
-    },
-    {
       "country_code": "no",
-      "users": 83,
-      "total_riders": 4502,
+      "users": 105,
+      "total_riders": 4749,
       "query": "is:unresolved \"*App Hang* detected*\" country:no"
     },
     {
+      "country_code": "gv-ge",
+      "users": 104,
+      "total_riders": 3204,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ge"
+    },
+    {
       "country_code": "gv-ng",
-      "users": 82,
-      "total_riders": 573,
+      "users": 99,
+      "total_riders": 627,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-ng"
     },
     {
       "country_code": "pe",
-      "users": 76,
-      "total_riders": 2694,
+      "users": 95,
+      "total_riders": 2938,
       "query": "is:unresolved \"*App Hang* detected*\" country:pe"
     },
     {
       "country_code": "kw",
-      "users": 74,
-      "total_riders": 1280,
+      "users": 94,
+      "total_riders": 1457,
       "query": "is:unresolved \"*App Hang* detected*\" country:kw"
     },
     {
       "country_code": "gv-ro",
-      "users": 70,
-      "total_riders": 3362,
+      "users": 90,
+      "total_riders": 3625,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-ro"
     },
     {
-      "country_code": "qa",
-      "users": 64,
-      "total_riders": 421,
-      "query": "is:unresolved \"*App Hang* detected*\" country:qa"
-    },
-    {
       "country_code": "at",
-      "users": 58,
-      "total_riders": 2357,
+      "users": 77,
+      "total_riders": 2473,
       "query": "is:unresolved \"*App Hang* detected*\" country:at"
     },
     {
       "country_code": "la",
-      "users": 53,
-      "total_riders": 866,
+      "users": 74,
+      "total_riders": 927,
       "query": "is:unresolved \"*App Hang* detected*\" country:la"
     },
     {
+      "country_code": "qa",
+      "users": 71,
+      "total_riders": 451,
+      "query": "is:unresolved \"*App Hang* detected*\" country:qa"
+    },
+    {
       "country_code": "gv-kz",
-      "users": 45,
-      "total_riders": 1725,
+      "users": 62,
+      "total_riders": 1839,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-kz"
     },
     {
-      "country_code": "bh",
-      "users": 38,
-      "total_riders": 285,
-      "query": "is:unresolved \"*App Hang* detected*\" country:bh"
-    },
-    {
-      "country_code": "pk",
-      "users": 37,
-      "total_riders": 588,
-      "query": "is:unresolved \"*App Hang* detected*\" country:pk"
-    },
-    {
       "country_code": "gv-tn",
-      "users": 34,
-      "total_riders": 681,
+      "users": 55,
+      "total_riders": 701,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-tn"
     },
     {
-      "country_code": "gv-ci",
-      "users": 33,
-      "total_riders": 484,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ci"
+      "country_code": "pk",
+      "users": 48,
+      "total_riders": 665,
+      "query": "is:unresolved \"*App Hang* detected*\" country:pk"
+    },
+    {
+      "country_code": "bh",
+      "users": 47,
+      "total_riders": 320,
+      "query": "is:unresolved \"*App Hang* detected*\" country:bh"
     },
     {
       "country_code": "ec",
-      "users": 32,
-      "total_riders": 1644,
+      "users": 40,
+      "total_riders": 1797,
       "query": "is:unresolved \"*App Hang* detected*\" country:ec"
     },
     {
-      "country_code": "kr2",
-      "users": 32,
-      "total_riders": 1105,
-      "query": "is:unresolved \"*App Hang* detected*\" country:kr2"
+      "country_code": "gv-ci",
+      "users": 40,
+      "total_riders": 520,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ci"
     },
     {
       "country_code": "hn",
-      "users": 31,
-      "total_riders": 937,
+      "users": 39,
+      "total_riders": 1001,
       "query": "is:unresolved \"*App Hang* detected*\" country:hn"
     },
     {
       "country_code": "bd",
-      "users": 30,
-      "total_riders": 733,
+      "users": 38,
+      "total_riders": 821,
       "query": "is:unresolved \"*App Hang* detected*\" country:bd"
     },
     {
-      "country_code": "gv-bg",
-      "users": 27,
-      "total_riders": 1067,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-bg"
-    },
-    {
-      "country_code": "py",
-      "users": 27,
-      "total_riders": 969,
-      "query": "is:unresolved \"*App Hang* detected*\" country:py"
-    },
-    {
-      "country_code": "cy",
-      "users": 25,
-      "total_riders": 1028,
-      "query": "is:unresolved \"*App Hang* detected*\" country:cy"
-    },
-    {
       "country_code": "sv",
-      "users": 25,
-      "total_riders": 705,
+      "users": 36,
+      "total_riders": 758,
       "query": "is:unresolved \"*App Hang* detected*\" country:sv"
     },
     {
+      "country_code": "kr2",
+      "users": 35,
+      "total_riders": 1190,
+      "query": "is:unresolved \"*App Hang* detected*\" country:kr2"
+    },
+    {
       "country_code": "gv-rs",
-      "users": 24,
-      "total_riders": 770,
+      "users": 33,
+      "total_riders": 803,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-rs"
     },
     {
+      "country_code": "gv-bg",
+      "users": 32,
+      "total_riders": 1145,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-bg"
+    },
+    {
+      "country_code": "cy",
+      "users": 32,
+      "total_riders": 1074,
+      "query": "is:unresolved \"*App Hang* detected*\" country:cy"
+    },
+    {
+      "country_code": "py",
+      "users": 31,
+      "total_riders": 1042,
+      "query": "is:unresolved \"*App Hang* detected*\" country:py"
+    },
+    {
+      "country_code": "bo",
+      "users": 21,
+      "total_riders": 567,
+      "query": "is:unresolved \"*App Hang* detected*\" country:bo"
+    },
+    {
       "country_code": "uy",
-      "users": 16,
-      "total_riders": 936,
+      "users": 18,
+      "total_riders": 1005,
       "query": "is:unresolved \"*App Hang* detected*\" country:uy"
     },
     {
+      "country_code": "gv-kg",
+      "users": 18,
+      "total_riders": 507,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-kg"
+    },
+    {
       "country_code": "gt",
-      "users": 14,
-      "total_riders": 860,
+      "users": 16,
+      "total_riders": 935,
       "query": "is:unresolved \"*App Hang* detected*\" country:gt"
     },
     {
       "country_code": "cr",
-      "users": 12,
-      "total_riders": 943,
+      "users": 15,
+      "total_riders": 1054,
       "query": "is:unresolved \"*App Hang* detected*\" country:cr"
     },
     {
       "country_code": "pa",
-      "users": 12,
-      "total_riders": 722,
+      "users": 15,
+      "total_riders": 784,
       "query": "is:unresolved \"*App Hang* detected*\" country:pa"
     },
     {
-      "country_code": "bo",
-      "users": 12,
-      "total_riders": 530,
-      "query": "is:unresolved \"*App Hang* detected*\" country:bo"
-    },
-    {
       "country_code": "gv-md",
-      "users": 12,
-      "total_riders": 414,
+      "users": 14,
+      "total_riders": 450,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-md"
     },
     {
-      "country_code": "gv-kg",
-      "users": 11,
-      "total_riders": 458,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-kg"
+      "country_code": "gv-ug",
+      "users": 13,
+      "total_riders": 200,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ug"
+    },
+    {
+      "country_code": "ve",
+      "users": 12,
+      "total_riders": 554,
+      "query": "is:unresolved \"*App Hang* detected*\" country:ve"
     },
     {
       "country_code": "mm",
-      "users": 11,
-      "total_riders": 236,
+      "users": 12,
+      "total_riders": 264,
       "query": "is:unresolved \"*App Hang* detected*\" country:mm"
     },
     {
       "country_code": "gv-me",
       "users": 10,
-      "total_riders": 214,
+      "total_riders": 224,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-me"
     },
     {
-      "country_code": "ve",
-      "users": 9,
-      "total_riders": 505,
-      "query": "is:unresolved \"*App Hang* detected*\" country:ve"
-    },
-    {
       "country_code": "ni",
-      "users": 7,
-      "total_riders": 396,
+      "users": 9,
+      "total_riders": 427,
       "query": "is:unresolved \"*App Hang* detected*\" country:ni"
     },
     {
-      "country_code": "gv-ug",
-      "users": 6,
-      "total_riders": 182,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-ug"
-    },
-    {
       "country_code": "gv-ke",
-      "users": 3,
-      "total_riders": 110,
+      "users": 6,
+      "total_riders": 130,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-ke"
     },
     {
       "country_code": "de",
-      "users": 3,
-      "total_riders": 71,
+      "users": 4,
+      "total_riders": 78,
       "query": "is:unresolved \"*App Hang* detected*\" country:de"
     },
     {
       "country_code": "gv-am",
-      "users": 2,
-      "total_riders": 147,
+      "users": 3,
+      "total_riders": 160,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-am"
+    },
+    {
+      "country_code": "gv-hr",
+      "users": 2,
+      "total_riders": 225,
+      "query": "is:unresolved \"*App Hang* detected*\" country:gv-hr"
     },
     {
       "country_code": "t3",
       "users": 1,
-      "total_riders": 5250,
+      "total_riders": 5841,
       "query": "is:unresolved \"*App Hang* detected*\" country:t3"
     },
     {
       "country_code": "fi",
       "users": 1,
-      "total_riders": 284,
+      "total_riders": 309,
       "query": "is:unresolved \"*App Hang* detected*\" country:fi"
-    },
-    {
-      "country_code": "gv-hr",
-      "users": 1,
-      "total_riders": 204,
-      "query": "is:unresolved \"*App Hang* detected*\" country:gv-hr"
     },
     {
       "country_code": "gv-ba",
       "users": 0,
-      "total_riders": 227,
+      "total_riders": 244,
       "query": "is:unresolved \"*App Hang* detected*\" country:gv-ba"
     },
     {
       "country_code": "t5",
       "users": 0,
-      "total_riders": 171,
+      "total_riders": 191,
       "query": "is:unresolved \"*App Hang* detected*\" country:t5"
     },
     {
       "country_code": "th",
       "users": 0,
-      "total_riders": 87,
+      "total_riders": 96,
       "query": "is:unresolved \"*App Hang* detected*\" country:th"
     },
     {
       "country_code": "de2",
       "users": 0,
-      "total_riders": 55,
+      "total_riders": 65,
       "query": "is:unresolved \"*App Hang* detected*\" country:de2"
     },
     {
       "country_code": "b2",
       "users": 0,
-      "total_riders": 40,
+      "total_riders": 59,
       "query": "is:unresolved \"*App Hang* detected*\" country:b2"
     },
     {
       "country_code": "q2",
       "users": 0,
-      "total_riders": 12,
+      "total_riders": 21,
       "query": "is:unresolved \"*App Hang* detected*\" country:q2"
     },
     {
       "country_code": "dk",
       "users": 0,
-      "total_riders": 5,
+      "total_riders": 6,
       "query": "is:unresolved \"*App Hang* detected*\" country:dk"
     },
     {
@@ -2630,8 +2630,8 @@ MONTHS.forEach((month, mi) => {
       environment: "production",
       project: PROJECT_ID,
       query: tier.query,
-      start: "2026-07-13T00:00:00",
-      end:   "2026-07-14T00:00:00",
+      start: "2026-07-16T00:00:00",
+      end:   "2026-07-17T00:00:00",
     });
     window.open(BASE_URL + "?" + p.toString(), "_blank");
   }
