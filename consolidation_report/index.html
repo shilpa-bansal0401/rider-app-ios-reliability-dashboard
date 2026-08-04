@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>iOS AQS Consolidation Report</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -62,54 +61,6 @@
     }
     tr.row-aqs td:first-child { text-align: left; }
 
-    /* ── Dashboard panel ── */
-    .pill-actions { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-    .pill-action-btn {
-      font-size: 12px; padding: 4px 14px; border-radius: 6px; cursor: pointer;
-      border: 1px solid #d1d5db; background: #f9fafb; color: #374151; font-weight: 500;
-    }
-    .pill-action-btn:hover { background: #e5e7eb; }
-    .brand-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-    .brand-pill {
-      padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-      cursor: pointer; border: 2px solid rgba(0,0,0,.12); transition: opacity .15s;
-      user-select: none;
-    }
-    .brand-pill.inactive { opacity: .3; }
-    .dash-summary { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 28px; }
-    .dash-card {
-      background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px;
-      padding: 14px 20px; min-width: 150px; flex: 1;
-    }
-    .dash-card .dc-label { font-size: 11px; text-transform: uppercase;
-                             letter-spacing: .05em; color: #6b7280; margin-bottom: 4px; }
-    .dash-card .dc-value { font-size: 24px; font-weight: 700; color: #111; }
-    .dash-card .dc-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
-    .charts-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; }
-    .chart-box {
-      flex: 1; min-width: 280px; background: #fff; border: 1px solid #e5e7eb;
-      border-radius: 8px; padding: 18px;
-    }
-    .chart-box h3 { font-size: 12px; font-weight: 600; color: #374151;
-                     text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
-    .chart-box canvas { max-width: 100%; height: 240px !important; }
-    .dash-section-title {
-      font-size: 12px; font-weight: 600; color: #374151;
-      text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px;
-    }
-    .dash-table-wrap { overflow-x: auto; }
-    .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .dash-table thead th {
-      text-align: right; padding: 8px 12px; border-bottom: 2px solid #e5e7eb;
-      color: #666; font-weight: 600; font-size: 11px;
-      text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
-    }
-    .dash-table thead th:first-child { text-align: left; }
-    .dash-table tbody tr { border-bottom: 1px solid #f3f4f6; }
-    .dash-table tbody tr:hover { filter: brightness(.96); }
-    .dash-table tbody td { padding: 9px 12px; text-align: right; white-space: nowrap; }
-    .dash-table tbody td:first-child { text-align: left; font-weight: 600; }
-
     .footer { margin-top: 32px; font-size: 11px; color: #9ca3af;
                border-top: 1px solid #e5e7eb; padding-top: 16px; line-height: 1.8; }
     .footer code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
@@ -119,22 +70,19 @@
 
 <h1>iOS AQS Consolidation Report</h1>
 <p class="subtitle">
-  Period: 1 Jul – 30 Jul 2026 &nbsp;|&nbsp; Fetched: 31 Jul 2026
+  Fetched: 4 Aug 2026
 </p>
 
-<div class="warning-banner">
-  ⚠ App size, ASTI and STTI have the older values, not recently updated. Update these columns manually before sharing. For the accurate AQS score, update these values.
-</div>
 
 
 <div class="tabs" id="tabs">
-  <div class="tab active" data-panel="aqs-table">AQS Table</div>
-  <div class="tab" data-panel="dashboard">Dashboard</div>
+  <div class="tab active" data-panel="prev-month">July 2026</div>
+  <div class="tab" data-panel="curr-month">August 2026</div>
 </div>
 
-<!-- ── Panel 1: AQS Table ── -->
-<div class="panel active" id="panel-aqs-table">
-
+<!-- Panel: prev month -->
+<div class="panel active" id="panel-prev-month">
+  
 <div class="table-wrap">
   <table>
     <thead>
@@ -156,33 +104,33 @@
         <td style="background:#FFE8EA;font-weight:600;white-space:nowrap;">Foodpanda</td>
         <td style="background:#FFE8EA;text-align:right;">99.89%</td>
         <td style="background:#FFE8EA;text-align:right;">99.49%</td>
-        <td style="background:#FFE8EA;text-align:right;">77.5</td>
-        <td style="background:#FFE8EA;text-align:right;">4.54</td>
-        <td style="background:#FFE8EA;text-align:right;">1.18</td>
-        <td style="background:#FFE8EA;text-align:right;">0.79%</td>
-        <td style="background:#FFE8EA;text-align:right;">1.33%</td>
+        <td style="background:#FFE8EA;text-align:right;">77.4</td>
+        <td style="background:#FFE8EA;text-align:right;">4.52</td>
+        <td style="background:#FFE8EA;text-align:right;">1.23</td>
+        <td style="background:#FFE8EA;text-align:right;">0.81%</td>
+        <td style="background:#FFE8EA;text-align:right;">1.34%</td>
         <td style="background:#FFE8EA;text-align:right;">78,203</td>
       </tr>
       <tr style="background:#E6FAF0;">
         <td style="background:#E6FAF0;font-weight:600;white-space:nowrap;">Foodora</td>
-        <td style="background:#E6FAF0;text-align:right;">99.92%</td>
-        <td style="background:#E6FAF0;text-align:right;">99.75%</td>
+        <td style="background:#E6FAF0;text-align:right;">99.91%</td>
+        <td style="background:#E6FAF0;text-align:right;">99.74%</td>
         <td style="background:#E6FAF0;text-align:right;">80.7</td>
-        <td style="background:#E6FAF0;text-align:right;">4.54</td>
-        <td style="background:#E6FAF0;text-align:right;">1.18</td>
-        <td style="background:#E6FAF0;text-align:right;">0.79%</td>
-        <td style="background:#E6FAF0;text-align:right;">1.33%</td>
+        <td style="background:#E6FAF0;text-align:right;">4.52</td>
+        <td style="background:#E6FAF0;text-align:right;">1.23</td>
+        <td style="background:#E6FAF0;text-align:right;">0.81%</td>
+        <td style="background:#E6FAF0;text-align:right;">1.34%</td>
         <td style="background:#E6FAF0;text-align:right;">14,946</td>
       </tr>
       <tr style="background:#E4F1FF;">
         <td style="background:#E4F1FF;font-weight:600;white-space:nowrap;">Talabat</td>
         <td style="background:#E4F1FF;text-align:right;">99.71%</td>
         <td style="background:#E4F1FF;text-align:right;">99.01%</td>
-        <td style="background:#E4F1FF;text-align:right;">77.6</td>
-        <td style="background:#E4F1FF;text-align:right;">4.54</td>
-        <td style="background:#E4F1FF;text-align:right;">1.18</td>
-        <td style="background:#E4F1FF;text-align:right;">0.79%</td>
-        <td style="background:#E4F1FF;text-align:right;">1.33%</td>
+        <td style="background:#E4F1FF;text-align:right;">77.5</td>
+        <td style="background:#E4F1FF;text-align:right;">4.52</td>
+        <td style="background:#E4F1FF;text-align:right;">1.23</td>
+        <td style="background:#E4F1FF;text-align:right;">0.81%</td>
+        <td style="background:#E4F1FF;text-align:right;">1.34%</td>
         <td style="background:#E4F1FF;text-align:right;">16,988</td>
       </tr>
       <tr style="background:#FEFEE8;">
@@ -190,92 +138,92 @@
         <td style="background:#FEFEE8;text-align:right;">99.89%</td>
         <td style="background:#FEFEE8;text-align:right;">99.74%</td>
         <td style="background:#FEFEE8;text-align:right;">67.8</td>
-        <td style="background:#FEFEE8;text-align:right;">4.54</td>
-        <td style="background:#FEFEE8;text-align:right;">1.18</td>
-        <td style="background:#FEFEE8;text-align:right;">0.79%</td>
-        <td style="background:#FEFEE8;text-align:right;">1.33%</td>
+        <td style="background:#FEFEE8;text-align:right;">4.52</td>
+        <td style="background:#FEFEE8;text-align:right;">1.23</td>
+        <td style="background:#FEFEE8;text-align:right;">0.81%</td>
+        <td style="background:#FEFEE8;text-align:right;">1.34%</td>
         <td style="background:#FEFEE8;text-align:right;">20,641</td>
       </tr>
       <tr style="background:#F2E8F6;">
         <td style="background:#F2E8F6;font-weight:600;white-space:nowrap;">HungerStation</td>
         <td style="background:#F2E8F6;text-align:right;">99.86%</td>
-        <td style="background:#F2E8F6;text-align:right;">99.56%</td>
+        <td style="background:#F2E8F6;text-align:right;">99.55%</td>
         <td style="background:#F2E8F6;text-align:right;">77.6</td>
-        <td style="background:#F2E8F6;text-align:right;">4.54</td>
-        <td style="background:#F2E8F6;text-align:right;">1.18</td>
-        <td style="background:#F2E8F6;text-align:right;">0.79%</td>
-        <td style="background:#F2E8F6;text-align:right;">1.33%</td>
+        <td style="background:#F2E8F6;text-align:right;">4.52</td>
+        <td style="background:#F2E8F6;text-align:right;">1.23</td>
+        <td style="background:#F2E8F6;text-align:right;">0.81%</td>
+        <td style="background:#F2E8F6;text-align:right;">1.34%</td>
         <td style="background:#F2E8F6;text-align:right;">10,630</td>
       </tr>
       <tr style="background:#E4F9F8;">
         <td style="background:#E4F9F8;font-weight:600;white-space:nowrap;">Yemeksepeti</td>
         <td style="background:#E4F9F8;text-align:right;">100.00%</td>
         <td style="background:#E4F9F8;text-align:right;">99.99%</td>
-        <td style="background:#E4F9F8;text-align:right;">77.5</td>
-        <td style="background:#E4F9F8;text-align:right;">4.54</td>
-        <td style="background:#E4F9F8;text-align:right;">1.18</td>
-        <td style="background:#E4F9F8;text-align:right;">0.79%</td>
-        <td style="background:#E4F9F8;text-align:right;">1.33%</td>
+        <td style="background:#E4F9F8;text-align:right;">77.6</td>
+        <td style="background:#E4F9F8;text-align:right;">4.52</td>
+        <td style="background:#E4F9F8;text-align:right;">1.23</td>
+        <td style="background:#E4F9F8;text-align:right;">0.81%</td>
+        <td style="background:#E4F9F8;text-align:right;">1.34%</td>
         <td style="background:#E4F9F8;text-align:right;">2,186</td>
       </tr>
       <tr style="background:#FEFEF2;">
         <td style="background:#FEFEF2;font-weight:600;white-space:nowrap;">Glovo</td>
         <td style="background:#FEFEF2;text-align:right;">99.86%</td>
         <td style="background:#FEFEF2;text-align:right;">99.63%</td>
-        <td style="background:#FEFEF2;text-align:right;">77.5</td>
-        <td style="background:#FEFEF2;text-align:right;">4.54</td>
-        <td style="background:#FEFEF2;text-align:right;">1.18</td>
-        <td style="background:#FEFEF2;text-align:right;">0.79%</td>
-        <td style="background:#FEFEF2;text-align:right;">1.33%</td>
+        <td style="background:#FEFEF2;text-align:right;">77.6</td>
+        <td style="background:#FEFEF2;text-align:right;">4.52</td>
+        <td style="background:#FEFEF2;text-align:right;">1.23</td>
+        <td style="background:#FEFEF2;text-align:right;">0.81%</td>
+        <td style="background:#FEFEF2;text-align:right;">1.34%</td>
         <td style="background:#FEFEF2;text-align:right;">46,896</td>
       </tr>
       <tr style="background:#DFF8F7;">
         <td style="background:#DFF8F7;font-weight:600;white-space:nowrap;">Woowa</td>
         <td style="background:#DFF8F7;text-align:right;">99.96%</td>
-        <td style="background:#DFF8F7;text-align:right;">99.71%</td>
+        <td style="background:#DFF8F7;text-align:right;">99.72%</td>
         <td style="background:#DFF8F7;text-align:right;">77.2</td>
-        <td style="background:#DFF8F7;text-align:right;">4.54</td>
-        <td style="background:#DFF8F7;text-align:right;">1.18</td>
-        <td style="background:#DFF8F7;text-align:right;">0.79%</td>
-        <td style="background:#DFF8F7;text-align:right;">1.33%</td>
+        <td style="background:#DFF8F7;text-align:right;">4.52</td>
+        <td style="background:#DFF8F7;text-align:right;">1.23</td>
+        <td style="background:#DFF8F7;text-align:right;">0.81%</td>
+        <td style="background:#DFF8F7;text-align:right;">1.34%</td>
         <td style="background:#DFF8F7;text-align:right;">731</td>
       </tr>
       <tr style="background:#EEE8E2;">
         <td style="background:#EEE8E2;font-weight:600;white-space:nowrap;">efood</td>
-        <td style="background:#EEE8E2;text-align:right;">99.85%</td>
+        <td style="background:#EEE8E2;text-align:right;">99.84%</td>
         <td style="background:#EEE8E2;text-align:right;">99.79%</td>
         <td style="background:#EEE8E2;text-align:right;">67.7</td>
-        <td style="background:#EEE8E2;text-align:right;">4.54</td>
-        <td style="background:#EEE8E2;text-align:right;">1.18</td>
-        <td style="background:#EEE8E2;text-align:right;">0.79%</td>
-        <td style="background:#EEE8E2;text-align:right;">1.33%</td>
+        <td style="background:#EEE8E2;text-align:right;">4.52</td>
+        <td style="background:#EEE8E2;text-align:right;">1.23</td>
+        <td style="background:#EEE8E2;text-align:right;">0.81%</td>
+        <td style="background:#EEE8E2;text-align:right;">1.34%</td>
         <td style="background:#EEE8E2;text-align:right;">5,258</td>
       </tr>
       <tr style="background:#EAE4FA;">
         <td style="background:#EAE4FA;font-weight:600;white-space:nowrap;">Foody</td>
-        <td style="background:#EAE4FA;text-align:right;">99.83%</td>
-        <td style="background:#EAE4FA;text-align:right;">99.56%</td>
+        <td style="background:#EAE4FA;text-align:right;">99.81%</td>
+        <td style="background:#EAE4FA;text-align:right;">99.57%</td>
         <td style="background:#EAE4FA;text-align:right;">67.7</td>
-        <td style="background:#EAE4FA;text-align:right;">4.54</td>
-        <td style="background:#EAE4FA;text-align:right;">1.18</td>
-        <td style="background:#EAE4FA;text-align:right;">0.79%</td>
-        <td style="background:#EAE4FA;text-align:right;">1.33%</td>
+        <td style="background:#EAE4FA;text-align:right;">4.52</td>
+        <td style="background:#EAE4FA;text-align:right;">1.23</td>
+        <td style="background:#EAE4FA;text-align:right;">0.81%</td>
+        <td style="background:#EAE4FA;text-align:right;">1.34%</td>
         <td style="background:#EAE4FA;text-align:right;">729</td>
       </tr>
       <tr class="row-avg">
         <td>Weighted AVG</td>
         <td>99.87%</td>
         <td>99.55%</td>
-        <td>76.44</td>
-        <td>4.54</td>
-        <td>1.18</td>
-        <td>0.79%</td>
-        <td>1.33%</td>
+        <td>76.42</td>
+        <td>4.52</td>
+        <td>1.23</td>
+        <td>0.81%</td>
+        <td>1.34%</td>
         <td></td>
       </tr>
       <tr class="row-aqs">
         <td>AQS Score</td>
-        <td style="text-align:right;">32.3750</td><td style="text-align:right;">3.1250</td><td style="text-align:right;">0.9040</td><td style="text-align:right;">3.6500</td><td style="text-align:right;">6.6000</td><td style="text-align:right;">13.0000</td><td style="text-align:right;">4.1750</td>
+        <td style="text-align:right;">32.3750</td><td style="text-align:right;">3.1250</td><td style="text-align:right;">0.9053</td><td style="text-align:right;">3.7000</td><td style="text-align:right;">6.3500</td><td style="text-align:right;">13.0000</td><td style="text-align:right;">4.1500</td>
         <td></td>
       </tr>
     </tbody>
@@ -285,208 +233,204 @@
 <div class="score-wrap">
   <div class="score-card">
     <div class="sc-label">Final AQS Score</div>
-    <div class="sc-value">63.83</div>
-    <div class="sc-sub">1 Jul – 30 Jul 2026</div>
+    <div class="sc-value">63.61</div>
+    <div class="sc-sub">1 Jul – 31 Jul 2026</div>
   </div>
 </div>
 
-<div class="footer">
-  <strong>Notes:</strong><br>
-  &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
-    (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
-    against BQ daily user counts for the period.<br>
-  &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
-    applied to all brands equally.<br>
-  &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated; update manually for accurate AQS score.<br>
-  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
-  &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
-  &bull; BQ_AVAILABLE = <code>True</code> &nbsp;|&nbsp;
-    Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
-  &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
+  <div class="footer">
+    <strong>Notes:</strong><br>
+    &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
+      (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      against BQ daily user counts for the period.<br>
+    &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
+      applied to all brands equally.<br>
+    &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+    &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
+    &bull; BQ_AVAILABLE = <code>True</code> &nbsp;|&nbsp;
+      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+    &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
+  </div>
 </div>
 
-</div><!-- /panel-aqs-table -->
-
-<!-- ── Panel 2: Dashboard ── -->
-<div class="panel" id="panel-dashboard">
-
-  <div class="pill-actions">
-    <button class="pill-action-btn" onclick="selectAllBrands()">Select All</button>
-    <button class="pill-action-btn" onclick="clearAllBrands()">Clear All</button>
+<!-- Panel: curr month -->
+<div class="panel" id="panel-curr-month">
+  <div class="warning-banner">
+    ⚠ App size, ASTI and STTI have the older values, not recently updated. Update these columns manually before sharing. For the accurate AQS score, update these values.
   </div>
-  <div class="brand-pills" id="brand-pills"></div>
+  
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Brand</th>
+        <th class="num">Crash Free %</th>
+        <th class="num">App Hangs %</th>
+        <th class="num">App Size (MB)</th>
+        <th class="num">ASTI (s)</th>
+        <th class="num">STTI (s)</th>
+        <th class="num">Frozen Frames %</th>
+        <th class="num">Skipped Frames %</th>
+        <th class="num">Riders</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr style="background:#FFE8EA;">
+        <td style="background:#FFE8EA;font-weight:600;white-space:nowrap;">Foodpanda</td>
+        <td style="background:#FFE8EA;text-align:right;">99.88%</td>
+        <td style="background:#FFE8EA;text-align:right;">99.41%</td>
+        <td style="background:#FFE8EA;text-align:right;">77.4</td>
+        <td style="background:#FFE8EA;text-align:right;">4.52</td>
+        <td style="background:#FFE8EA;text-align:right;">1.23</td>
+        <td style="background:#FFE8EA;text-align:right;">0.86%</td>
+        <td style="background:#FFE8EA;text-align:right;">1.26%</td>
+        <td style="background:#FFE8EA;text-align:right;">78,203</td>
+      </tr>
+      <tr style="background:#E6FAF0;">
+        <td style="background:#E6FAF0;font-weight:600;white-space:nowrap;">Foodora</td>
+        <td style="background:#E6FAF0;text-align:right;">99.91%</td>
+        <td style="background:#E6FAF0;text-align:right;">99.70%</td>
+        <td style="background:#E6FAF0;text-align:right;">80.7</td>
+        <td style="background:#E6FAF0;text-align:right;">4.52</td>
+        <td style="background:#E6FAF0;text-align:right;">1.23</td>
+        <td style="background:#E6FAF0;text-align:right;">0.86%</td>
+        <td style="background:#E6FAF0;text-align:right;">1.26%</td>
+        <td style="background:#E6FAF0;text-align:right;">14,946</td>
+      </tr>
+      <tr style="background:#E4F1FF;">
+        <td style="background:#E4F1FF;font-weight:600;white-space:nowrap;">Talabat</td>
+        <td style="background:#E4F1FF;text-align:right;">99.71%</td>
+        <td style="background:#E4F1FF;text-align:right;">99.04%</td>
+        <td style="background:#E4F1FF;text-align:right;">77.5</td>
+        <td style="background:#E4F1FF;text-align:right;">4.52</td>
+        <td style="background:#E4F1FF;text-align:right;">1.23</td>
+        <td style="background:#E4F1FF;text-align:right;">0.86%</td>
+        <td style="background:#E4F1FF;text-align:right;">1.26%</td>
+        <td style="background:#E4F1FF;text-align:right;">16,988</td>
+      </tr>
+      <tr style="background:#FEFEE8;">
+        <td style="background:#FEFEE8;font-weight:600;white-space:nowrap;">pedidosya</td>
+        <td style="background:#FEFEE8;text-align:right;">99.90%</td>
+        <td style="background:#FEFEE8;text-align:right;">99.74%</td>
+        <td style="background:#FEFEE8;text-align:right;">67.8</td>
+        <td style="background:#FEFEE8;text-align:right;">4.52</td>
+        <td style="background:#FEFEE8;text-align:right;">1.23</td>
+        <td style="background:#FEFEE8;text-align:right;">0.86%</td>
+        <td style="background:#FEFEE8;text-align:right;">1.26%</td>
+        <td style="background:#FEFEE8;text-align:right;">20,641</td>
+      </tr>
+      <tr style="background:#F2E8F6;">
+        <td style="background:#F2E8F6;font-weight:600;white-space:nowrap;">HungerStation</td>
+        <td style="background:#F2E8F6;text-align:right;">99.89%</td>
+        <td style="background:#F2E8F6;text-align:right;">99.48%</td>
+        <td style="background:#F2E8F6;text-align:right;">77.6</td>
+        <td style="background:#F2E8F6;text-align:right;">4.52</td>
+        <td style="background:#F2E8F6;text-align:right;">1.23</td>
+        <td style="background:#F2E8F6;text-align:right;">0.86%</td>
+        <td style="background:#F2E8F6;text-align:right;">1.26%</td>
+        <td style="background:#F2E8F6;text-align:right;">10,630</td>
+      </tr>
+      <tr style="background:#E4F9F8;">
+        <td style="background:#E4F9F8;font-weight:600;white-space:nowrap;">Yemeksepeti</td>
+        <td style="background:#E4F9F8;text-align:right;">100.00%</td>
+        <td style="background:#E4F9F8;text-align:right;">100.00%</td>
+        <td style="background:#E4F9F8;text-align:right;">77.6</td>
+        <td style="background:#E4F9F8;text-align:right;">4.52</td>
+        <td style="background:#E4F9F8;text-align:right;">1.23</td>
+        <td style="background:#E4F9F8;text-align:right;">0.86%</td>
+        <td style="background:#E4F9F8;text-align:right;">1.26%</td>
+        <td style="background:#E4F9F8;text-align:right;">2,186</td>
+      </tr>
+      <tr style="background:#FEFEF2;">
+        <td style="background:#FEFEF2;font-weight:600;white-space:nowrap;">Glovo</td>
+        <td style="background:#FEFEF2;text-align:right;">99.86%</td>
+        <td style="background:#FEFEF2;text-align:right;">99.58%</td>
+        <td style="background:#FEFEF2;text-align:right;">77.6</td>
+        <td style="background:#FEFEF2;text-align:right;">4.52</td>
+        <td style="background:#FEFEF2;text-align:right;">1.23</td>
+        <td style="background:#FEFEF2;text-align:right;">0.86%</td>
+        <td style="background:#FEFEF2;text-align:right;">1.26%</td>
+        <td style="background:#FEFEF2;text-align:right;">46,896</td>
+      </tr>
+      <tr style="background:#DFF8F7;">
+        <td style="background:#DFF8F7;font-weight:600;white-space:nowrap;">Woowa</td>
+        <td style="background:#DFF8F7;text-align:right;">100.00%</td>
+        <td style="background:#DFF8F7;text-align:right;">99.76%</td>
+        <td style="background:#DFF8F7;text-align:right;">77.2</td>
+        <td style="background:#DFF8F7;text-align:right;">4.52</td>
+        <td style="background:#DFF8F7;text-align:right;">1.23</td>
+        <td style="background:#DFF8F7;text-align:right;">0.86%</td>
+        <td style="background:#DFF8F7;text-align:right;">1.26%</td>
+        <td style="background:#DFF8F7;text-align:right;">731</td>
+      </tr>
+      <tr style="background:#EEE8E2;">
+        <td style="background:#EEE8E2;font-weight:600;white-space:nowrap;">efood</td>
+        <td style="background:#EEE8E2;text-align:right;">99.90%</td>
+        <td style="background:#EEE8E2;text-align:right;">99.85%</td>
+        <td style="background:#EEE8E2;text-align:right;">67.7</td>
+        <td style="background:#EEE8E2;text-align:right;">4.52</td>
+        <td style="background:#EEE8E2;text-align:right;">1.23</td>
+        <td style="background:#EEE8E2;text-align:right;">0.86%</td>
+        <td style="background:#EEE8E2;text-align:right;">1.26%</td>
+        <td style="background:#EEE8E2;text-align:right;">5,258</td>
+      </tr>
+      <tr style="background:#EAE4FA;">
+        <td style="background:#EAE4FA;font-weight:600;white-space:nowrap;">Foody</td>
+        <td style="background:#EAE4FA;text-align:right;">99.81%</td>
+        <td style="background:#EAE4FA;text-align:right;">99.52%</td>
+        <td style="background:#EAE4FA;text-align:right;">67.7</td>
+        <td style="background:#EAE4FA;text-align:right;">4.52</td>
+        <td style="background:#EAE4FA;text-align:right;">1.23</td>
+        <td style="background:#EAE4FA;text-align:right;">0.86%</td>
+        <td style="background:#EAE4FA;text-align:right;">1.26%</td>
+        <td style="background:#EAE4FA;text-align:right;">729</td>
+      </tr>
+      <tr class="row-avg">
+        <td>Weighted AVG</td>
+        <td>99.87%</td>
+        <td>99.50%</td>
+        <td>76.42</td>
+        <td>4.52</td>
+        <td>1.23</td>
+        <td>0.86%</td>
+        <td>1.26%</td>
+        <td></td>
+      </tr>
+      <tr class="row-aqs">
+        <td>AQS Score</td>
+        <td style="text-align:right;">32.3750</td><td style="text-align:right;">0.0000</td><td style="text-align:right;">0.9053</td><td style="text-align:right;">3.7000</td><td style="text-align:right;">6.3500</td><td style="text-align:right;">13.0000</td><td style="text-align:right;">4.3500</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-  <div class="dash-summary" id="dash-summary"></div>
-
-  <div class="charts-row">
-    <div class="chart-box">
-      <h3>Crash Free % per Brand</h3>
-      <canvas id="chart-cfu"></canvas>
-    </div>
-    <div class="chart-box">
-      <h3>App Hangs % per Brand</h3>
-      <canvas id="chart-hang"></canvas>
-    </div>
+<div class="score-wrap">
+  <div class="score-card">
+    <div class="sc-label">Final AQS Score</div>
+    <div class="sc-value">60.68</div>
+    <div class="sc-sub">1 Aug – 3 Aug 2026</div>
   </div>
+</div>
 
-  <div class="charts-row">
-    <div class="chart-box">
-      <h3>Frozen &amp; Skipped Frames % per Brand</h3>
-      <canvas id="chart-frames"></canvas>
-    </div>
-    <div class="chart-box">
-      <h3>App Size (MB) per Brand</h3>
-      <canvas id="chart-appsize"></canvas>
-    </div>
+  <div class="footer">
+    <strong>Notes:</strong><br>
+    &bull; <strong>Crash Free % / App Hangs %</strong> — computed from Sentry Discover API
+      (<code>level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ</code> / <code>!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"</code>)
+      against BQ daily user counts for the period.<br>
+    &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — single aggregated value from Firebase Performance BQ,
+      applied to all brands equally.<br>
+    &bull; <strong>App Size, ASTI, STTI</strong> — older values, not recently updated; update manually for accurate AQS score.<br>
+    &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
+    &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
+    &bull; BQ_AVAILABLE = <code>True</code> &nbsp;|&nbsp;
+      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+    &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
-
-  <p class="dash-section-title">Brand Detail</p>
-  <div class="dash-table-wrap">
-    <table class="dash-table">
-      <thead>
-        <tr>
-          <th>Brand</th>
-          <th>Crash Free %</th>
-          <th>App Hangs %</th>
-          <th>App Size (MB)</th>
-          <th>ASTI (s)</th>
-          <th>STTI (s)</th>
-          <th>Frozen Frames %</th>
-          <th>Skipped Frames %</th>
-          <th>Riders</th>
-        </tr>
-      </thead>
-      <tbody id="dash-table-body"></tbody>
-    </table>
-  </div>
-
-</div><!-- /panel-dashboard -->
+</div>
 
 <script>
-var BRAND_DATA = [
-  {
-    "name": "Foodpanda",
-    "color": "#FFE8EA",
-    "cfu": 99.89,
-    "hang": 99.49,
-    "app_size": 77.5,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 78203
-  },
-  {
-    "name": "Foodora",
-    "color": "#E6FAF0",
-    "cfu": 99.92,
-    "hang": 99.75,
-    "app_size": 80.7,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 14946
-  },
-  {
-    "name": "Talabat",
-    "color": "#E4F1FF",
-    "cfu": 99.71,
-    "hang": 99.01,
-    "app_size": 77.6,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 16988
-  },
-  {
-    "name": "pedidosya",
-    "color": "#FEFEE8",
-    "cfu": 99.89,
-    "hang": 99.74,
-    "app_size": 67.8,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 20641
-  },
-  {
-    "name": "HungerStation",
-    "color": "#F2E8F6",
-    "cfu": 99.86,
-    "hang": 99.56,
-    "app_size": 77.6,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 10630
-  },
-  {
-    "name": "Yemeksepeti",
-    "color": "#E4F9F8",
-    "cfu": 100.0,
-    "hang": 99.99,
-    "app_size": 77.5,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 2186
-  },
-  {
-    "name": "Glovo",
-    "color": "#FEFEF2",
-    "cfu": 99.86,
-    "hang": 99.63,
-    "app_size": 77.5,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 46896
-  },
-  {
-    "name": "Woowa",
-    "color": "#DFF8F7",
-    "cfu": 99.96,
-    "hang": 99.71,
-    "app_size": 77.2,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 731
-  },
-  {
-    "name": "efood",
-    "color": "#EEE8E2",
-    "cfu": 99.85,
-    "hang": 99.79,
-    "app_size": 67.7,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 5258
-  },
-  {
-    "name": "Foody",
-    "color": "#EAE4FA",
-    "cfu": 99.83,
-    "hang": 99.56,
-    "app_size": 67.7,
-    "asti": 4.54,
-    "stti": 1.18,
-    "frozen": 0.79,
-    "skipped": 1.33,
-    "riders": 729
-  }
-];
-
-// ── Tab switching ─────────────────────────────────────────────────────────────
 document.getElementById('tabs').addEventListener('click', function(e) {
   var t = e.target.closest('.tab');
   if (!t) return;
@@ -495,177 +439,6 @@ document.getElementById('tabs').addEventListener('click', function(e) {
   t.classList.add('active');
   document.getElementById('panel-' + t.dataset.panel).classList.add('active');
 });
-
-// ── Brand selection state ─────────────────────────────────────────────────────
-var selected = BRAND_DATA.map(function() { return true; });
-var chartCfu, chartHang, chartFrames, chartAppsize;
-
-function getActiveBrands() {
-  return BRAND_DATA.filter(function(b, i) { return selected[i]; });
-}
-
-function riderWeightedAvg(key) {
-  var active = getActiveBrands();
-  if (!active.length) return 0;
-  var totalRiders = 0, sum = 0;
-  active.forEach(function(b) { sum += b[key] * b.riders; totalRiders += b.riders; });
-  return totalRiders ? sum / totalRiders : 0;
-}
-
-// ── Summary cards ─────────────────────────────────────────────────────────────
-function renderSummary() {
-  var active = getActiveBrands();
-  var cards = [
-    { key: 'cfu',      label: 'Crash Free %',     fmt: function(v) { return v.toFixed(2) + '%'; } },
-    { key: 'hang',     label: 'App Hangs %',       fmt: function(v) { return v.toFixed(2) + '%'; } },
-    { key: 'frozen',   label: 'Frozen Frames %',   fmt: function(v) { return v.toFixed(2) + '%'; } },
-    { key: 'skipped',  label: 'Skipped Frames %',  fmt: function(v) { return v.toFixed(2) + '%'; } },
-    { key: 'app_size', label: 'Avg App Size (MB)',  fmt: function(v) { return v.toFixed(1) + ' MB'; } },
-  ];
-  var sub = active.length + ' brand' + (active.length !== 1 ? 's' : '') + ' · rider-weighted';
-  document.getElementById('dash-summary').innerHTML = cards.map(function(c) {
-    return '<div class="dash-card">'
-      + '<div class="dc-label">' + c.label + '</div>'
-      + '<div class="dc-value">' + c.fmt(riderWeightedAvg(c.key)) + '</div>'
-      + '<div class="dc-sub">' + sub + '</div></div>';
-  }).join('');
-}
-
-// ── Chart helpers ─────────────────────────────────────────────────────────────
-function hexToRgba(hex, a) {
-  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
-}
-function darken(hex) {
-  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  return 'rgb(' + Math.max(0,r-60) + ',' + Math.max(0,g-60) + ',' + Math.max(0,b-60) + ')';
-}
-
-function renderCharts() {
-  var active = getActiveBrands();
-  var labels = active.map(function(b) { return b.name; });
-  var bgColors = active.map(function(b) { return hexToRgba(b.color, 0.88); });
-  var bdColors = active.map(function(b) { return darken(b.color); });
-
-  if (chartCfu) chartCfu.destroy();
-  chartCfu = new Chart(document.getElementById('chart-cfu'), {
-    type: 'bar',
-    data: { labels: labels, datasets: [{
-      data: active.map(function(b) { return b.cfu; }),
-      backgroundColor: bgColors, borderColor: bdColors, borderWidth: 1, borderRadius: 4
-    }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw.toFixed(3) + '%'; } } } },
-      scales: { y: { min: 99, max: 100.1, ticks: { callback: function(v) { return v + '%'; } } } },
-    },
-  });
-
-  if (chartHang) chartHang.destroy();
-  chartHang = new Chart(document.getElementById('chart-hang'), {
-    type: 'bar',
-    data: { labels: labels, datasets: [{
-      data: active.map(function(b) { return b.hang; }),
-      backgroundColor: bgColors, borderColor: bdColors, borderWidth: 1, borderRadius: 4
-    }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw.toFixed(3) + '%'; } } } },
-      scales: { y: { min: 99, max: 100.1, ticks: { callback: function(v) { return v + '%'; } } } },
-    },
-  });
-
-  if (chartFrames) chartFrames.destroy();
-  chartFrames = new Chart(document.getElementById('chart-frames'), {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Frozen %', data: active.map(function(b) { return b.frozen; }),
-           backgroundColor: 'rgba(99,102,241,.75)', borderColor: 'rgb(79,70,229)', borderWidth: 1, borderRadius: 4 },
-        { label: 'Skipped %', data: active.map(function(b) { return b.skipped; }),
-           backgroundColor: 'rgba(251,146,60,.75)', borderColor: 'rgb(234,88,12)', borderWidth: 1, borderRadius: 4 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'top' },
-                  tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + ctx.raw.toFixed(2) + '%'; } } } },
-      scales: { y: { ticks: { callback: function(v) { return v + '%'; } } } },
-    },
-  });
-
-  if (chartAppsize) chartAppsize.destroy();
-  chartAppsize = new Chart(document.getElementById('chart-appsize'), {
-    type: 'bar',
-    data: { labels: labels, datasets: [{
-      data: active.map(function(b) { return b.app_size; }),
-      backgroundColor: bgColors, borderColor: bdColors, borderWidth: 1, borderRadius: 4
-    }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' MB'; } } } },
-      scales: { y: { min: 50, ticks: { callback: function(v) { return v + ' MB'; } } } },
-    },
-  });
-}
-
-// ── Brand detail table ────────────────────────────────────────────────────────
-function renderTable() {
-  var active = getActiveBrands();
-  var tbody = document.getElementById('dash-table-body');
-  if (!active.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:20px;">No brands selected</td></tr>';
-    return;
-  }
-  tbody.innerHTML = active.map(function(b) {
-    return '<tr style="background:' + b.color + ';">'
-      + '<td>' + b.name + '</td>'
-      + '<td>' + b.cfu.toFixed(2) + '%</td>'
-      + '<td>' + b.hang.toFixed(2) + '%</td>'
-      + '<td>' + b.app_size + '</td>'
-      + '<td>' + b.asti + '</td>'
-      + '<td>' + b.stti + '</td>'
-      + '<td>' + b.frozen.toFixed(2) + '%</td>'
-      + '<td>' + b.skipped.toFixed(2) + '%</td>'
-      + '<td>' + b.riders.toLocaleString() + '</td>'
-      + '</tr>';
-  }).join('');
-}
-
-function renderAll() {
-  renderSummary();
-  renderCharts();
-  renderTable();
-}
-
-// ── Brand pills ───────────────────────────────────────────────────────────────
-function buildPills() {
-  document.getElementById('brand-pills').innerHTML = BRAND_DATA.map(function(b, i) {
-    return '<div class="brand-pill" id="pill-' + i + '" style="background:' + b.color + ';" onclick="toggleBrand(' + i + ')">' + b.name + '</div>';
-  }).join('');
-}
-
-function toggleBrand(i) {
-  selected[i] = !selected[i];
-  document.getElementById('pill-' + i).classList.toggle('inactive', !selected[i]);
-  renderAll();
-}
-
-function selectAllBrands() {
-  selected = BRAND_DATA.map(function() { return true; });
-  BRAND_DATA.forEach(function(b, i) { document.getElementById('pill-' + i).classList.remove('inactive'); });
-  renderAll();
-}
-
-function clearAllBrands() {
-  selected = BRAND_DATA.map(function() { return false; });
-  BRAND_DATA.forEach(function(b, i) { document.getElementById('pill-' + i).classList.add('inactive'); });
-  renderAll();
-}
-
-buildPills();
-renderAll();
 </script>
 
 </body>
