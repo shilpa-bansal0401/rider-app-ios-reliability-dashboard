@@ -38,12 +38,11 @@ OUT_DIR = "hang_report"
 # Each entry needs a version string and the Sentry dist (build number).
 # Set to [] to auto-fetch the most recent releases from Sentry instead.
 PINNED_RELEASES = [
-    {"version": "4.2626.1", "dist": "1006"},
-    {"version": "4.2627.1", "dist": "1010"},
     {"version": "4.2628", "dists": ["1014", "1016"]},
     {"version": "4.2629", "dists": ["1020", "1023"]},
     {"version": "4.2630.1", "dist": "1026"},
     {"version": "4.2631.1", "dist": "1032"},
+    {"version": "4.2632.4", "dist": "1040"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
