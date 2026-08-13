@@ -17,6 +17,7 @@ import json
 import os
 import datetime
 import sys
+import time
 import warnings
 import calendar
 
@@ -83,6 +84,15 @@ if SHOW_PREV_TAB:
 else:
     PREV_START_DATE = PREV_END_DATE = PREV_START = PREV_END = PREV_BQ_START = PREV_BQ_END = None
 
+# Fixed 30-day window for per-release metrics — gradual rollout means a release
+# may have started shipping weeks ago, so we always look back 30 days.
+REL_END_DATE   = TODAY - datetime.timedelta(days=1)
+REL_START_DATE = TODAY - datetime.timedelta(days=30)
+REL_START    = REL_START_DATE.strftime("%Y-%m-%dT00:00:00.000")
+REL_END      = REL_END_DATE.strftime("%Y-%m-%dT23:59:59.999")
+REL_BQ_START = REL_START_DATE.strftime("%Y-%m-%d")
+REL_BQ_END   = REL_END_DATE.strftime("%Y-%m-%d")
+
 HANGS_QUERY   = '!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"'
 CRASHES_QUERY = "level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ"
 
@@ -105,19 +115,40 @@ FIREBASE_BRANDS = [
 # Derived from FIREBASE_BRANDS for use in Firebase fetch queries
 FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
+# Pinned release versions tracked for version-based AQS performance scoring
+PINNED_RELEASES = [
+    {"version": "4.2630.1", "dist":  "1026",           "asti": 4.18,  "stti": 1.190, "brand_field": "Brand"},
+    {"version": "4.2631.1", "dist":  "1032",           "asti": 3.97,  "stti": 1.200, "brand_field": "Brand"},
+    {"version": "4.2632.4", "dist":  "1040",           "asti": 4.10,  "stti": 1.190, "brand_field": "brand", "excluded_brands": ["glovo", "woowa"]},
+    {"version": "4.2633.1", "dist":  "1044",           "asti": 3.95,  "stti": 1.053, "brand_field": "brand", "frozen_frames": 1.02, "skipped_frames": 1.36},
+]
+
+
+def rel_filter_str(rel):
+    """Build a Sentry query filter for a PINNED_RELEASES entry (dist: or release:)."""
+    dists = rel.get("dists")
+    d     = rel.get("dist")
+    v     = rel.get("version")
+    if dists:
+        return "(" + " OR ".join(f"dist:{dd}" for dd in dists) + ")"
+    if d:
+        return f"dist:{d}"
+    return f"release:{v}"
+
+
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 77.4, "asti": 3.93, "stti": 1.20, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 80.7, "asti": 3.93, "stti": 1.20, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 77.5, "asti": 3.93, "stti": 1.20, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 67.8, "asti": 3.93, "stti": 1.20, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 77.6, "asti": 3.93, "stti": 1.20, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 77.6, "asti": 3.93, "stti": 1.20, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 77.6, "asti": 3.93, "stti": 1.20, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 77.2, "asti": 3.93, "stti": 1.20, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 67.7, "asti": 3.93, "stti": 1.20, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 67.7, "asti": 3.93, "stti": 1.20, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 83.8, "asti": 3.93, "stti": 1.20, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 78.4, "asti": 3.93, "stti": 1.20, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 68.6, "asti": 3.93, "stti": 1.20, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 78.5, "asti": 3.93, "stti": 1.20, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 78.4, "asti": 3.93, "stti": 1.20, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 78.0, "asti": 3.93, "stti": 1.20, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 68.5, "asti": 3.93, "stti": 1.20, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 68.5, "asti": 3.93, "stti": 1.20, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -191,6 +222,47 @@ def fetch_bigquery(bq_start=None, bq_end=None):
     except Exception as exc:
         print(f"WARNING: BigQuery fetch failed, skipping BQ data: {exc}", file=sys.stderr)
         return []
+
+
+def fetch_bigquery_by_version(version, bq_start=None, bq_end=None):
+    """Return (raw_rows, brand_totals) for a specific appVersionCode.
+
+    Runs one query per brand with LOWER(appId) LIKE and appVersionCode filters —
+    matching the Dashboard SUMIFS approach. raw_rows is [{dt, appId, user_count}]
+    suitable for writing to a Dashboard-style raw data section. brand_totals is
+    {bq_key_lower: total_user_count} for AQS computation.
+    """
+    if not BQ_AVAILABLE:
+        return [], {}
+    _bq_start = bq_start or BQ_START
+    _bq_end   = bq_end   or BQ_END
+    all_rows     = []
+    brand_totals = {}
+    for brand in BRANDS:
+        bkey = brand["bq_key"].lower()
+        query = f"""
+            SELECT partition_date as dt, appId, count(distinct clientId) as user_count
+            FROM `fulfillment-dwh-production.curated_data_shared_coredata_tracking.perseus_events_rider_app`
+            WHERE partition_date BETWEEN '{_bq_start}' AND '{_bq_end}'
+              AND platform = 'iOS'
+              AND appVersionCode = '{version}'
+              AND LOWER(appId) LIKE '%{bkey}%'
+            GROUP BY ALL
+            ORDER BY appId, dt ASC
+        """
+        try:
+            client = bq_client.Client(project="logistics-rider-staging")
+            rows = list(client.query(query))
+            brand_rows = [{"dt": str(r.dt), "appId": r.appId or "", "user_count": int(r.user_count or 0)} for r in rows]
+            total = sum(r["user_count"] for r in brand_rows)
+        except Exception as exc:
+            print(f"WARNING: BQ version={version} brand={bkey}: {exc}", file=sys.stderr)
+            brand_rows = []
+            total = 0
+        all_rows.extend(brand_rows)
+        brand_totals[bkey] = total
+        print(f"    {bkey}: {total:,} users")
+    return all_rows, brand_totals
 
 
 def fetch_firebase_frames(bq_start=None, bq_end=None):
@@ -281,7 +353,172 @@ FROM frames_percentages_calc
         return {}
 
 
-def fetch_discover(query, environment=None, start=None, end=None):
+def fetch_firebase_frames_by_version(version, bq_start=None, bq_end=None):
+    """Return {"frozen": float, "skipped": float, "score": float} for a specific app_display_version.
+
+    Runs the same UNION query as fetch_firebase_frames but adds an app_display_version
+    filter to each brand table, isolating frame metrics for a single release.
+    """
+    if not BQ_AVAILABLE:
+        print(f"WARNING: BigQuery unavailable, skipping frames fetch for version {version}.",
+              file=sys.stderr)
+        return {}
+
+    _bq_start = bq_start or BQ_START
+    _bq_end   = bq_end   or BQ_END
+
+    selects = "\n  UNION ALL".join(
+        f"""
+  SELECT
+    app_display_version, app_build_version, os_version, device_name, country,
+    event_name, event_type, event_timestamp,
+    trace_info.duration_us,
+    trace_info.screen_info,
+    trace_info.metric_info
+  FROM `logistics-54934.firebase_performance.{table}`
+  WHERE TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) >= TIMESTAMP('{_bq_start}')
+    AND TIMESTAMP_TRUNC(_PARTITIONTIME, DAY) <= TIMESTAMP('{_bq_end}')
+    AND app_display_version LIKE '{version}%'"""
+        for _, table in FIREBASE_BRANDS
+    )
+
+    query = f"""
+WITH fb_performance AS ({selects}
+),
+frames_grader AS (
+  SELECT
+    event_name,
+    event_type,
+    duration_us,
+    screen_info.slow_frame_ratio,
+    screen_info.frozen_frame_ratio,
+    CONCAT(event_name, CAST(event_timestamp AS STRING), app_build_version, country) AS event_id,
+    CASE
+      WHEN COUNT(CONCAT(event_name, CAST(event_timestamp AS STRING), app_build_version, country)) > 0
+        THEN 1 ELSE 0
+    END AS total_event_count,
+    CASE WHEN COUNTIF(screen_info.slow_frame_ratio   > 0.5)   > 0 THEN 1 ELSE 0 END AS count_skipped_greater50,
+    CASE WHEN COUNTIF(screen_info.frozen_frame_ratio > 0.001) > 0 THEN 1 ELSE 0 END AS count_frozen_greater1
+  FROM fb_performance
+  WHERE screen_info IS NOT NULL
+    AND CHAR_LENGTH(event_name) > 9
+  GROUP BY 1, 2, 3, 4, 5, 6
+),
+events_totals AS (
+  SELECT
+    SUM(total_event_count)       AS events_count,
+    SUM(count_skipped_greater50) AS skipped_frames_count,
+    SUM(count_frozen_greater1)   AS frozen_frames_count
+  FROM frames_grader
+),
+frames_percentages_calc AS (
+  SELECT
+    (skipped_frames_count / events_count) * 100 AS skipped_frames_percentage,
+    (frozen_frames_count  / events_count) * 100 AS forzen_frames_percentage
+  FROM events_totals
+)
+SELECT
+  ROUND(skipped_frames_percentage, 2) AS skipped_frames_percentage,
+  ROUND(forzen_frames_percentage,  2) AS forzen_frames_percentage,
+  ROUND(100 - ((0.2 * skipped_frames_percentage) + (0.8 * forzen_frames_percentage)), 2) AS performance_score
+FROM frames_percentages_calc
+"""
+    try:
+        client = bq_client.Client(project="logistics-rider-staging")
+        rows = list(client.query(query))
+        if not rows:
+            print(f"WARNING: No Firebase frame data for version {version}.", file=sys.stderr)
+            return {}
+        row = rows[0]
+        frozen_val  = row.forzen_frames_percentage
+        skipped_val = row.skipped_frames_percentage
+        score_val   = row.performance_score
+        if frozen_val is None or skipped_val is None:
+            print(f"WARNING: Firebase frames for v{version} returned NULL (no events in period).",
+                  file=sys.stderr)
+            return {}
+        result = {
+            "frozen":  float(frozen_val),
+            "skipped": float(skipped_val),
+            "score":   float(score_val) if score_val is not None else None,
+        }
+        print(f"  v{version}: frozen={result['frozen']}%  skipped={result['skipped']}%  score={result['score']}")
+        return result
+    except Exception as exc:
+        print(f"ERROR fetching Firebase frames for version {version}: {exc}", file=sys.stderr)
+        return {}
+
+
+def fetch_sentry_users_per_version(rel, base_query, environment=None):
+    """Return count_unique(user) from Sentry for a specific release/dist.
+
+    Appends the dist/release filter from rel_filter_str(rel) to base_query and
+    calls the Discover /events/ endpoint for a single aggregated user count.
+    """
+    dist_filter = rel_filter_str(rel)
+    query = f"{base_query} {dist_filter}".strip()
+
+    params = [
+        ("project", PROJECT),
+        ("query",   query),
+        ("start",   START),
+        ("end",     END),
+        ("field",   "count_unique(user)"),
+        ("dataset", "errors"),
+    ]
+    if environment:
+        params.append(("environment", environment))
+
+    url = (f"https://sentry.io/api/0/organizations/{ORG}/events/?"
+           + urllib.parse.urlencode(params))
+    req = urllib.request.Request(url, headers=HEADERS)
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+        rows = data.get("data", [])
+        if not rows:
+            return 0
+        return int(rows[0].get("count_unique(user)", 0) or 0)
+    except Exception as exc:
+        print(f"ERROR fetching Sentry users for version {rel['version']}: {exc}", file=sys.stderr)
+        return 0
+
+
+def fetch_sentry_users_per_version_per_brand(rel, base_query, environment=None):
+    """Return {sentry_key_lower: count_unique(user)} per brand for a specific release/dist."""
+    dist_filter = rel_filter_str(rel)
+    result = {}
+    for brand in BRANDS:
+        skey = brand["sentry_key"]
+        brand_field = rel.get("brand_field", "Brand")
+        brand_query = f"{base_query} {dist_filter} {brand_field}:*{skey}*".strip()
+        params = [
+            ("project", PROJECT),
+            ("query",   brand_query),
+            ("start",   START),
+            ("end",     END),
+            ("field",   "count_unique(user)"),
+            ("dataset", "errors"),
+        ]
+        if environment:
+            params.append(("environment", environment))
+        url = (f"https://sentry.io/api/0/organizations/{ORG}/events/?"
+               + urllib.parse.urlencode(params))
+        req = urllib.request.Request(url, headers=HEADERS)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read())
+            rows = data.get("data", [])
+            count = int(rows[0].get("count_unique(user)", 0) or 0) if rows else 0
+        except Exception as exc:
+            print(f"WARNING: brand={skey} v{rel['version']}: {exc}", file=sys.stderr)
+            count = 0
+        result[skey.lower()] = count
+        time.sleep(0.3)
+    return result
+
+
+def fetch_discover(query, environment=None, start=None, end=None, brand_field="Brand"):
     rows = []
     cursor = None
     _start = start or START
@@ -294,7 +531,7 @@ def fetch_discover(query, environment=None, start=None, end=None):
             ("start",    _start),
             ("end",      _end),
             ("field",    "timestamp.to_day"),
-            ("field",    "Brand"),
+            ("field",    brand_field),
             ("field",    "count_unique(user)"),
             ("sort",     "timestamp.to_day"),
             ("dataset",  "errors"),
@@ -373,13 +610,40 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None):
     return all_rows
 
 
+def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None):
+    """Like fetch_discover_per_brand but adds the release dist filter to each brand query."""
+    dist_filter = rel_filter_str(rel)
+    sentry_brand_field = rel.get("brand_field", "Brand")
+    excluded = {b.lower() for b in rel.get("excluded_brands", [])}
+    all_rows = []
+    for brand in BRANDS:
+        skey = brand["sentry_key"]
+        if skey.lower() in excluded:
+            print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
+            continue
+        brand_query = f'{base_query} {dist_filter} {sentry_brand_field}:*{skey}*'
+        rows = fetch_discover(brand_query, environment=environment, start=start, end=end,
+                              brand_field=sentry_brand_field)
+        # Tag each row with the brand we queried for — the brand field in the Sentry response
+        # may be empty or a short name without the full package path, so we carry the key
+        # explicitly to guarantee correct aggregation later.
+        for r in rows:
+            r["_sentry_key"] = skey.lower()
+        total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+        print(f"    {skey}: {total} users across {len(rows)} day-rows")
+        all_rows.extend(rows)
+        time.sleep(0.3)
+    return all_rows
+
+
 def shape_rows(raw, user_col):
     rows = [
         {
             user_col:           int(row.get("count_unique(user)", 0)),
             "day":              row.get("timestamp.to_day", "")[:10],
             "timestamp.to_day": row.get("timestamp.to_day", ""),
-            "Brand":            row.get("Brand", ""),
+            "Brand":            row.get("Brand") or row.get("brand") or "",
+            "_sentry_key":      row.get("_sentry_key", ""),
         }
         for row in raw
     ]
@@ -387,19 +651,28 @@ def shape_rows(raw, user_col):
 
 
 def aggregate_by_brand(rows, user_col="count_unique(user)"):
-    """Aggregate user counts from Sentry rows by brand (substring match on sentry_key).
+    """Aggregate user counts from Sentry rows by brand.
 
     Accepts either raw Discover rows (user_col="count_unique(user)") or
     shaped rows (user_col="CRASH_USERS" / "HANG_USERS").
     Returns dict: {sentry_key_lower: total_count} for each brand in BRANDS.
+
+    Prefers the _sentry_key tag (set by fetch_discover_per_brand_for_release) over
+    substring-matching the Brand field, so results are correct even when Sentry returns
+    a short name without the full package path.
     """
     totals = {}
     for brand in BRANDS:
         skey = brand["sentry_key"].lower()
         total = 0
         for row in rows:
-            brand_field = (row.get("Brand") or "").lower()
-            if skey in brand_field:
+            tagged_key = row.get("_sentry_key", "")
+            if tagged_key:
+                matches = (tagged_key == skey)
+            else:
+                brand_val = (row.get("Brand") or "").lower()
+                matches = bool(brand_val) and skey in brand_val
+            if matches:
                 total += int(row.get(user_col, 0) or 0)
         totals[skey] = total
     return totals
@@ -518,6 +791,168 @@ BRAND_COLORS = [
 
 # ── HTML report generation ─────────────────────────────────────────────────────
 
+def _build_version_aqs_panel_html(version_aqs_data, date_range):
+    """Build the HTML content for the Version AQS panel.
+
+    Each entry in version_aqs_data must contain:
+        version, cfu, hang, asti, stti, app_size, frozen, skipped,
+        aqs_scores (dict), final_aqs (float), crash_users, hang_users,
+        no_data (bool)
+    """
+    if not version_aqs_data:
+        return """
+<div style="padding:40px;text-align:center;color:#9ca3af;font-size:13px;">
+  No version AQS data available. Ensure Sentry and BigQuery are accessible when running the report.
+</div>"""
+
+    AQS_COL_ORDER = ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]
+
+    def aqs_bg(score):
+        if score is None:
+            return "#f9fafb"
+        if score >= 80:
+            return "#E8F5EA"
+        if score >= 60:
+            return "#FFF8E1"
+        return "#FFE4E6"
+
+    brand_rows_html = ""
+    aqs_score_cells = ""
+    version_colors = [
+        "#E4F1FF", "#E6FAF0", "#FEFEE8", "#F2E8F6", "#E4F9F8",
+    ]
+
+    for i, vd in enumerate(version_aqs_data):
+        ver     = vd.get("version", "—")
+        no_data = vd.get("no_data", False)
+        bg      = version_colors[i % len(version_colors)]
+        cs      = f"background:{bg};"
+
+        if no_data:
+            brand_rows_html += f"""
+      <tr style="background:{bg};">
+        <td style="{cs}font-weight:600;">{ver}</td>
+        <td colspan="8" style="{cs}text-align:center;color:#9ca3af;">No data available for this period</td>
+      </tr>"""
+        else:
+            cfu      = vd.get("cfu",      0.0)
+            hang     = vd.get("hang",     0.0)
+            asti     = vd.get("asti",     0.0)
+            stti     = vd.get("stti",     0.0)
+            app_size = vd.get("app_size", 0.0)
+            frozen   = vd.get("frozen",   0.0)
+            skipped  = vd.get("skipped",  0.0)
+            final    = vd.get("final_aqs", 0.0)
+            brand_rows_html += f"""
+      <tr style="background:{bg};">
+        <td style="{cs}font-weight:600;white-space:nowrap;">{ver}</td>
+        <td style="{cs}text-align:right;">{cfu:.2f}%</td>
+        <td style="{cs}text-align:right;">{hang:.2f}%</td>
+        <td style="{cs}text-align:right;">{app_size}</td>
+        <td style="{cs}text-align:right;">{asti}</td>
+        <td style="{cs}text-align:right;">{stti}</td>
+        <td style="{cs}text-align:right;">{frozen:.2f}%</td>
+        <td style="{cs}text-align:right;">{skipped:.2f}%</td>
+        <td style="{cs}text-align:right;font-weight:700;">{final}</td>
+      </tr>"""
+
+    # AQS Score component row (sum of all versions' components averaged, or show per-version)
+    # Show one row per version for AQS components — use a compact sub-table style
+    aqs_rows_html = ""
+    for vd in version_aqs_data:
+        if vd.get("no_data"):
+            continue
+        scores = vd.get("aqs_scores", {})
+        cells  = "".join(
+            f'<td style="text-align:right;">{scores.get(k, 0):.4f}</td>'
+            for k in AQS_COL_ORDER
+        )
+        aqs_rows_html += f"""
+      <tr class="row-aqs">
+        <td style="text-align:left;">{vd['version']}</td>
+        {cells}
+        <td style="text-align:right;font-weight:700;">{vd.get('final_aqs', 0)}</td>
+      </tr>"""
+
+    # Score cards
+    score_cards_html = '<div class="score-wrap">'
+    for vd in version_aqs_data:
+        if vd.get("no_data"):
+            continue
+        score_cards_html += f"""
+  <div class="score-card">
+    <div class="sc-label">v{vd['version']}</div>
+    <div class="sc-value">{vd.get('final_aqs', 0)}</div>
+    <div class="sc-sub">AQS Score</div>
+  </div>"""
+    score_cards_html += "\n</div>"
+
+    return f"""
+<p style="font-size:13px;color:#6b7280;margin-bottom:20px;">
+  Full AQS score per pinned release version. Crashes &amp; hangs from Sentry (dist filter);
+  frozen &amp; skipped frames from Firebase Performance BigQuery (version filter);
+  ASTI, STTI, and app size use current fleet values.
+  Period: <strong>{date_range}</strong>
+</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Version</th>
+        <th class="num">Crash Free %</th>
+        <th class="num">Hang Free %</th>
+        <th class="num">App Size (MB)</th>
+        <th class="num">ASTI (s)</th>
+        <th class="num">STTI (s)</th>
+        <th class="num">Frozen Frames %</th>
+        <th class="num">Skipped Frames %</th>
+        <th class="num">Final AQS</th>
+      </tr>
+    </thead>
+    <tbody>
+      {brand_rows_html}
+    </tbody>
+  </table>
+</div>
+
+<div style="margin-bottom:20px;">
+  <p style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin-bottom:10px;">AQS Score Components (35% / 25% / 2% / 10% / 10% / 13% / 5%)</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th class="num">Crash Free</th>
+          <th class="num">Hang Free</th>
+          <th class="num">App Size</th>
+          <th class="num">ASTI</th>
+          <th class="num">STTI</th>
+          <th class="num">Frozen</th>
+          <th class="num">Skipped</th>
+          <th class="num">Final AQS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {aqs_rows_html}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{score_cards_html}
+
+<div class="footer">
+  &bull; <strong>Crash Free % / Hang Free %</strong> — Sentry <code>count_unique(user)</code>
+    with dist filter, divided by total BQ iOS user-days for the period.<br>
+  &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — Firebase Performance BigQuery
+    filtered by <code>app_display_version</code>.<br>
+  &bull; <strong>ASTI, STTI, App Size</strong> — rider-weighted fleet averages (static per report run).<br>
+  &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value − baseline) / (target − baseline)) × 50) + 50)) × weight%</code><br>
+  &bull; Query period: {date_range}
+</div>"""
+
+
 def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data, start_date, end_date):
     """Returns (brand_metrics, avg_metrics, aqs_scores, final_aqs)."""
     days_in_period = (end_date - start_date).days + 1
@@ -564,7 +999,8 @@ def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_
 
 
 def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data,
-                          prev_bq_users=None, prev_crash=None, prev_hang=None, prev_firebase=None):
+                          prev_bq_users=None, prev_crash=None, prev_hang=None, prev_firebase=None,
+                          version_aqs_data=None):
     """Generate consolidation_report/index.html from pre-fetched data.
 
     Args:
@@ -576,6 +1012,8 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         prev_crash:        same shape as crash_by_brand for previous month (optional)
         prev_hang:         same shape as hang_by_brand for previous month (optional)
         prev_firebase:     same shape as firebase_data for previous month (optional)
+        version_aqs_data:  list of per-version AQS dicts — {version, cfu, hang, asti, stti,
+                           app_size, frozen, skipped, aqs_scores, final_aqs, ...} (optional)
     """
     OUT_DIR = "consolidation_report"
 
@@ -694,6 +1132,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
 
         prev_panel_html = _build_aqs_table_html(prev_metrics, prev_avg, prev_aqs, prev_final, prev_date_range)
         curr_panel_html = _build_aqs_table_html(curr_metrics, curr_avg, curr_aqs, curr_final, curr_date_range)
+        version_panel_html = _build_version_aqs_panel_html(version_aqs_data or [], curr_date_range)
 
         bq_status_note = ""
         if not BQ_AVAILABLE:
@@ -786,6 +1225,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
 <div class="tabs" id="tabs">
   <div class="tab active" data-panel="prev-month">{prev_month_label}</div>
   <div class="tab" data-panel="curr-month">{curr_month_label}</div>
+  <div class="tab" data-panel="version-aqs">Version AQS</div>
 </div>
 
 <!-- Panel: prev month -->
@@ -828,6 +1268,11 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
       Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
+</div>
+
+<!-- Panel: version aqs -->
+<div class="panel" id="panel-version-aqs">
+  {version_panel_html}
 </div>
 
 <script>
@@ -951,6 +1396,8 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         ' update manually for accurate AQS score.<br>\n'
         if TODAY.day >= 3 else ""
     )
+
+    version_panel_html = _build_version_aqs_panel_html(version_aqs_data or [], date_range)
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1082,6 +1529,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 <div class="tabs" id="tabs">
   <div class="tab active" data-panel="aqs-table">AQS Table</div>
   <div class="tab" data-panel="dashboard">Dashboard</div>
+  <div class="tab" data-panel="version-aqs">Version AQS</div>
 </div>
 
 <!-- ── Panel 1: AQS Table ── -->
@@ -1202,6 +1650,11 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
   </div>
 
 </div><!-- /panel-dashboard -->
+
+<!-- ── Panel 3: Version AQS ── -->
+<div class="panel" id="panel-version-aqs">
+  {version_panel_html}
+</div><!-- /panel-version-aqs -->
 
 <script>
 var BRAND_DATA = {brand_json};
@@ -1599,7 +2052,310 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ws.freeze_panes = "B2"
 
 
-def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
+def add_release_version_sheets(wb, version_aqs_data):
+    """Add two Excel tabs per pinned release version:
+
+    1. 'v{ver}' — Dashboard-style: raw BQ/crash/hang data in columns T-AD,
+       per-day formulas in A-N with brand selector, exactly like the main Dashboard.
+    2. 'v{ver} Cons' — Consolidation-style: per-brand CFU%/hang-free% summary
+       reading from the release dashboard tab, with weighted average and AQS.
+    """
+    if not version_aqs_data:
+        return
+
+    FINAL_BLUE  = PatternFill("solid", fgColor="4472C4")
+    month_days  = calendar.monthrange(START_DATE.year, START_DATE.month)[1]
+    FORMULA_END = END_DATE.day + 1
+    DATA_END_D  = month_days + 1   # last date row in dashboard tab
+
+    BRAND_DROPDOWN = ["foodora", "woowa", "foodpanda", "talabat", "efood", "glovo",
+                      "hungerstation", "yemek", "foody", "pedidosya"]
+
+    bq_cols    = ["dt", "appId", "user_count"]
+    crash_cols = ["CRASH_USERS", "day", "Brand"]
+    hang_cols  = ["HANG_USERS",  "day", "Brand"]
+
+    for rel_data in version_aqs_data:
+        ver        = rel_data["version"]
+        brand_data = rel_data.get("brand_data", [])
+        bq_rows_r  = rel_data.get("bq_rows_rel",    [])
+        crash_rows_r = rel_data.get("crash_rows_rel", [])
+        hang_rows_r  = rel_data.get("hang_rows_rel",  [])
+
+        dash_name = f"v{ver}"[:31]
+        cons_name = f"v{ver} Cons"[:31]
+
+        # ── Tab 1: Dashboard-style ────────────────────────────────────────────────
+        ws = wb.create_sheet(title=dash_name)
+
+        # Raw data headers and values (columns T-AD — same layout as main Dashboard)
+        for ci, name in enumerate(bq_cols, start=BQ_START_COL):
+            cell = ws.cell(row=1, column=ci, value=name)
+            cell.font = BOLD; cell.fill = BQ_HEADER_FILL
+            cell.alignment = Alignment(horizontal="center")
+        for ci, name in enumerate(crash_cols, start=CRASH_START_COL):
+            cell = ws.cell(row=1, column=ci, value=name)
+            cell.font = BOLD; cell.fill = CRASH_HEADER_FILL
+            cell.alignment = Alignment(horizontal="center")
+        for ci, name in enumerate(hang_cols, start=HANG_START_COL):
+            cell = ws.cell(row=1, column=ci, value=name)
+            cell.font = BOLD; cell.fill = HANG_HEADER_FILL
+            cell.alignment = Alignment(horizontal="center")
+
+        for ri, row in enumerate(bq_rows_r, start=2):
+            for ci, key in enumerate(bq_cols, start=BQ_START_COL):
+                ws.cell(row=ri, column=ci, value=row[key])
+        for ri, row in enumerate(crash_rows_r, start=2):
+            for ci, key in enumerate(crash_cols, start=CRASH_START_COL):
+                ws.cell(row=ri, column=ci, value=row[key])
+        for ri, row in enumerate(hang_rows_r, start=2):
+            for ci, key in enumerate(hang_cols, start=HANG_START_COL):
+                ws.cell(row=ri, column=ci, value=row[key])
+
+        # Settings panel (A-B rows 1-10)
+        settings = [
+            ("CFU part in AQS",  60),
+            ("base AQS score",   32.65),
+            ("CFU minimum",      99.5),
+            ("CFU maximum",      99.9),
+            (None,               None),
+            ("Hang minimum",     99.5),
+            ("Hang maximum",     99.9),
+            ("Hang part in AQS", 25),
+            (None,               None),
+            ("Brand",            "woowa"),
+        ]
+        for i, (label, value) in enumerate(settings, start=1):
+            if label:
+                a = ws.cell(row=i, column=1, value=label)
+                a.font = BOLD; a.fill = SETTINGS_FILL
+                b = ws.cell(row=i, column=2, value=value)
+                b.fill = SETTINGS_FILL
+
+        brand_dv = DataValidation(type="list",
+                                  formula1='"' + ",".join(BRAND_DROPDOWN) + '"',
+                                  allow_blank=False, showDropDown=False)
+        ws.add_data_validation(brand_dv)
+        brand_dv.add("B10")
+
+        # Column headers (C-N)
+        col_headers = {
+            3:  "Date",
+            4:  "Total users count (ios_User_Count)",
+            5:  "Crashed users count (Query)",
+            7:  "CFU %",
+            11: "Hang user count (Query)",
+            12: "Hang free %",
+            14: "Projected AQS including hangs",
+        }
+        for col, header in col_headers.items():
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = BOLD; cell.fill = DASH_HEADER_FILL
+            cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+        # Date column C
+        for day in range(1, month_days + 1):
+            ws.cell(row=day + 1, column=3,
+                    value=START_DATE.replace(day=day).strftime("%Y-%m-%d"))
+
+        # Per-day formulas (same as main Dashboard, self-referencing T-AD of this sheet)
+        for r in range(2, FORMULA_END + 1):
+            ws.cell(r, 4).value  = f'=SUMIFS(V:V,U:U,"*"&$B$10&"*",T:T,C{r})'
+            ws.cell(r, 5).value  = f'=SUMIFS(X:X,Z:Z,"*"&$B$10&"*",Y:Y,C{r})'
+            ws.cell(r, 7).value  = (f'=ROUND(MAX(0,MIN(100,(1-E{r}/IF(D{r}>0,D{r},'
+                                    f'SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100)),2)')
+            ws.cell(r, 8).value  = f'=MIN(1,(G{r}-$B$3)/($B$4-$B$3))*$B$1'
+            ws.cell(r, 11).value = f'=SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{r})'
+            ws.cell(r, 12).value = (f'=ROUND(MAX(0,MIN(100,100*(1-K{r}/IF(D{r}>0,D{r},'
+                                    f'SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})))),2)')
+            ws.cell(r, 13).value = f'=MAX(0,(L{r}-$B$6)/($B$7-$B$6)*$B$8)'
+            ws.cell(r, 14).value = f'=$B$2+H{r}+M{r}'
+
+        # Summary rows
+        LBL = DATA_END_D + 1
+        VAL = DATA_END_D + 2
+        month_name = START_DATE.strftime("%B")
+        summaries = [
+            (4,  None,
+             f"=AVERAGE(D2:D{FORMULA_END})"),
+            (7,  "AVG CFU",
+             f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
+            (8,  None,
+             f"=AVERAGE(H2:H{FORMULA_END})"),
+            (9,  f"{month_name} AQS score",
+             f"=$B$2+H{VAL}"),
+            (12, "AVG Hang-free",
+             f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
+            (13, None,
+             f"=MAX(0,(L{VAL}-$B$6)/($B$7-$B$6)*$B$8)"),
+            (14, "Projected AQS including hangs",
+             f"=$B$2+MAX(0,(G{VAL}-$B$3)/($B$4-$B$3)*($B$1-$B$8))+M{VAL}"),
+        ]
+        for col, label, formula in summaries:
+            if label:
+                lc = ws.cell(row=LBL, column=col, value=label)
+                lc.font = BOLD
+            ws.cell(row=VAL, column=col, value=formula)
+        ws.cell(row=VAL, column=7).number_format  = "0.##"
+        ws.cell(row=VAL, column=9).number_format  = "0.00"
+        ws.cell(row=VAL, column=12).number_format = "0.##"
+        ws.cell(row=VAL, column=14).number_format = "0.00"
+
+        # Column widths & freeze
+        for ci in range(BQ_START_COL, BQ_START_COL + 3):
+            ws.column_dimensions[get_column_letter(ci)].width = 22
+        ws.column_dimensions["W"].width = 4
+        for ci in range(CRASH_START_COL, CRASH_START_COL + 3):
+            ws.column_dimensions[get_column_letter(ci)].width = 22
+        ws.column_dimensions["AA"].width = 4
+        for ci in range(HANG_START_COL, HANG_START_COL + 3):
+            ws.column_dimensions[get_column_letter(ci)].width = 22
+        ws.column_dimensions["A"].width = 20
+        ws.column_dimensions["B"].width = 12
+        ws.column_dimensions["C"].width = 14
+        ws.column_dimensions["D"].width = 30
+        ws.column_dimensions["E"].width = 28
+        ws.column_dimensions["G"].width = 12
+        ws.column_dimensions["K"].width = 24
+        ws.column_dimensions["L"].width = 14
+        ws.column_dimensions["N"].width = 30
+        ws.row_dimensions[1].height = 45
+        ws.freeze_panes = "C2"
+
+        # ── Tab 2: Consolidation-style ────────────────────────────────────────────
+        wc = wb.create_sheet(title=cons_name)
+
+        if not brand_data:
+            continue
+
+        C_DATA_START = 2
+        C_DATA_END   = C_DATA_START + len(brand_data) - 1
+        C_AVG_ROW    = C_DATA_END + 1
+        C_AQS_ROW    = C_AVG_ROW + 1
+        C_FINAL_ROW  = C_AQS_ROW + 2
+        RIDER_COL    = 9   # I
+        WEIGHT_COL   = 10  # J
+
+        # Headers
+        cons_headers = [
+            "Brand", "Crash free users", "App Hangs", "App size",
+            "ASTI", "STTI", "Frozen Frames", "Skipped Frames",
+        ]
+        for ci, h in enumerate(cons_headers, start=1):
+            cell = wc.cell(1, ci, value=h)
+            cell.font = BOLD; cell.fill = DASH_HEADER_FILL; cell.border = THIN_BOX
+            cell.alignment = Alignment(horizontal="center", wrap_text=True)
+
+        ri_hdr = wc.cell(1, RIDER_COL, value="Riders count")
+        ri_hdr.font = BOLD; ri_hdr.fill = SETTINGS_FILL; ri_hdr.border = THIN_BOX
+        ri_hdr.alignment = Alignment(horizontal="center", wrap_text=True)
+
+        wt_hdr = wc.cell(1, WEIGHT_COL, value="Weight Rider ID")
+        wt_hdr.font = BOLD; wt_hdr.fill = SETTINGS_FILL; wt_hdr.border = THIN_BOX
+        wt_hdr.alignment = Alignment(horizontal="center", wrap_text=True)
+
+        # Per-brand rows — CFU%/hang-free% formulas read from the release dashboard tab
+        for i, bd in enumerate(brand_data):
+            r        = C_DATA_START + i
+            row_fill = EVEN_ROW_FILL if r % 2 == 0 else None
+
+            def _sc(col, value=None, fmt=None, bold=False, r=r, rf=row_fill):
+                cell = wc.cell(r, col, value=value)
+                cell.border = THIN_BOX
+                if rf:
+                    cell.fill = rf
+                if fmt:
+                    cell.number_format = fmt
+                if bold:
+                    cell.font = BOLD
+                return cell
+
+            _sc(1, bd["name"], bold=True)
+
+            # CFU% — SUMIFS on release dashboard tab's raw crash/BQ columns
+            _sc(2).value = (
+                f"=TRUNC(MAX(0,MIN(100,(1-SUMIFS('{dash_name}'!$X:$X,'{dash_name}'!$Z:$Z,\"*\"&$A{r}&\"*\")"
+                f"/IF(SUMIFS('{dash_name}'!$V:$V,'{dash_name}'!$U:$U,\"*\"&$A{r}&\"*\")>0,"
+                f"SUMIFS('{dash_name}'!$V:$V,'{dash_name}'!$U:$U,\"*\"&$A{r}&\"*\"),"
+                f"I{r}*{month_days}))*100)),2)"
+            )
+            # Hang-free%
+            _sc(3).value = (
+                f"=TRUNC(MAX(0,MIN(100,(1-SUMIFS('{dash_name}'!$AB:$AB,'{dash_name}'!$AD:$AD,\"*\"&$A{r}&\"*\")"
+                f"/IF(SUMIFS('{dash_name}'!$V:$V,'{dash_name}'!$U:$U,\"*\"&$A{r}&\"*\")>0,"
+                f"SUMIFS('{dash_name}'!$V:$V,'{dash_name}'!$U:$U,\"*\"&$A{r}&\"*\"),"
+                f"I{r}*{month_days}))*100)),2)"
+            )
+            static = BRANDS[i] if i < len(BRANDS) else {}
+            _sc(4, static.get("app_size", 75.0))
+            _sc(5, static.get("asti",     3.93))
+            _sc(6, static.get("stti",     1.20))
+            _sc(7, 0.58)   # frozen — fleet fallback (no per-release firebase data)
+            _sc(8, 1.20)   # skipped
+
+            riders_cell = _sc(RIDER_COL, bd["riders"])
+            weight_cell = _sc(WEIGHT_COL, bd["weight"])
+            weight_cell.number_format = "0.00%"
+
+        # Weighted AVG row
+        wcol = get_column_letter(WEIGHT_COL)
+        wc.cell(C_AVG_ROW, 1, value="AVG").font = BOLD
+        wc.cell(C_AVG_ROW, 1).fill = SUMMARY_LBL_FILL
+        wc.cell(C_AVG_ROW, 1).border = THIN_BOX
+        for ci in range(2, 9):
+            cl   = get_column_letter(ci)
+            cell = wc.cell(C_AVG_ROW, ci)
+            cell.value = (f"=TRUNC(SUMPRODUCT({cl}{C_DATA_START}:{cl}{C_DATA_END},"
+                          f"{wcol}{C_DATA_START}:{wcol}{C_DATA_END}),2)")
+            cell.font = BOLD; cell.fill = SUMMARY_LBL_FILL; cell.border = THIN_BOX
+            cell.number_format = "0.00"
+
+        # AQS row
+        aqs_formulas = {
+            2: f"=MIN(100,MAX(0,(((B{C_AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*35%",
+            3: f"=MIN(100,MAX(0,(((C{C_AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*25%",
+            4: f"=MIN(100,MAX(0,(((D{C_AVG_ROW}-75)/(60-75))*50)+50))*2%",
+            5: f"=MIN(100,MAX(0,(((E{C_AVG_ROW}-4)/(2-4))*50)+50))*10%",
+            6: f"=MIN(100,MAX(0,(((F{C_AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*10%",
+            7: f"=MIN(100,MAX(0,(((G{C_AVG_ROW}-3)/(1-3))*50)+50))*13%",
+            8: f"=MIN(100,MAX(0,(((H{C_AVG_ROW}-2)/(1-2))*50)+50))*5%",
+        }
+        wc.cell(C_AQS_ROW, 1, value="AQS").font = BOLD
+        wc.cell(C_AQS_ROW, 1).fill = SUMMARY_VAL_FILL
+        wc.cell(C_AQS_ROW, 1).border = THIN_BOX
+        for ci, formula in aqs_formulas.items():
+            cell = wc.cell(C_AQS_ROW, ci, value=formula)
+            cell.font = BOLD; cell.fill = SUMMARY_VAL_FILL; cell.border = THIN_BOX
+            cell.number_format = "0.00"
+        n_aqs = wc.cell(C_AQS_ROW, WEIGHT_COL,
+                        value=f"=SUM({wcol}{C_DATA_START}:{wcol}{C_DATA_END})")
+        n_aqs.font = BOLD; n_aqs.fill = SETTINGS_FILL; n_aqs.border = THIN_BOX
+        n_aqs.number_format = "0.00%"
+
+        # Final AQS
+        wc.cell(C_FINAL_ROW, 1, value="FINAL AQS =")
+        wc.cell(C_FINAL_ROW, 1).font = Font(bold=True, color="FFFFFF")
+        wc.cell(C_FINAL_ROW, 1).fill = FINAL_BLUE
+        wc.cell(C_FINAL_ROW, 1).border = MEDIUM_BOX
+        wc.cell(C_FINAL_ROW, 1).alignment = Alignment(horizontal="right")
+        final_cell = wc.cell(C_FINAL_ROW, 2)
+        final_cell.value = f"=ROUND(SUM(B{C_AQS_ROW}:H{C_AQS_ROW}),2)"
+        final_cell.font  = Font(bold=True, color="FFFFFF", size=13)
+        final_cell.fill  = FINAL_BLUE
+        final_cell.border = MEDIUM_BOX
+        final_cell.number_format = "0.00"
+
+        # Column widths & freeze
+        wc.column_dimensions["A"].width = 18
+        for col in "BCDEFGH":
+            wc.column_dimensions[col].width = 17
+        wc.column_dimensions[get_column_letter(RIDER_COL)].width  = 15
+        wc.column_dimensions[get_column_letter(WEIGHT_COL)].width = 16
+        wc.row_dimensions[1].height = 40
+        wc.freeze_panes = "B2"
+
+
+def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None, version_aqs_data=None):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Dashboard"
@@ -1812,6 +2568,7 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     ws.column_dimensions["N"].width = 30
     ws.row_dimensions[1].height = 45
 
+    add_release_version_sheets(wb, version_aqs_data)
     add_consolidation_sheet(wb, firebase_data=firebase_data)
 
     # Make Consolidation the first visible tab when the workbook is opened
@@ -1851,8 +2608,129 @@ def main():
     crash_by_brand = aggregate_by_brand(crash_rows, "CRASH_USERS")
     hang_by_brand  = aggregate_by_brand(hang_rows,  "HANG_USERS")
 
+    # ── Version-based AQS ─────────────────────────────────────────────────────
+    # app_size: rider-weighted fleet average (no per-version data available).
+    # ASTI / STTI: per-version measured values stored in PINNED_RELEASES.
+    total_riders    = sum(b["riders"] for b in BRANDS)
+    static_app_size = round(sum(b["app_size"] * b["riders"] for b in BRANDS) / total_riders, 2) if total_riders else 75.0
+
+    print(f"\nFetching version-based AQS (brand-weighted, {len(PINNED_RELEASES)} releases)...")
+    version_aqs_data = []
+    for rel in PINNED_RELEASES:
+        ver        = rel["version"]
+        ver_asti   = rel["asti"]
+        ver_stti   = rel["stti"]
+        print(f"  v{ver} — BQ users by version + brand (last 30 days)...")
+        ver_bq_rows, ver_bq_users_by_brand = fetch_bigquery_by_version(ver, bq_start=REL_BQ_START, bq_end=REL_BQ_END)
+        ver_total_users = sum(ver_bq_users_by_brand.values())
+        print(f"    → {ver_total_users:,} total users")
+
+        print(f"  v{ver} — crashes per brand per day (Sentry, last 30 days)...")
+        ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=REL_START, end=REL_END)
+        ver_crash_rows     = shape_rows(ver_raw_crash, "CRASH_USERS")
+        crash_by_brand_rel = aggregate_by_brand(ver_crash_rows, "CRASH_USERS")
+        crash_users        = sum(crash_by_brand_rel.values())
+
+        print(f"  v{ver} — hangs per brand per day (Sentry, last 30 days)...")
+        ver_raw_hang      = fetch_discover_per_brand_for_release(rel, HANGS_QUERY, start=REL_START, end=REL_END)
+        ver_hang_rows     = shape_rows(ver_raw_hang, "HANG_USERS")
+        hang_by_brand_rel = aggregate_by_brand(ver_hang_rows, "HANG_USERS")
+        hang_users        = sum(hang_by_brand_rel.values())
+        if "frozen_frames" in rel and "skipped_frames" in rel:
+            frozen  = rel["frozen_frames"]
+            skipped = rel["skipped_frames"]
+            print(f"  v{ver} — frames: using pinned values (frozen={frozen}, skipped={skipped})")
+        else:
+            print(f"  v{ver} — frames (BQ, last 30 days)...", end=" ", flush=True)
+            frames  = fetch_firebase_frames_by_version(ver, bq_start=REL_BQ_START, bq_end=REL_BQ_END)
+            print("done")
+            frozen  = frames.get("frozen")
+            skipped = frames.get("skipped")
+        no_data = (crash_users == 0 and hang_users == 0 and frozen is None)
+
+        # Brand-weighted CFU and hang using release-specific BQ user counts.
+        # Brands with 0 users or in excluded_brands are skipped (not rolled out to that brand).
+        # Remaining weights are normalized so they sum to 1.0.
+        excluded = {b.lower() for b in rel.get("excluded_brands", [])}
+
+        active_weight_sum = sum(
+            w for brand, w in zip(BRANDS, WEIGHTS)
+            if brand["sentry_key"].lower() not in excluded
+            and ver_bq_users_by_brand.get(brand["bq_key"].lower(), 0) > 0
+        ) or 1.0
+
+        brand_data      = []
+        brand_cfu_list  = []
+        brand_hang_list = []
+        for brand, weight in zip(BRANDS, WEIGHTS):
+            skey_b    = brand["sentry_key"].lower()
+            bkey      = brand["bq_key"].lower()
+            users     = ver_bq_users_by_brand.get(bkey, 0)
+            crashes_b = crash_by_brand_rel.get(skey_b, 0)
+            hangs_b   = hang_by_brand_rel.get(skey_b, 0)
+            if skey_b in excluded:
+                b_cfu = b_hang = None  # not rolled out — excluded from all calculations
+            elif users > 0:
+                b_cfu  = max(0.0, min(100.0, int((1 - crashes_b / users) * 10000) / 100))
+                b_hang = max(0.0, min(100.0, int((1 - hangs_b   / users) * 10000) / 100))
+                norm_weight = weight / active_weight_sum
+                brand_cfu_list.append(b_cfu  * norm_weight)
+                brand_hang_list.append(b_hang * norm_weight)
+            else:
+                b_cfu = b_hang = 100.0  # no users yet — excluded from weighted average
+            brand_data.append({
+                "name":     brand["name"],
+                "weight":   weight,
+                "riders":   brand["riders"],
+                "users":    users,
+                "crashes":  crashes_b,
+                "hangs":    hangs_b,
+                "cfu":      b_cfu,
+                "hang":     b_hang,
+                "excluded": skey_b in excluded,
+            })
+
+        cfu  = int(sum(brand_cfu_list)  * 100) / 100
+        hang = int(sum(brand_hang_list) * 100) / 100
+
+        metrics = {
+            "cfu":      cfu,
+            "hang":     hang,
+            "app_size": static_app_size,
+            "asti":     ver_asti,
+            "stti":     ver_stti,
+            "frozen":   frozen  if frozen  is not None else 0.58,
+            "skipped":  skipped if skipped is not None else 1.2,
+        }
+        aqs_scores = {k: round(aqs_score(v, k), 4) for k, v in metrics.items()}
+        final_aqs  = round(sum(aqs_scores.values()), 2)
+
+        version_aqs_data.append({
+            "version":     ver,
+            "bq_start":    REL_BQ_START,
+            "bq_end":      REL_BQ_END,
+            "crash_users": crash_users,
+            "hang_users":  hang_users,
+            "cfu":         cfu,
+            "hang":        hang,
+            "app_size":    static_app_size,
+            "asti":        ver_asti,
+            "stti":        ver_stti,
+            "frozen":      frozen  if frozen  is not None else 0.58,
+            "skipped":     skipped if skipped is not None else 1.2,
+            "aqs_scores":  aqs_scores,
+            "final_aqs":      final_aqs,
+            "no_data":        no_data,
+            "brand_data":     brand_data,
+            "bq_rows_rel":    ver_bq_rows,
+            "crash_rows_rel": ver_crash_rows,
+            "hang_rows_rel":  ver_hang_rows,
+        })
+        print(f"    → CFU={cfu:.2f}%  Hang={hang:.2f}%  ASTI={ver_asti}  STTI={ver_stti}  Frozen={frozen}%  Skipped={skipped}%  AQS={final_aqs}")
+
     os.makedirs("consolidation_report", exist_ok=True)
-    write_excel(bq_rows, hang_rows, crash_rows, "consolidation_report/sentry_data.xlsx", firebase_data=firebase_data)
+    write_excel(bq_rows, hang_rows, crash_rows, "consolidation_report/sentry_data.xlsx",
+                firebase_data=firebase_data, version_aqs_data=version_aqs_data)
 
     # Fetch previous month data when showing dual-month tabs (days 3-6)
     prev_bq_users_by_brand = prev_crash_by_brand = prev_hang_by_brand = prev_firebase_data = None
@@ -1885,6 +2763,7 @@ def main():
         prev_crash=prev_crash_by_brand,
         prev_hang=prev_hang_by_brand,
         prev_firebase=prev_firebase_data,
+        version_aqs_data=version_aqs_data,
     )
 
 

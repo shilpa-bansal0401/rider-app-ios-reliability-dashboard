@@ -59,12 +59,8 @@ def add_months(d, delta):
 
 
 def get_months():
-    """
-    Dynamic month window:
-    - After the 20th: current month + previous 2 months
-    - On/before the 20th: current month + previous 3 months
-    """
-    month_count = 3 if TODAY.day > 20 else 4
+    """Return current month + previous 2 months (3-month rolling window)."""
+    month_count = 3
     current_month_start = TODAY.replace(day=1)
     start_month = add_months(current_month_start, -(month_count - 1))
 
