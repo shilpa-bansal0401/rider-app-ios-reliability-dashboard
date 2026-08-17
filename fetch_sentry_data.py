@@ -117,10 +117,7 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2630.1", "dist":  "1026",           "asti": 4.18,  "stti": 1.190, "brand_field": "Brand"},
-    {"version": "4.2631.1", "dist":  "1032",           "asti": 3.97,  "stti": 1.200, "brand_field": "Brand"},
-    {"version": "4.2632.4", "dist":  "1040",           "asti": 4.10,  "stti": 1.190, "brand_field": "brand", "excluded_brands": ["glovo", "woowa"]},
-    {"version": "4.2633.1", "dist":  "1044",           "asti": 3.95,  "stti": 1.053, "brand_field": "brand", "frozen_frames": 1.02, "skipped_frames": 1.36},
+    {"version": "4.2633.1", "dist":  "1044",           "asti": 3.94,  "stti": 1.11},
 ]
 
 
@@ -490,8 +487,7 @@ def fetch_sentry_users_per_version_per_brand(rel, base_query, environment=None):
     result = {}
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        brand_field = rel.get("brand_field", "Brand")
-        brand_query = f"{base_query} {dist_filter} {brand_field}:*{skey}*".strip()
+        brand_query = f"{base_query} {dist_filter} ((Brand:\"\" brand:*{skey}*) OR Brand:*{skey}*)".strip()
         params = [
             ("project", PROJECT),
             ("query",   brand_query),
@@ -531,7 +527,8 @@ def fetch_discover(query, environment=None, start=None, end=None, brand_field="B
             ("start",    _start),
             ("end",      _end),
             ("field",    "timestamp.to_day"),
-            ("field",    brand_field),
+            ("field",    "brand"),
+            ("field",    "Brand"),
             ("field",    "count_unique(user)"),
             ("sort",     "timestamp.to_day"),
             ("dataset",  "errors"),
@@ -602,7 +599,7 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None):
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        brand_query = f'{query} Brand:*{skey}*'
+        brand_query = f'{query} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
         rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
         print(f"    {skey}: {total} users across {len(rows)} day-rows")
@@ -613,7 +610,6 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None):
 def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None):
     """Like fetch_discover_per_brand but adds the release dist filter to each brand query."""
     dist_filter = rel_filter_str(rel)
-    sentry_brand_field = rel.get("brand_field", "Brand")
     excluded = {b.lower() for b in rel.get("excluded_brands", [])}
     all_rows = []
     for brand in BRANDS:
@@ -621,9 +617,8 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
         if skey.lower() in excluded:
             print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
             continue
-        brand_query = f'{base_query} {dist_filter} {sentry_brand_field}:*{skey}*'
-        rows = fetch_discover(brand_query, environment=environment, start=start, end=end,
-                              brand_field=sentry_brand_field)
+        brand_query = f'{base_query} {dist_filter} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
+        rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         # Tag each row with the brand we queried for — the brand field in the Sentry response
         # may be empty or a short name without the full package path, so we carry the key
         # explicitly to guarantee correct aggregation later.
@@ -690,11 +685,11 @@ def backfill_zero_rows(rows, user_col, query, environment=None):
         )
         day_counts = {}
         for r in day_raw:
-            brand = (r.get("Brand") or "").lower()
+            brand = (r.get("Brand") or r.get("brand") or "").lower()
             day_counts[brand] = day_counts.get(brand, 0) + int(r.get("count_unique(user)", 0) or 0)
         for row in rows:
             if row["day"] == day and row[user_col] == 0:
-                brand = (row.get("Brand") or "").lower()
+                brand = (row.get("Brand") or row.get("brand") or "").lower()
                 row[user_col] = day_counts.get(brand, 0)
 
 
@@ -2289,7 +2284,7 @@ def add_release_version_sheets(wb, version_aqs_data):
             static = BRANDS[i] if i < len(BRANDS) else {}
             _sc(4, static.get("app_size", 75.0))
             _sc(5, static.get("asti",     3.93))
-            _sc(6, static.get("stti",     1.20))
+            _sc(6, rel_data.get("stti",   1.20))
             _sc(7, 0.58)   # frozen — fleet fallback (no per-release firebase data)
             _sc(8, 1.20)   # skipped
 

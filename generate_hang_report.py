@@ -167,11 +167,10 @@ CATEGORIES = [
         "key":      "naver",
         "label":    "Naver",
         "color":    "#BAFFC9", # Pastel Mint
-        "filters":  ["stack.function:*NavigationMapView*"],
+        "filters":  [],
         "excl":     excl("mapbox"),
-        "link_filter": "stack.function:*NavigationMapView*",
+        "link_filter": "",
         "culprits": [
-            "NavigationMapView.subscribeToNavigatonUpdates",
             "NMFMapView.init", "NMFCameraUpdate",
         ],
     },
@@ -247,8 +246,9 @@ CATEGORIES = [
             "stack.function:*CameraProvider*", "stack.function:*QRScanCameraOverlayView*",
         ],
         "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
-        "link_filter": "stack.package:*ARKit*",
+        "link_filter": "stack.function:*QRScanCameraOverlayView*",
         "culprits": [
+            "QRScanCameraOverlayView",
             "ARView.init", "ARPhotoManagerImpl.convertPixelBufferToUIImage",
             "ARSession.run", "CameraProviderImpl",
         ],

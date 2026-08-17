@@ -179,13 +179,14 @@ RELEASE_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
 # ── Exclusion patterns ────────────────────────────────────────────────────────
 
 NX = {
-    "quic":      "!message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet*",
-    "data_sync": "!message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload*",
-    "watchdog":  "!error.mechanism:watchdog_termination",
-    "mapbox":    "!stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox*",
-    "location":  "!stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location*",
+    "quic":       "!message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet*",
+    "data_sync":  "!message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload*",
+    "watchdog":   "!error.mechanism:watchdog_termination",
+    "mapbox":     "!stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox*",
+    "location":   "!stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location*",
     "core_logic": "!message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch*",
-    "uikit":     "!stack.package:*UIKit* !stack.package:*Foundation* !stack.function:*UIApplication* !stack.function:*UIViewController*",
+    "rider_home": "!stack.function:*RiderHomeDataService*",
+    "uikit":      "!stack.package:*UIKit* !stack.package:*Foundation* !stack.function:*UIApplication* !stack.function:*UIViewController*",
 }
 
 def excl(*keys):
@@ -200,6 +201,7 @@ DISCOVER_BASE_QUERY = 'level:fatal !error.handled:true'
 
 CATEGORIES = [
     {"key": "quic", "label": "QUIC Protocol", "color": "#A0C4FF", "filters": ["message:*QUIC*", "message:*quic*", "stack.function:*quic*", "stack.package:*Cronet*"], "excl": "", "link_filter": "message:*QUIC*", "culprits": ["QUIC protocol errors", "Network transport failures", "Cronet / HTTP3 stack"]},
+    {"key": "rider_home", "label": "Rider Home", "color": "#FFC6FF", "filters": ["message:*RiderHomeDataService*"], "excl": "", "link_filter": "message:*RiderHomeDataService*", "culprits": ["RiderHomeDataService"]},
     {"key": "data_sync", "label": "Data Sync Upload", "color": "#BDE0FE", "filters": ["message:*DataSync*", "message:*Data Sync*", "stack.function:*DataSync*", "stack.function:*Upload*", "stack.function:*upload*"], "excl": excl("quic"), "link_filter": "message:*DataSync*", "culprits": ["Data sync upload", "Upload pipeline", "Background sync"]},
     {
     "key": "watchdog",
@@ -226,7 +228,7 @@ CATEGORIES = [
     },
     {"key": "location", "label": "Location", "color": "#CAFFBF", "filters": ["stack.package:*CoreLocation*", "stack.function:*CLLocation*", "stack.function:*Location*"], "excl": excl("quic", "data_sync", "watchdog", "mapbox"), "link_filter": "stack.package:*CoreLocation*", "culprits": ["CoreLocation", "Location provider", "Location manager"]},
     {"key": "core_logic", "label": "Core Logic / Concurrency", "color": "#D0BFFF", "filters": ["message:*concurrency*", "message:*Concurrency*", "stack.function:*swift_task*", "stack.function:*Task*", "stack.function:*DispatchQueue*", "stack.function:*_dispatch*"], "excl": excl("quic", "data_sync", "watchdog", "mapbox", "location"), "link_filter": "message:*concurrency*", "culprits": ["Swift concurrency", "DispatchQueue", "Core business logic"]},
-    {"key": "uikit", "label": "UIKit / Foundation", "color": "#FFB5A7", "filters": ["stack.package:*UIKit*", "stack.package:*Foundation*", "stack.function:*UIApplication*", "stack.function:*UIViewController*"], "excl": excl("quic", "data_sync", "watchdog", "mapbox", "location", "core_logic"), "link_filter": "stack.package:*UIKit*", "culprits": ["UIKit", "Foundation", "App lifecycle / view controller stack"]},
+    {"key": "uikit", "label": "UIKit / Foundation", "color": "#FFB5A7", "filters": ["stack.package:*UIKit*", "stack.package:*Foundation*", "stack.function:*UIApplication*", "stack.function:*UIViewController*"], "excl": excl("quic", "data_sync", "watchdog", "mapbox", "location", "core_logic", "rider_home"), "link_filter": "stack.package:*UIKit*", "culprits": ["UIKit", "Foundation", "App lifecycle / view controller stack"]},
 ]
 
 # ── Device class helpers ──────────────────────────────────────────────────────
