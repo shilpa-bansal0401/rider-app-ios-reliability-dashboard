@@ -2643,26 +2643,71 @@ def main():
             skipped = frames.get("skipped")
         no_data = (crash_users == 0 and hang_users == 0 and frozen is None)
 
-        # Brand-weighted CFU and hang using release-specific BQ user counts.
-        # Brands with 0 users or in excluded_brands are skipped (not rolled out to that brand).
+        # Brand-weighted CFU and hang using per-day raw BQ rows.
+        # Days with 0 BQ users are excluded from both the user count and the crash/hang count.
+        # Brands with no valid days or in excluded_brands are skipped.
         # Remaining weights are normalized so they sum to 1.0.
         excluded = {b.lower() for b in rel.get("excluded_brands", [])}
+
+        # Build {bkey: {day: user_count}} from raw per-day BQ rows
+        bq_brand_day = {}
+        for row in ver_bq_rows:
+            appid = (row.get("appId") or "").lower()
+            day   = row.get("dt", "")
+            count = int(row.get("user_count", 0) or 0)
+            for brand in BRANDS:
+                b = brand["bq_key"].lower()
+                if b in appid:
+                    if b not in bq_brand_day:
+                        bq_brand_day[b] = {}
+                    bq_brand_day[b][day] = bq_brand_day[b].get(day, 0) + count
+                    break
+
+        # Build {skey: {day: count}} from raw per-day Sentry rows
+        crash_brand_day = {}
+        for row in ver_crash_rows:
+            skey = (row.get("_sentry_key") or "").lower()
+            day  = row.get("day", "")
+            cnt  = int(row.get("CRASH_USERS", 0) or 0)
+            if skey:
+                if skey not in crash_brand_day:
+                    crash_brand_day[skey] = {}
+                crash_brand_day[skey][day] = crash_brand_day[skey].get(day, 0) + cnt
+
+        hang_brand_day = {}
+        for row in ver_hang_rows:
+            skey = (row.get("_sentry_key") or "").lower()
+            day  = row.get("day", "")
+            cnt  = int(row.get("HANG_USERS", 0) or 0)
+            if skey:
+                if skey not in hang_brand_day:
+                    hang_brand_day[skey] = {}
+                hang_brand_day[skey][day] = hang_brand_day[skey].get(day, 0) + cnt
+
+        # Pre-compute per-brand totals using only days where BQ users > 0
+        ver_brand_users = {}
+        for brand in BRANDS:
+            bkey    = brand["bq_key"].lower()
+            bq_days = bq_brand_day.get(bkey, {})
+            ver_brand_users[bkey] = sum(v for d, v in bq_days.items() if v > 0)
 
         active_weight_sum = sum(
             w for brand, w in zip(BRANDS, WEIGHTS)
             if brand["sentry_key"].lower() not in excluded
-            and ver_bq_users_by_brand.get(brand["bq_key"].lower(), 0) > 0
+            and ver_brand_users.get(brand["bq_key"].lower(), 0) > 0
         ) or 1.0
 
         brand_data      = []
         brand_cfu_list  = []
         brand_hang_list = []
         for brand, weight in zip(BRANDS, WEIGHTS):
-            skey_b    = brand["sentry_key"].lower()
-            bkey      = brand["bq_key"].lower()
-            users     = ver_bq_users_by_brand.get(bkey, 0)
-            crashes_b = crash_by_brand_rel.get(skey_b, 0)
-            hangs_b   = hang_by_brand_rel.get(skey_b, 0)
+            skey_b  = brand["sentry_key"].lower()
+            bkey    = brand["bq_key"].lower()
+            bq_days = bq_brand_day.get(bkey, {})
+            valid_days = {d for d, v in bq_days.items() if v > 0}
+            users     = ver_brand_users[bkey]
+            crashes_b = sum(crash_brand_day.get(skey_b, {}).get(d, 0) for d in valid_days)
+            hangs_b   = sum(hang_brand_day.get(skey_b,  {}).get(d, 0) for d in valid_days)
             if skey_b in excluded:
                 b_cfu = b_hang = None  # not rolled out — excluded from all calculations
             elif users > 0:
