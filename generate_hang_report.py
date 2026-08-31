@@ -132,7 +132,6 @@ WEEKS = get_last_4_weeks()
 
 NX = {
     "mapbox":   "!stack.package:*Mapbox* !message:*Mapbox*",
-    "naver":    "!stack.function:*NavigationMapView*",
     "webkit":   "!stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView*",
     "firebase": "!message:*FIRCLS* !message:*FireApp*",
     "sentry":   "!stack.package:*Sentry* !message:*SentryAppHang*",
@@ -153,7 +152,7 @@ CATEGORIES = [
         "key":      "mapbox",
         "label":    "Mapbox",
         "color":    "#FFB3BA", # Pastel Rose
-        "filters":  ["stack.package:*Mapbox*", "stack.function:*Mapbox*"],
+        "filters":  ["stack.package:*Mapbox*", "stack.function:*Mapbox*", "stack.function:*NavigationMapView*"],
         "excl":     "",
         "link_filter": "stack.package:*Mapbox*",
         "culprits": [
@@ -164,22 +163,11 @@ CATEGORIES = [
         ],
     },
     {
-        "key":      "naver",
-        "label":    "Naver",
-        "color":    "#BAFFC9", # Pastel Mint
-        "filters":  [],
-        "excl":     excl("mapbox"),
-        "link_filter": "",
-        "culprits": [
-            "NMFMapView.init", "NMFCameraUpdate",
-        ],
-    },
-    {
         "key":      "webkit",
         "label":    "WebKit / WebView",
         "color":    "#BAE1FF", # Pastel Sky Blue
         "filters":  ["stack.package:*WebKit*", "stack.function:*WKWebView*"],
-        "excl":     excl("mapbox", "naver"),
+        "excl":     excl("mapbox"),
         "link_filter": "stack.package:*WebKit*",
         "culprits": [
             "WebViewController.webView.getter", "WKWebView.load",
@@ -194,7 +182,7 @@ CATEGORIES = [
             "message:*FIRCLSFileLoop*", "message:*FIRCLSProcess*",
             "message:*FireApp*", "stack.function:*FIRCLS*", "stack.function:*FireApp*",
         ],
-        "excl":     excl("mapbox", "naver", "webkit") + " !stack.function:*AppleLocationProvider*",
+        "excl":     excl("mapbox", "webkit") + " !stack.function:*AppleLocationProvider*",
         "link_filter": "message:*FIRCLS*",
         "culprits": [
             "FIRCLSFileLoopWithWriteBlock", "FIRCLSProcessRecordAllThreads",
@@ -206,7 +194,7 @@ CATEGORIES = [
         "label":    "Keyboard",
         "color":    "#E0BBE4", # Pastel Lavender
         "filters":  ["stack.function:*UIKeyboard*"],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase"),
+        "excl":     excl("mapbox", "webkit", "firebase"),
         "link_filter": "stack.function:*UIKeyboard*",
         "culprits": [],
     },
@@ -215,7 +203,7 @@ CATEGORIES = [
         "label":    "Location",
         "color":    "#B2F2EF", # Pastel Turquoise
         "filters":  ["stack.package:*CoreLocation*", "stack.function:*CLLocation*", "stack.function:*CLClientCreateWithBundleIdentifierAndPathWithWebsiteOnSilo*"],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
+        "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreLocation*",
         "culprits": [
             "AppleLocationProvider.init", "LocationPermission",
@@ -230,7 +218,7 @@ CATEGORIES = [
             "stack.package:*AVFoundation*", "stack.function:*AVAudio*",
             "stack.function:*AudioPlayer*",
         ],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
+        "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*AVFoundation*",
         "culprits": [
             "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -245,7 +233,7 @@ CATEGORIES = [
             "stack.package:*ARKit*", "stack.function:*ARSession*",
             "stack.function:*CameraProvider*", "stack.function:*QRScanCameraOverlayView*",
         ],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
+        "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.function:*QRScanCameraOverlayView*",
         "culprits": [
             "QRScanCameraOverlayView",
@@ -258,7 +246,7 @@ CATEGORIES = [
         "label":    "Storage",
         "color":    "#D3C0B0", # Pastel Taupe
         "filters":  ["stack.package:*CoreData*", "stack.function:*PersistentData*"],
-        "excl":     excl("mapbox", "naver", "webkit", "firebase", "sentry", "keyboard"),
+        "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreData*",
         "culprits": [
             "PersistentDataActorImpl.__allocating_init", "PersistentDataActorImpl.init",
@@ -561,8 +549,13 @@ for rel in RELEASES:
     results = []
     for cat in CATEGORIES:
         link_filter = cat["link_filter"]
-        link_query  = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
-        discover_q  = f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
+        if cat["key"] == "mapbox":
+            or_filters = " OR ".join(cat["filters"])
+            link_query = f'{BASE_QUERY} {rel_filter} ({or_filters})'.strip()
+            discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} ({or_filters})'.strip()
+        else:
+            link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
+            discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
         try:
             users = count_unique_users(discover_q, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
         except Exception as e:
@@ -1040,9 +1033,8 @@ html = f"""<!DOCTYPE html>
 <div class="footer">
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
-     Priority: Mapbox › Naver › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
+     Priority: Mapbox › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
   <br>• <strong>Filter:</strong> <code>"*App Hang* detected*"</code> — matches all AppHang events reported by the Sentry SDK.
-  <br>• <strong>Naver</strong> matched via <code>stack.function:*NavigationMapView*</code> (app-level wrapper).
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
   <br>• <strong>{current_month_note}</strong> Earlier months in this report are complete months.
   <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
