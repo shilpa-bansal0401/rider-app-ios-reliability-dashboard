@@ -152,16 +152,20 @@ BRANDS = [
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
 RIDER_COUNTS = [78203, 14946, 16988, 20641, 10630, 2186, 46896, 731, 5258, 729]
 
+# Lookup: sentry_key.lower() → canonical bundle_id (e.g. "talabat" → "com.logistics.rider.talabat")
+SENTRY_KEY_TO_BUNDLE = {b["sentry_key"].lower(): b["bundle_id"] for b in BRANDS}
+
 
 def brand_filter(brand):
     """Return a Sentry query clause matching all known brand values for a brand entry.
 
     Matches the canonical bundle_id plus every alias the iOS app may send in the
     lowercase 'brand' tag (e.g. 'panda', 'pandarider' for foodpanda).
-    Values containing spaces are quoted so Sentry parses them as a single token.
+    Values with spaces or dots are quoted so Sentry parses them as a single token
+    (dots are field-name separators in Sentry query syntax and must be quoted in values).
     """
     def term(v):
-        return f'brand:"{v}"' if " " in v else f"brand:{v}"
+        return f'brand:"{v}"' if (" " in v or "." in v) else f"brand:{v}"
 
     terms = [term(brand["bundle_id"])] + [term(a) for a in brand.get("sentry_aliases", [])]
     return "(" + " OR ".join(terms) + ")"
@@ -608,23 +612,51 @@ def fetch_discover_max(query, environment=None, start=None, end=None):
     return result
 
 
-def fetch_discover_per_brand(query, environment=None, start=None, end=None):
+def _build_brand_filter(brand, exact_brand):
+    """Build the Sentry brand query clause for a single brand.
+
+    exact_brand=True (crashes): flat OR of all lowercase 'brand' tag values (quoted bundle
+    ID + aliases) plus the uppercase 'Brand:*skey*' wildcard. Flat structure avoids nested
+    parentheses that Sentry's query parser may reject, and bundle IDs are quoted to prevent
+    dots from being misread as field-name separators.
+    exact_brand=False (hangs): uses only the uppercase 'Brand' tag with a wildcard on the
+    sentry_key, which is the correct tag for hang events.
+    """
+    skey = brand["sentry_key"]
+    if exact_brand:
+        def term(v):
+            return f'brand:"{v}"' if (" " in v or "." in v) else f"brand:{v}"
+        terms = (
+            [term(brand["bundle_id"])]
+            + [term(a) for a in brand.get("sentry_aliases", [])]
+            + [f"Brand:*{skey}*"]
+        )
+        return "(" + " OR ".join(terms) + ")"
+    return f'((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
+
+
+def fetch_discover_per_brand(query, environment=None, start=None, end=None, exact_brand=False):
     """Run a separate Discover query per brand with an explicit Brand filter.
     Merges all results into a single list. More reliable than a single query
-    since Sentry can silently drop or zero-out brand rows in grouped results."""
+    since Sentry can silently drop or zero-out brand rows in grouped results.
+    exact_brand=True (crashes) matches both lowercase brand tag and uppercase Brand tag."""
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        brand_query = f'{query} {brand_filter(brand)}'
+        bf = _build_brand_filter(brand, exact_brand)
+        brand_query = f'{query} {bf}'
         rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
+        for r in rows:
+            r["_sentry_key"] = skey.lower()
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
         print(f"    {skey}: {total} users across {len(rows)} day-rows")
         all_rows.extend(rows)
     return all_rows
 
 
-def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None):
-    """Like fetch_discover_per_brand but adds the release dist filter to each brand query."""
+def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None, exact_brand=False):
+    """Like fetch_discover_per_brand but adds the release dist filter to each brand query.
+    exact_brand=True (crashes) matches both lowercase brand tag and uppercase Brand tag."""
     dist_filter = rel_filter_str(rel)
     excluded = {b.lower() for b in rel.get("excluded_brands", [])}
     all_rows = []
@@ -633,7 +665,8 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
         if skey.lower() in excluded:
             print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
             continue
-        brand_query = f'{base_query} {dist_filter} {brand_filter(brand)}'
+        bf = _build_brand_filter(brand, exact_brand)
+        brand_query = f'{base_query} {dist_filter} {bf}'
         rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         # Tag each row with the brand we queried for — the brand field in the Sentry response
         # may be empty or a short name without the full package path, so we carry the key
@@ -648,12 +681,18 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
 
 
 def shape_rows(raw, user_col):
+    def canonical_brand(row):
+        skey = row.get("_sentry_key", "")
+        if skey:
+            return SENTRY_KEY_TO_BUNDLE.get(skey, row.get("Brand") or row.get("brand") or "")
+        return row.get("Brand") or row.get("brand") or ""
+
     rows = [
         {
             user_col:           int(row.get("count_unique(user)", 0)),
             "day":              row.get("timestamp.to_day", "")[:10],
             "timestamp.to_day": row.get("timestamp.to_day", ""),
-            "Brand":            row.get("Brand") or row.get("brand") or "",
+            "Brand":            canonical_brand(row),
             "_sentry_key":      row.get("_sentry_key", ""),
         }
         for row in raw
@@ -2604,7 +2643,7 @@ def main():
     backfill_zero_rows(hang_rows, "HANG_USERS", HANGS_QUERY)
 
     print("Fetching Sentry crashes (per-brand queries)...")
-    raw_crash_rows = fetch_discover_per_brand(CRASHES_QUERY, environment="production")
+    raw_crash_rows = fetch_discover_per_brand(CRASHES_QUERY, environment="production", exact_brand=True)
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS")
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
@@ -2638,7 +2677,7 @@ def main():
         print(f"    → {ver_total_users:,} total users")
 
         print(f"  v{ver} — crashes per brand per day (Sentry, last 30 days)...")
-        ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=REL_START, end=REL_END)
+        ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=REL_START, end=REL_END, exact_brand=True)
         ver_crash_rows     = shape_rows(ver_raw_crash, "CRASH_USERS")
         crash_by_brand_rel = aggregate_by_brand(ver_crash_rows, "CRASH_USERS")
         crash_users        = sum(crash_by_brand_rel.values())
@@ -2801,7 +2840,7 @@ def main():
 
         print("Fetching Sentry crashes for previous month...")
         prev_raw_crash = fetch_discover_per_brand(CRASHES_QUERY, environment="production",
-                                                   start=PREV_START, end=PREV_END)
+                                                   start=PREV_START, end=PREV_END, exact_brand=True)
         prev_crash_shaped = shape_rows(prev_raw_crash, "CRASH_USERS")
 
         prev_firebase_data = fetch_firebase_frames(PREV_BQ_START, PREV_BQ_END)
