@@ -137,20 +137,35 @@ def rel_filter_str(rel):
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "app_size": 83.2, "asti": 3.93, "stti": 1.20, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "app_size": 68.4, "asti": 3.93, "stti": 1.20, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "app_size": 77.9, "asti": 3.93, "stti": 1.20, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "app_size": 78.0, "asti": 3.93, "stti": 1.20, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["panda", "pandarider", "panda rider"],            "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora"],                                       "app_size": 83.2, "asti": 3.93, "stti": 1.20, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider"],                      "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["pedidosya", "peya", "peya riders"],              "app_size": 68.4, "asti": 3.93, "stti": 1.20, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerstation", "hungerstation riders"],         "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti"],                                   "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider"],            "app_size": 77.9, "asti": 3.93, "stti": 1.20, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa"],                                         "app_size": 78.0, "asti": 3.93, "stti": 1.20, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood"],                                         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
 RIDER_COUNTS = [78203, 14946, 16988, 20641, 10630, 2186, 46896, 731, 5258, 729]
+
+
+def brand_filter(brand):
+    """Return a Sentry query clause matching all known brand values for a brand entry.
+
+    Matches the canonical bundle_id plus every alias the iOS app may send in the
+    lowercase 'brand' tag (e.g. 'panda', 'pandarider' for foodpanda).
+    Values containing spaces are quoted so Sentry parses them as a single token.
+    """
+    def term(v):
+        return f'brand:"{v}"' if " " in v else f"brand:{v}"
+
+    terms = [term(brand["bundle_id"])] + [term(a) for a in brand.get("sentry_aliases", [])]
+    return "(" + " OR ".join(terms) + ")"
+
 
 # ── AQS config ─────────────────────────────────────────────────────────────────
 
@@ -488,7 +503,7 @@ def fetch_sentry_users_per_version_per_brand(rel, base_query, environment=None):
     result = {}
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        brand_query = f"{base_query} {dist_filter} ((Brand:\"\" brand:*{skey}*) OR Brand:*{skey}*)".strip()
+        brand_query = f"{base_query} {dist_filter} {brand_filter(brand)}".strip()
         params = [
             ("project", PROJECT),
             ("query",   brand_query),
@@ -600,7 +615,7 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None):
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        brand_query = f'{query} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
+        brand_query = f'{query} {brand_filter(brand)}'
         rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
         print(f"    {skey}: {total} users across {len(rows)} day-rows")
@@ -618,7 +633,7 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
         if skey.lower() in excluded:
             print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
             continue
-        brand_query = f'{base_query} {dist_filter} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
+        brand_query = f'{base_query} {dist_filter} {brand_filter(brand)}'
         rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
         # Tag each row with the brand we queried for — the brand field in the Sentry response
         # may be empty or a short name without the full package path, so we carry the key
@@ -666,8 +681,9 @@ def aggregate_by_brand(rows, user_col="count_unique(user)"):
             if tagged_key:
                 matches = (tagged_key == skey)
             else:
-                brand_val = (row.get("Brand") or "").lower()
-                matches = bool(brand_val) and skey in brand_val
+                brand_val = (row.get("brand") or row.get("Brand") or "").lower()
+                known = {brand.get("bundle_id", "").lower()} | {a.lower() for a in brand.get("sentry_aliases", [])}
+                matches = bool(brand_val) and brand_val in known
             if matches:
                 total += int(row.get(user_col, 0) or 0)
         totals[skey] = total
