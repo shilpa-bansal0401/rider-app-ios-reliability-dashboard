@@ -612,40 +612,47 @@ def fetch_discover_max(query, environment=None, start=None, end=None):
     return result
 
 
-def _build_brand_filter(brand, exact_brand):
-    """Build the Sentry brand query clause for a single brand.
-
-    exact_brand=True (crashes): flat OR of all lowercase 'brand' tag values (quoted bundle
-    ID + aliases) plus the uppercase 'Brand:*skey*' wildcard. Flat structure avoids nested
-    parentheses that Sentry's query parser may reject, and bundle IDs are quoted to prevent
-    dots from being misread as field-name separators.
-    exact_brand=False (hangs): uses only the uppercase 'Brand' tag with a wildcard on the
-    sentry_key, which is the correct tag for hang events.
-    """
-    skey = brand["sentry_key"]
-    if exact_brand:
-        def term(v):
-            return f'brand:"{v}"' if (" " in v or "." in v) else f"brand:{v}"
-        terms = (
-            [term(brand["bundle_id"])]
-            + [term(a) for a in brand.get("sentry_aliases", [])]
-            + [f"Brand:*{skey}*"]
-        )
-        return "(" + " OR ".join(terms) + ")"
-    return f'((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)'
-
-
 def fetch_discover_per_brand(query, environment=None, start=None, end=None, exact_brand=False):
-    """Run a separate Discover query per brand with an explicit Brand filter.
-    Merges all results into a single list. More reliable than a single query
-    since Sentry can silently drop or zero-out brand rows in grouped results.
-    exact_brand=True (crashes) matches both lowercase brand tag and uppercase Brand tag."""
+    """Run a separate Discover query per brand.
+
+    exact_brand=False (hangs): one query per brand using the uppercase Brand tag wildcard.
+    exact_brand=True (crashes): two queries per brand —
+      Pass 1 — Brand:*skey* (uppercase Brand tag): rows written as-is, Brand column
+               preserves whatever short name Sentry returns (e.g. "talabat rider").
+      Pass 2 — brand_filter(brand) (lowercase brand tag, exact bundle IDs + aliases):
+               rows appended after Pass 1; Brand column is replaced with the full
+               package name (e.g. "com.logistics.rider.talabat") via _brand_source.
+    """
+    if exact_brand:
+        brand_tag_rows = []
+        exact_tag_rows = []
+        for brand in BRANDS:
+            skey = brand["sentry_key"]
+
+            rows = fetch_discover(f'{query} Brand:*{skey}*', environment=environment, start=start, end=end)
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
+            brand_tag_rows.extend(rows)
+
+            rows = fetch_discover(f'{query} {brand_filter(brand)}', environment=environment, start=start, end=end)
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+                r["_brand_source"] = "brand"
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
+            exact_tag_rows.extend(rows)
+
+        return brand_tag_rows + exact_tag_rows
+
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
-        bf = _build_brand_filter(brand, exact_brand)
-        brand_query = f'{query} {bf}'
-        rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
+        rows = fetch_discover(
+            f'{query} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)',
+            environment=environment, start=start, end=end,
+        )
         for r in rows:
             r["_sentry_key"] = skey.lower()
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
@@ -655,22 +662,54 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None, exac
 
 
 def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None, exact_brand=False):
-    """Like fetch_discover_per_brand but adds the release dist filter to each brand query.
-    exact_brand=True (crashes) matches both lowercase brand tag and uppercase Brand tag."""
+    """Like fetch_discover_per_brand but adds the release dist filter to each brand query."""
     dist_filter = rel_filter_str(rel)
     excluded = {b.lower() for b in rel.get("excluded_brands", [])}
+
+    if exact_brand:
+        brand_tag_rows = []
+        exact_tag_rows = []
+        for brand in BRANDS:
+            skey = brand["sentry_key"]
+            if skey.lower() in excluded:
+                print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
+                continue
+
+            rows = fetch_discover(
+                f'{base_query} {dist_filter} Brand:*{skey}*',
+                environment=environment, start=start, end=end,
+            )
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
+            brand_tag_rows.extend(rows)
+            time.sleep(0.3)
+
+            rows = fetch_discover(
+                f'{base_query} {dist_filter} {brand_filter(brand)}',
+                environment=environment, start=start, end=end,
+            )
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+                r["_brand_source"] = "brand"
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
+            exact_tag_rows.extend(rows)
+            time.sleep(0.3)
+
+        return brand_tag_rows + exact_tag_rows
+
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
         if skey.lower() in excluded:
             print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
             continue
-        bf = _build_brand_filter(brand, exact_brand)
-        brand_query = f'{base_query} {dist_filter} {bf}'
-        rows = fetch_discover(brand_query, environment=environment, start=start, end=end)
-        # Tag each row with the brand we queried for — the brand field in the Sentry response
-        # may be empty or a short name without the full package path, so we carry the key
-        # explicitly to guarantee correct aggregation later.
+        rows = fetch_discover(
+            f'{base_query} {dist_filter} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)',
+            environment=environment, start=start, end=end,
+        )
         for r in rows:
             r["_sentry_key"] = skey.lower()
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
@@ -680,10 +719,16 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
     return all_rows
 
 
-def shape_rows(raw, user_col):
+def shape_rows(raw, user_col, sort_by_day=True):
+    """Shape raw Sentry Discover rows into a normalised list.
+
+    sort_by_day=True (hangs, default): sort by date.
+    sort_by_day=False (crashes): preserve input order so Brand-query rows (Pass 1)
+    stay above brand-query rows (Pass 2) in the Excel sheet.
+    """
     def canonical_brand(row):
-        skey = row.get("_sentry_key", "")
-        if skey:
+        if row.get("_brand_source") == "brand":
+            skey = row.get("_sentry_key", "")
             return SENTRY_KEY_TO_BUNDLE.get(skey, row.get("Brand") or row.get("brand") or "")
         return row.get("Brand") or row.get("brand") or ""
 
@@ -697,7 +742,9 @@ def shape_rows(raw, user_col):
         }
         for row in raw
     ]
-    return sorted(rows, key=lambda r: r["timestamp.to_day"])
+    if sort_by_day:
+        return sorted(rows, key=lambda r: r["timestamp.to_day"])
+    return rows
 
 
 def aggregate_by_brand(rows, user_col="count_unique(user)"):
@@ -1353,6 +1400,17 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_data, START_DATE, END_DATE
     )
 
+    # Crash reporting defect introduced in Aug 2026 inflates the CFU component score.
+    _CRASH_CORRECTION_DELTA  = 1.75
+    _CRASH_CORRECTION_PERIOD = (2026, 8)
+    _crash_correction_active = (START_DATE.year, START_DATE.month) == _CRASH_CORRECTION_PERIOD
+    if _crash_correction_active:
+        _raw_cfu_score = aqs_scores['cfu']
+        _raw_final_aqs = final_aqs
+        aqs_scores = dict(aqs_scores)
+        aqs_scores['cfu'] = round(aqs_scores['cfu'] - _CRASH_CORRECTION_DELTA, 4)
+        final_aqs = round(final_aqs - _CRASH_CORRECTION_DELTA, 2)
+
     print("\nBrand metrics:")
     for m in brand_metrics:
         flag = " (fallback)" if m["fallback"] else ""
@@ -1447,6 +1505,22 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         ' update manually for accurate AQS score.<br>\n'
         if TODAY.day >= 3 else ""
     )
+
+    if _crash_correction_active:
+        crash_warning_html = (
+            f'<div class="warning-banner">\n'
+            f'  &#9888;&#xFE0F; <strong>Crash Score Anomaly — {START_DATE.strftime("%B %Y")}:</strong>'
+            f' A defect introduced in the crash reporting pipeline has inflated the Crash Free component score'
+            f' by <strong>{_CRASH_CORRECTION_DELTA} points</strong>.'
+            f' The displayed AQS Crash score of <strong>{_raw_cfu_score:.4f}</strong>'
+            f' should be treated as <strong>{aqs_scores["cfu"]:.4f}</strong>.'
+            f' The Final AQS Score has been adjusted accordingly'
+            f' (<strong>{_raw_final_aqs} &rarr; {final_aqs}</strong>).'
+            f' All other AQS components are unaffected.\n'
+            f'</div>'
+        )
+    else:
+        crash_warning_html = ""
 
     version_panel_html = _build_version_aqs_panel_html(version_aqs_data or [], date_range)
 
@@ -1575,6 +1649,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 </p>
 
 {stale_warning_html}
+{crash_warning_html}
 {bq_status_note}
 
 <div class="tabs" id="tabs">
@@ -2644,7 +2719,7 @@ def main():
 
     print("Fetching Sentry crashes (per-brand queries)...")
     raw_crash_rows = fetch_discover_per_brand(CRASHES_QUERY, environment="production", exact_brand=True)
-    crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS")
+    crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
     print("Fetching Firebase Performance frames...")
@@ -2678,7 +2753,7 @@ def main():
 
         print(f"  v{ver} — crashes per brand per day (Sentry, last 30 days)...")
         ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=REL_START, end=REL_END, exact_brand=True)
-        ver_crash_rows     = shape_rows(ver_raw_crash, "CRASH_USERS")
+        ver_crash_rows     = shape_rows(ver_raw_crash, "CRASH_USERS", sort_by_day=False)
         crash_by_brand_rel = aggregate_by_brand(ver_crash_rows, "CRASH_USERS")
         crash_users        = sum(crash_by_brand_rel.values())
 
@@ -2841,7 +2916,7 @@ def main():
         print("Fetching Sentry crashes for previous month...")
         prev_raw_crash = fetch_discover_per_brand(CRASHES_QUERY, environment="production",
                                                    start=PREV_START, end=PREV_END, exact_brand=True)
-        prev_crash_shaped = shape_rows(prev_raw_crash, "CRASH_USERS")
+        prev_crash_shaped = shape_rows(prev_raw_crash, "CRASH_USERS", sort_by_day=False)
 
         prev_firebase_data = fetch_firebase_frames(PREV_BQ_START, PREV_BQ_END)
 
