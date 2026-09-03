@@ -56,23 +56,15 @@ if not TOKEN:
 
 TODAY = datetime.date.today()
 
-if TODAY.day < 3:
-    # On day 1-2 of the month, report on the previous full month
-    first_of_current = TODAY.replace(day=1)
-    END_DATE   = first_of_current - datetime.timedelta(days=1)  # last day of prev month
-    START_DATE = END_DATE.replace(day=1)                         # 1st of prev month
-else:
-    # From day 3 onwards, report on the current month up to yesterday
-    END_DATE   = TODAY - datetime.timedelta(days=1)
-    START_DATE = TODAY.replace(day=1)
+END_DATE   = TODAY - datetime.timedelta(days=1)
+START_DATE = TODAY.replace(day=1)
 
 START    = START_DATE.strftime("%Y-%m-%dT00:00:00.000")
 END      = END_DATE.strftime("%Y-%m-%dT23:59:59.999")
 BQ_START = START_DATE.strftime("%Y-%m-%d")
 BQ_END   = END_DATE.strftime("%Y-%m-%d")
 
-# On day 3 only: also show the previous full month as a second HTML tab
-SHOW_PREV_TAB = TODAY.day == 3
+SHOW_PREV_TAB = False
 if SHOW_PREV_TAB:
     _prev_last      = TODAY.replace(day=1) - datetime.timedelta(days=1)
     PREV_START_DATE = _prev_last.replace(day=1)
@@ -117,8 +109,7 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2633.1", "dist": "1044", "asti": 3.78, "stti": 1.08},
-    {"version": "4.2634.1", "dist": "1049", "asti": 3.78, "stti": 1.08},
+    {"version": "4.2636.1", "dist": "1058", "asti": 3.96, "stti": 0.996, "month_start": "2026-09-01"},
 ]
 
 
@@ -137,16 +128,16 @@ def rel_filter_str(rel):
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["panda", "pandarider", "panda rider"],            "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora"],                                       "app_size": 83.2, "asti": 3.93, "stti": 1.20, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider"],                      "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["pedidosya", "peya", "peya riders"],              "app_size": 68.4, "asti": 3.93, "stti": 1.20, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerstation", "hungerstation riders"],         "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti"],                                   "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider"],            "app_size": 77.9, "asti": 3.93, "stti": 1.20, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa"],                                         "app_size": 78.0, "asti": 3.93, "stti": 1.20, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood"],                                         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                         "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["foodpanda", "panda", "pandarider", "panda rider"],                    "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora", "foodora rider"],                                           "app_size": 83.2, "asti": 3.93, "stti": 1.20, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider", "Talabat"],                                           "app_size": 77.8, "asti": 3.93, "stti": 1.20, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["PedidosYa", "pedidosYa", "peya", "peya rider"],                     "app_size": 68.4, "asti": 3.93, "stti": 1.20, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerStation", "hungerstation rider", "HungerStation"],                             "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti", "yemek", "yemek rider"],                               "app_size": 78.3, "asti": 3.93, "stti": 1.20, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider", "Glovo"],                                 "app_size": 77.9, "asti": 3.93, "stti": 1.20, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa", "woowa rider"],                                               "app_size": 78.0, "asti": 3.93, "stti": 1.20, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood", "efood rider"],                                                             "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                                             "app_size": 68.1, "asti": 3.93, "stti": 1.20, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -169,6 +160,15 @@ def brand_filter(brand):
 
     terms = [term(brand["bundle_id"])] + [term(a) for a in brand.get("sentry_aliases", [])]
     return "(" + " OR ".join(terms) + ")"
+
+
+def package_id_filter(brand):
+    """Return a Sentry brand: query clause using only the canonical bundle_id (package ID).
+
+    Used for crash queries in the projected/version AQS tab to avoid alias overlap between brands.
+    """
+    bid = brand["bundle_id"]
+    return f'brand:"{bid}"' if ("." in bid or " " in bid) else f"brand:{bid}"
 
 
 # ── AQS config ─────────────────────────────────────────────────────────────────
@@ -616,35 +616,23 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None, exac
     """Run a separate Discover query per brand.
 
     exact_brand=False (hangs): one query per brand using the uppercase Brand tag wildcard.
-    exact_brand=True (crashes): two queries per brand —
-      Pass 1 — Brand:*skey* (uppercase Brand tag): rows written as-is, Brand column
-               preserves whatever short name Sentry returns (e.g. "talabat rider").
-      Pass 2 — brand_filter(brand) (lowercase brand tag, exact bundle IDs + aliases):
-               rows appended after Pass 1; Brand column is replaced with the full
-               package name (e.g. "com.logistics.rider.talabat") via _brand_source.
+    exact_brand=True (crashes): one query per brand using the canonical bundle_id only
+      (package_id_filter), matching the projected AQS approach to avoid alias overlap.
     """
     if exact_brand:
-        brand_tag_rows = []
         exact_tag_rows = []
         for brand in BRANDS:
             skey = brand["sentry_key"]
 
-            rows = fetch_discover(f'{query} Brand:*{skey}*', environment=environment, start=start, end=end)
-            for r in rows:
-                r["_sentry_key"] = skey.lower()
-            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
-            brand_tag_rows.extend(rows)
-
-            rows = fetch_discover(f'{query} {brand_filter(brand)}', environment=environment, start=start, end=end)
+            rows = fetch_discover(f'{query} {package_id_filter(brand)}', environment=environment, start=start, end=end)
             for r in rows:
                 r["_sentry_key"] = skey.lower()
                 r["_brand_source"] = "brand"
             total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
+            print(f"    {skey} ({brand['bundle_id']}): {total} users across {len(rows)} day-rows")
             exact_tag_rows.extend(rows)
 
-        return brand_tag_rows + exact_tag_rows
+        return exact_tag_rows
 
     all_rows = []
     for brand in BRANDS:
@@ -662,12 +650,17 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None, exac
 
 
 def fetch_discover_per_brand_for_release(rel, base_query, environment=None, start=None, end=None, exact_brand=False):
-    """Like fetch_discover_per_brand but adds the release dist filter to each brand query."""
+    """Like fetch_discover_per_brand but adds the release dist filter to each brand query.
+
+    exact_brand=False (hangs): exact Brand:"{bundle_id}" match per brand — wildcard fails with dist filter.
+    exact_brand=True (crashes): exact brand:"{bundle_id}" (lowercase) match via package_id_filter.
+    """
     dist_filter = rel_filter_str(rel)
     excluded = {b.lower() for b in rel.get("excluded_brands", [])}
 
     if exact_brand:
-        brand_tag_rows = []
+        # Crashes: query using only the package ID (bundle_id) in the brand: tag.
+        # Aliases are excluded to prevent cross-brand overlap in the version AQS tab.
         exact_tag_rows = []
         for brand in BRANDS:
             skey = brand["sentry_key"]
@@ -676,44 +669,36 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
                 continue
 
             rows = fetch_discover(
-                f'{base_query} {dist_filter} Brand:*{skey}*',
-                environment=environment, start=start, end=end,
-            )
-            for r in rows:
-                r["_sentry_key"] = skey.lower()
-            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
-            brand_tag_rows.extend(rows)
-            time.sleep(0.3)
-
-            rows = fetch_discover(
-                f'{base_query} {dist_filter} {brand_filter(brand)}',
+                f'{base_query} {dist_filter} {package_id_filter(brand)}',
                 environment=environment, start=start, end=end,
             )
             for r in rows:
                 r["_sentry_key"] = skey.lower()
                 r["_brand_source"] = "brand"
             total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
+            print(f"    {skey} ({brand['bundle_id']}): {total} users across {len(rows)} day-rows")
             exact_tag_rows.extend(rows)
             time.sleep(0.3)
 
-        return brand_tag_rows + exact_tag_rows
+        return exact_tag_rows
 
+    # Hangs: use exact Brand tag match (bundle_id) to avoid wildcard returning 0 with dist filter.
     all_rows = []
     for brand in BRANDS:
         skey = brand["sentry_key"]
         if skey.lower() in excluded:
             print(f"    {skey}: skipped (not rolled out for v{rel['version']})")
             continue
+        bid = brand["bundle_id"]
+        brand_tag = f'Brand:"{bid}"' if ("." in bid or " " in bid) else f"Brand:{bid}"
         rows = fetch_discover(
-            f'{base_query} {dist_filter} ((Brand:"" brand:*{skey}*) OR Brand:*{skey}*)',
+            f'{base_query} {dist_filter} {brand_tag}',
             environment=environment, start=start, end=end,
         )
         for r in rows:
             r["_sentry_key"] = skey.lower()
         total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-        print(f"    {skey}: {total} users across {len(rows)} day-rows")
+        print(f"    {skey} ({bid}): {total} users across {len(rows)} day-rows")
         all_rows.extend(rows)
         time.sleep(0.3)
     return all_rows
@@ -926,10 +911,20 @@ def _build_version_aqs_panel_html(version_aqs_data, date_range):
         bg      = version_colors[i % len(version_colors)]
         cs      = f"background:{bg};"
 
+        projected   = vd.get("projected", False)
+        bq_start_lbl = vd.get("bq_start", "")
+        bq_end_lbl   = vd.get("bq_end",   "")
+        proj_badge   = (
+            ' <span style="font-size:10px;font-weight:600;background:#FFF3CD;color:#856404;'
+            'border:1px solid #ffc107;border-radius:4px;padding:1px 5px;vertical-align:middle;">'
+            'Projected</span>'
+        ) if projected else ""
+        ver_label = f"{ver}{proj_badge}"
+
         if no_data:
             brand_rows_html += f"""
       <tr style="background:{bg};">
-        <td style="{cs}font-weight:600;">{ver}</td>
+        <td style="{cs}font-weight:600;">{ver_label}</td>
         <td colspan="8" style="{cs}text-align:center;color:#9ca3af;">No data available for this period</td>
       </tr>"""
         else:
@@ -943,7 +938,7 @@ def _build_version_aqs_panel_html(version_aqs_data, date_range):
             final    = vd.get("final_aqs", 0.0)
             brand_rows_html += f"""
       <tr style="background:{bg};">
-        <td style="{cs}font-weight:600;white-space:nowrap;">{ver}</td>
+        <td style="{cs}font-weight:600;white-space:nowrap;">{ver_label}</td>
         <td style="{cs}text-align:right;">{cfu:.2f}%</td>
         <td style="{cs}text-align:right;">{hang:.2f}%</td>
         <td style="{cs}text-align:right;">{app_size}</td>
@@ -965,9 +960,14 @@ def _build_version_aqs_panel_html(version_aqs_data, date_range):
             f'<td style="text-align:right;">{scores.get(k, 0):.4f}</td>'
             for k in AQS_COL_ORDER
         )
+        proj_badge_aqs = (
+            ' <span style="font-size:10px;font-weight:600;background:#FFF3CD;color:#856404;'
+            'border:1px solid #ffc107;border-radius:4px;padding:1px 5px;vertical-align:middle;">'
+            'Projected</span>'
+        ) if vd.get("projected") else ""
         aqs_rows_html += f"""
       <tr class="row-aqs">
-        <td style="text-align:left;">{vd['version']}</td>
+        <td style="text-align:left;">{vd['version']}{proj_badge_aqs}</td>
         {cells}
         <td style="text-align:right;font-weight:700;">{vd.get('final_aqs', 0)}</td>
       </tr>"""
@@ -981,16 +981,28 @@ def _build_version_aqs_panel_html(version_aqs_data, date_range):
   <div class="score-card">
     <div class="sc-label">v{vd['version']}</div>
     <div class="sc-value">{vd.get('final_aqs', 0)}</div>
-    <div class="sc-sub">AQS Score</div>
+    <div class="sc-sub">{'Projected (Sep)' if vd.get('projected') else 'AQS Score'}</div>
   </div>"""
     score_cards_html += "\n</div>"
+
+    # Build per-version period labels for the header
+    period_parts = []
+    for vd in version_aqs_data:
+        bq_s = vd.get("bq_start", "")
+        bq_e = vd.get("bq_end", "")
+        label = f"v{vd['version']}: <strong>{bq_s} – {bq_e}"
+        if vd.get("projected"):
+            label += " (Projected)"
+        label += "</strong>"
+        period_parts.append(label)
+    period_line = " &nbsp;|&nbsp; ".join(period_parts) if period_parts else f"<strong>{date_range}</strong>"
 
     return f"""
 <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">
   Full AQS score per pinned release version. Crashes &amp; hangs from Sentry (dist filter);
   frozen &amp; skipped frames from Firebase Performance BigQuery (version filter);
-  ASTI, STTI, and app size use current fleet values.
-  Period: <strong>{date_range}</strong>
+  ASTI, STTI, and app size use current fleet values.<br>
+  Period: {period_line}
 </p>
 
 <div class="table-wrap">
@@ -1042,12 +1054,12 @@ def _build_version_aqs_panel_html(version_aqs_data, date_range):
 
 <div class="footer">
   &bull; <strong>Crash Free % / Hang Free %</strong> — Sentry <code>count_unique(user)</code>
-    with dist filter, divided by total BQ iOS user-days for the period.<br>
+    with dist filter, divided by total BQ iOS user-days for the period. Crashes use package-ID brand filter only.<br>
   &bull; <strong>Frozen Frames % / Skipped Frames %</strong> — Firebase Performance BigQuery
     filtered by <code>app_display_version</code>.<br>
   &bull; <strong>ASTI, STTI, App Size</strong> — rider-weighted fleet averages (static per report run).<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value − baseline) / (target − baseline)) × 50) + 50)) × weight%</code><br>
-  &bull; Query period: {date_range}
+  &bull; {period_line}
 </div>"""
 
 
@@ -2746,19 +2758,37 @@ def main():
         ver        = rel["version"]
         ver_asti   = rel["asti"]
         ver_stti   = rel["stti"]
-        print(f"  v{ver} — BQ users by version + brand (last 30 days)...")
-        ver_bq_rows, ver_bq_users_by_brand = fetch_bigquery_by_version(ver, bq_start=REL_BQ_START, bq_end=REL_BQ_END)
+
+        # Per-version date range: use month_start override when set (projected/partial month),
+        # otherwise fall back to the global 30-day rolling window.
+        if "month_start" in rel:
+            _bq_start_dt = datetime.datetime.strptime(rel["month_start"], "%Y-%m-%d")
+            _bq_start    = rel["month_start"]
+            _bq_end      = REL_BQ_END
+            _start       = _bq_start_dt.strftime("%Y-%m-%dT00:00:00.000")
+            _end         = REL_END
+            is_projected = True
+        else:
+            _bq_start    = REL_BQ_START
+            _bq_end      = REL_BQ_END
+            _start       = REL_START
+            _end         = REL_END
+            is_projected = False
+
+        period_label = f"{_bq_start} – {_bq_end}"
+        print(f"  v{ver} — BQ users by version + brand ({period_label})...")
+        ver_bq_rows, ver_bq_users_by_brand = fetch_bigquery_by_version(ver, bq_start=_bq_start, bq_end=_bq_end)
         ver_total_users = sum(ver_bq_users_by_brand.values())
         print(f"    → {ver_total_users:,} total users")
 
-        print(f"  v{ver} — crashes per brand per day (Sentry, last 30 days)...")
-        ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=REL_START, end=REL_END, exact_brand=True)
+        print(f"  v{ver} — crashes per brand per day (Sentry, {period_label})...")
+        ver_raw_crash      = fetch_discover_per_brand_for_release(rel, CRASHES_QUERY, environment="production", start=_start, end=_end, exact_brand=True)
         ver_crash_rows     = shape_rows(ver_raw_crash, "CRASH_USERS", sort_by_day=False)
         crash_by_brand_rel = aggregate_by_brand(ver_crash_rows, "CRASH_USERS")
         crash_users        = sum(crash_by_brand_rel.values())
 
-        print(f"  v{ver} — hangs per brand per day (Sentry, last 30 days)...")
-        ver_raw_hang      = fetch_discover_per_brand_for_release(rel, HANGS_QUERY, start=REL_START, end=REL_END)
+        print(f"  v{ver} — hangs per brand per day (Sentry, {period_label})...")
+        ver_raw_hang      = fetch_discover_per_brand_for_release(rel, HANGS_QUERY, start=_start, end=_end)
         ver_hang_rows     = shape_rows(ver_raw_hang, "HANG_USERS")
         hang_by_brand_rel = aggregate_by_brand(ver_hang_rows, "HANG_USERS")
         hang_users        = sum(hang_by_brand_rel.values())
@@ -2767,8 +2797,8 @@ def main():
             skipped = rel["skipped_frames"]
             print(f"  v{ver} — frames: using pinned values (frozen={frozen}, skipped={skipped})")
         else:
-            print(f"  v{ver} — frames (BQ, last 30 days)...", end=" ", flush=True)
-            frames  = fetch_firebase_frames_by_version(ver, bq_start=REL_BQ_START, bq_end=REL_BQ_END)
+            print(f"  v{ver} — frames (BQ, {period_label})...", end=" ", flush=True)
+            frames  = fetch_firebase_frames_by_version(ver, bq_start=_bq_start, bq_end=_bq_end)
             print("done")
             frozen  = frames.get("frozen")
             skipped = frames.get("skipped")
@@ -2878,8 +2908,9 @@ def main():
 
         version_aqs_data.append({
             "version":     ver,
-            "bq_start":    REL_BQ_START,
-            "bq_end":      REL_BQ_END,
+            "bq_start":    _bq_start,
+            "bq_end":      _bq_end,
+            "projected":   is_projected,
             "crash_users": crash_users,
             "hang_users":  hang_users,
             "cfu":         cfu,
