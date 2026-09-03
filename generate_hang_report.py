@@ -995,11 +995,16 @@ html = f"""<!DOCTYPE html>
   <div class="weekly-chart-wrap">
     <canvas id="device-class-chart"></canvas>
   </div>
+  <div class="weekly-chart-wrap" style="margin-top:24px;">
+    <canvas id="device-class-pct-chart"></canvas>
+  </div>
+
   <table class="compare-table" id="device-class-table">
     <thead>
       <tr>
         <th>Device Class</th>
         <th class="num">Avg Daily Riders</th>
+        <th class="num">% of Fleet</th>
         <th class="num">Hang-impacted</th>
         <th class="num">Impact Rate</th>
       </tr>
@@ -1776,12 +1781,61 @@ MONTHS.forEach((month, mi) => {{
     }}
   }});
 
-  // ── 3-row table: Device Class | Total Riders | Hang-impacted | Impact Rate ─
+  // ── Pre-compute grand totals (needed for fleet % and impacted %) ─────────────
+  const grandTotal    = DEVICE_CLASS.reduce((s, t) => s + t.total_riders,   0);
+  const grandImpacted = DEVICE_CLASS.reduce((s, t) => s + t.impacted_users, 0);
+
+  // ── % of Fleet chart ────────────────────────────────────────────────────────
+  new Chart(document.getElementById("device-class-pct-chart").getContext("2d"), {{
+    type: "bar",
+    data: {{
+      labels: DEVICE_CLASS.map(t => t.label),
+      datasets: [
+        {{
+          label: "% of Fleet",
+          data: DEVICE_CLASS.map(t => grandTotal > 0 ? +(t.total_riders / grandTotal * 100).toFixed(2) : 0),
+          backgroundColor: DEVICE_CLASS.map(t => t.color + "99"),
+          borderColor:     DEVICE_CLASS.map(t => t.color),
+          borderWidth: 1,
+          borderRadius: 4,
+        }},
+      ],
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{
+          callbacks: {{
+            label: ctx => ` % of Fleet: ${{ctx.parsed.y.toFixed(2)}}%`,
+          }}
+        }},
+        title: {{
+          display: true,
+          text: "Fleet distribution by device class",
+          font: {{ size: 13 }},
+          color: "#374151",
+        }},
+      }},
+      scales: {{
+        x: {{ grid: {{ display: false }}, ticks: {{ font: {{ size: 12 }} }} }},
+        y: {{
+          beginAtZero: true,
+          title: {{ display: true, text: "Share (%)", font: {{ size: 11 }} }},
+          ticks: {{ callback: v => v + "%" }},
+        }},
+      }},
+    }}
+  }});
+
+  // ── Table: Device Class | Avg Daily Riders | % of Fleet | Hang-impacted | Impact Rate ─
   const tbody = document.getElementById("device-class-tbody");
   DEVICE_CLASS.forEach(tier => {{
-    const total    = tier.total_riders;
-    const impacted = tier.impacted_users;
-    const rate     = total > 0 ? (impacted / total * 100).toFixed(2) + "%" : "—";
+    const total       = tier.total_riders;
+    const impacted    = tier.impacted_users;
+    const fleetPct    = grandTotal > 0 ? (total    / grandTotal * 100).toFixed(2) + "%" : "—";
+    const rate        = total > 0       ? (impacted / total     * 100).toFixed(2) + "%" : "—";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><div class="td-group">
@@ -1789,6 +1843,11 @@ MONTHS.forEach((month, mi) => {{
         <span style="font-weight:600;color:${{tier.color}}">${{tier.label}}</span>
       </div></td>
       <td class="num">${{total > 0 ? total.toLocaleString() : "—"}}</td>
+      <td class="num">
+        <span style="background:#eff6ff;border-radius:4px;padding:2px 8px;font-weight:600;color:#1d4ed8">
+          ${{fleetPct}}
+        </span>
+      </td>
       <td class="num cell-link" title="Open ${{tier.label}} hangs in Sentry">
         ${{impacted.toLocaleString()}}
       </td>
@@ -1797,18 +1856,19 @@ MONTHS.forEach((month, mi) => {{
           ${{rate}}
         </span>
       </td>`;
-    tr.querySelectorAll("td")[2].addEventListener("click", () => openSentry(tier));
+    tr.querySelectorAll("td")[3].addEventListener("click", () => openSentry(tier));
     tbody.appendChild(tr);
   }});
 
-  const grandTotal    = DEVICE_CLASS.reduce((s, t) => s + t.total_riders,   0);
-  const grandImpacted = DEVICE_CLASS.reduce((s, t) => s + t.impacted_users, 0);
-  const grandRate     = grandTotal > 0 ? (grandImpacted / grandTotal * 100).toFixed(2) + "%" : "—";
+  const grandRate = grandTotal > 0 ? (grandImpacted / grandTotal * 100).toFixed(2) + "%" : "—";
   const trTotal = document.createElement("tr");
   trTotal.style.cssText = "font-weight:700; border-top:2px solid #e5e7eb;";
   trTotal.innerHTML = `
     <td>Total</td>
     <td class="num">${{grandTotal > 0 ? grandTotal.toLocaleString() : "—"}}</td>
+    <td class="num">
+      <span style="background:#eff6ff;border-radius:4px;padding:2px 8px;font-weight:600;color:#1d4ed8">100%</span>
+    </td>
     <td class="num">${{grandImpacted.toLocaleString()}}</td>
     <td class="num">
       <span style="background:#f3f4f6;border-radius:4px;padding:2px 8px;font-weight:600">
