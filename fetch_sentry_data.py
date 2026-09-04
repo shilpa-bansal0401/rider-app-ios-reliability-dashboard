@@ -616,23 +616,33 @@ def fetch_discover_per_brand(query, environment=None, start=None, end=None, exac
     """Run a separate Discover query per brand.
 
     exact_brand=False (hangs): one query per brand using the uppercase Brand tag wildcard.
-    exact_brand=True (crashes): one query per brand using the canonical bundle_id only
-      (package_id_filter), matching the projected AQS approach to avoid alias overlap.
+    exact_brand=True (crashes): two queries per brand —
+      Pass 1 — Brand:*skey* (uppercase Brand tag): captures events using the short brand name.
+      Pass 2 — brand_filter(brand) (lowercase brand tag, all aliases + bundle_id):
+               captures events recorded with the full package ID or any alias.
     """
     if exact_brand:
+        brand_tag_rows = []
         exact_tag_rows = []
         for brand in BRANDS:
             skey = brand["sentry_key"]
 
-            rows = fetch_discover(f'{query} {package_id_filter(brand)}', environment=environment, start=start, end=end)
+            rows = fetch_discover(f'{query} Brand:*{skey}*', environment=environment, start=start, end=end)
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
+            brand_tag_rows.extend(rows)
+
+            rows = fetch_discover(f'{query} {brand_filter(brand)}', environment=environment, start=start, end=end)
             for r in rows:
                 r["_sentry_key"] = skey.lower()
                 r["_brand_source"] = "brand"
             total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} ({brand['bundle_id']}): {total} users across {len(rows)} day-rows")
+            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
             exact_tag_rows.extend(rows)
 
-        return exact_tag_rows
+        return brand_tag_rows + exact_tag_rows
 
     all_rows = []
     for brand in BRANDS:
@@ -653,14 +663,14 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
     """Like fetch_discover_per_brand but adds the release dist filter to each brand query.
 
     exact_brand=False (hangs): exact Brand:"{bundle_id}" match per brand — wildcard fails with dist filter.
-    exact_brand=True (crashes): exact brand:"{bundle_id}" (lowercase) match via package_id_filter.
+    exact_brand=True (crashes): two passes per brand — Brand:*skey* + brand_filter (aliases + bundle_id).
     """
     dist_filter = rel_filter_str(rel)
     excluded = {b.lower() for b in rel.get("excluded_brands", [])}
 
     if exact_brand:
-        # Crashes: query using only the package ID (bundle_id) in the brand: tag.
-        # Aliases are excluded to prevent cross-brand overlap in the version AQS tab.
+        # Crashes: two passes per brand — uppercase Brand tag wildcard + lowercase brand aliases.
+        brand_tag_rows = []
         exact_tag_rows = []
         for brand in BRANDS:
             skey = brand["sentry_key"]
@@ -669,18 +679,29 @@ def fetch_discover_per_brand_for_release(rel, base_query, environment=None, star
                 continue
 
             rows = fetch_discover(
-                f'{base_query} {dist_filter} {package_id_filter(brand)}',
+                f'{base_query} {dist_filter} Brand:*{skey}*',
+                environment=environment, start=start, end=end,
+            )
+            for r in rows:
+                r["_sentry_key"] = skey.lower()
+            total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
+            print(f"    {skey} (Brand): {total} users across {len(rows)} day-rows")
+            brand_tag_rows.extend(rows)
+            time.sleep(0.3)
+
+            rows = fetch_discover(
+                f'{base_query} {dist_filter} {brand_filter(brand)}',
                 environment=environment, start=start, end=end,
             )
             for r in rows:
                 r["_sentry_key"] = skey.lower()
                 r["_brand_source"] = "brand"
             total = sum(int(r.get("count_unique(user)", 0) or 0) for r in rows)
-            print(f"    {skey} ({brand['bundle_id']}): {total} users across {len(rows)} day-rows")
+            print(f"    {skey} (brand): {total} users across {len(rows)} day-rows")
             exact_tag_rows.extend(rows)
             time.sleep(0.3)
 
-        return exact_tag_rows
+        return brand_tag_rows + exact_tag_rows
 
     # Hangs: use exact Brand tag match (bundle_id) to avoid wildcard returning 0 with dist filter.
     all_rows = []
