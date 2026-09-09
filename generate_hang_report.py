@@ -551,7 +551,7 @@ for rel in RELEASES:
         link_filter = cat["link_filter"]
         if cat["key"] == "mapbox":
             or_filters = " OR ".join(cat["filters"])
-            link_query = f'{BASE_QUERY} {rel_filter} ({or_filters})'.strip()
+            link_query = f'{BASE_QUERY} {rel_filter} {link_filter}'.strip()
             discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} ({or_filters})'.strip()
         else:
             link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
