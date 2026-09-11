@@ -13,6 +13,7 @@ Output:
     hang_report/index.html
 """
 
+
 import urllib.request
 import urllib.parse
 import json
@@ -132,9 +133,9 @@ WEEKS = get_last_4_weeks()
 
 NX = {
     "mapbox":   "!stack.package:*Mapbox* !message:*Mapbox*",
-    "webkit":   "!stack.package:*WebKit* !stack.package:*WebCore* !message:*WKWebView*",
-    "firebase": "!message:*FIRCLS* !message:*FireApp*",
-    "sentry":   "!stack.package:*Sentry* !message:*SentryAppHang*",
+    "webkit":   "!stack.package:*WebKit*,*WebCore*,*WKWebView*",
+    "firebase": "!message:*FIRCLS*,*FireApp*",
+    "sentry":   "!stack.package:*Sentry*,*SentryAppHang*",
     "keyboard": "!stack.function:*UIKeyboard*",
 }
 
@@ -152,9 +153,9 @@ CATEGORIES = [
         "key":      "mapbox",
         "label":    "Mapbox",
         "color":    "#FFB3BA", # Pastel Rose
-        "filters":  ["stack.package:*Mapbox*", "stack.function:*Mapbox*", "stack.function:*NavigationMapView*"],
+        "filters":  ["stack.package:*Mapbox*"],
         "excl":     "",
-        "link_filter": "stack.package:*Mapbox*",
+        "link_filter": "stack.function:[*Mapbox*,*NavigationMapView*]",
         "culprits": [
             "MetalView.draw", "MetalView.nextDrawable", "MapboxMap.init",
             "MapView.commonInit", "MBMStyleManager", "InfoButtonOrnament.init",
@@ -179,8 +180,8 @@ CATEGORIES = [
         "label":    "Firebase / Crashlytics",
         "color":    "#FFFFBA", # Pastel Lemon
         "filters":  [
-            "message:*FIRCLSFileLoop*", "message:*FIRCLSProcess*",
-            "message:*FireApp*", "stack.function:*FIRCLS*", "stack.function:*FireApp*",
+            "message:[*FIRCLSFileLoop*,*FIRCLSProcess*,*FireApp*]",
+            "stack.function:[*FIRCLS*,*FireApp*]",
         ],
         "excl":     excl("mapbox", "webkit") + " !stack.function:*AppleLocationProvider*",
         "link_filter": "message:*FIRCLS*",
@@ -202,7 +203,10 @@ CATEGORIES = [
         "key":      "location",
         "label":    "Location",
         "color":    "#B2F2EF", # Pastel Turquoise
-        "filters":  ["stack.package:*CoreLocation*", "stack.function:*CLLocation*", "stack.function:*CLClientCreateWithBundleIdentifierAndPathWithWebsiteOnSilo*"],
+        "filters":  [
+            "stack.package:*CoreLocation*",
+            "stack.function:[*CLLocation*,*CLClientCreateWithBundleIdentifierAndPathWithWebsiteOnSilo*]",
+        ],
         "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreLocation*",
         "culprits": [
@@ -215,8 +219,8 @@ CATEGORIES = [
         "label":    "Audio / Media",
         "color":    "#FDFDCC", # Pastel Cream
         "filters":  [
-            "stack.package:*AVFoundation*", "stack.function:*AVAudio*",
-            "stack.function:*AudioPlayer*",
+            "stack.package:*AVFoundation*",
+            "stack.function:[*AVAudio*,*AudioPlayer*]"
         ],
         "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*AVFoundation*",
@@ -230,8 +234,8 @@ CATEGORIES = [
         "label":    "Camera / AR",
         "color":    "#97EDEA", # Pastel Aqua
         "filters":  [
-            "stack.package:*ARKit*", "stack.function:*ARSession*",
-            "stack.function:*CameraProvider*", "stack.function:*QRScanCameraOverlayView*",
+            "stack.package:*ARKit*",
+            "stack.function:[*ARSession*,*CameraProvider*,*QRScanCameraOverlayView*]"
         ],
         "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.function:*QRScanCameraOverlayView*",
@@ -245,7 +249,10 @@ CATEGORIES = [
         "key":      "storage",
         "label":    "Storage",
         "color":    "#D3C0B0", # Pastel Taupe
-        "filters":  ["stack.package:*CoreData*", "stack.function:*PersistentData*"],
+        "filters":  [
+            "stack.package:*CoreData*",
+            "stack.function:*PersistentData*",
+        ],
         "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
         "link_filter": "stack.package:*CoreData*",
         "culprits": [
@@ -301,6 +308,30 @@ def fetch_all(query, start, end):
     return issues
 
 
+def group_filters(filters):
+    """Group Sentry filter conditions by field, comma-joining values for the same field.
+
+    ['stack.package:*Mapbox*', 'stack.function:*Mapbox*', 'stack.function:*NavigationMapView*']
+    → 'stack.package:*Mapbox* stack.function:*Mapbox*,*NavigationMapView*'
+    """
+    groups = {}
+    order  = []
+    for f in filters:
+        if ":" in f:
+            field, value = f.split(":", 1)
+        else:
+            field, value = "", f
+        if field not in groups:
+            groups[field] = []
+            order.append(field)
+        groups[field].append(value)
+    parts = []
+    for field in order:
+        vals = ",".join(groups[field])
+        parts.append(f"{field}:{vals}" if field else vals)
+    return " ".join(parts)
+
+
 def count_unique_users(query, start, end):
     """Count unique users via Discover /events/ API — SDK 9.9.0 raw totals."""
     params = urllib.parse.urlencode([
@@ -317,6 +348,25 @@ def count_unique_users(query, start, end):
         data = json.loads(resp.read())
     rows = data.get("data", [])
     return int(rows[0].get("count_unique(user)", 0)) if rows else 0
+
+
+def count_unique_users_multi(queries, start, end):
+    """Run one Discover query per entry and return the MAX count_unique(user).
+
+    Replaces a single OR query when Sentry rejects OR syntax. Taking max instead
+    of summing avoids double-counting users who match more than one filter
+    (e.g. a Mapbox hang that appears in both stack.package:*Mapbox* and
+    stack.function:*Mapbox* queries).
+    """
+    best = 0
+    for q in queries:
+        try:
+            n = count_unique_users(q, start, end)
+            best = max(best, n)
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"  WARN multi-query error: {e}")
+    return best
 
 
 # ── Device class helpers ──────────────────────────────────────────────────────
@@ -548,16 +598,13 @@ for rel in RELEASES:
     cumulative_excl = ""
     results = []
     for cat in CATEGORIES:
-        link_filter = cat["link_filter"]
-        if cat["key"] == "mapbox":
-            or_filters = " OR ".join(cat["filters"])
-            link_query = f'{BASE_QUERY} {rel_filter} {link_filter}'.strip()
-            discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} ({or_filters})'.strip()
-        else:
-            link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
-            discover_q = f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {link_filter}'.strip()
+        discover_queries = [
+            f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {f}'.strip()
+            for f in cat["filters"]
+        ]
+        link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {cat["link_filter"]}'.strip()
         try:
-            users = count_unique_users(discover_q, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
+            users = count_unique_users_multi(discover_queries, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
         except Exception as e:
             print(f"  ERROR {cat['label']}: {e}")
             users = 0
