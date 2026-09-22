@@ -109,7 +109,8 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2638.1", "dist": "1065", "asti": 4.13, "stti": 1.05, "month_start": "2026-09-01"},
+    {"version": "4.2637.1", "dist": "1062", "asti": 4.25, "stti": 1.08, "month_start": "2026-09-01"},
+    {"version": "4.2638.1", "dist": "1065", "asti": 4.15, "stti": 1.03, "month_start": "2026-09-01"},
     {"version": "4.2639.1", "dist": "1069", "asti": 4.13, "stti": 1.05, "month_start": "2026-09-01"},
 ]
 
@@ -2654,10 +2655,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None, versio
 
     ws.cell(row=VAL, column=4).number_format  = "0"      # rider count — integer
     ws.cell(row=VAL, column=7).number_format  = "0.##"   # AVG CFU % — up to 2 decimal places
-    ws.cell(row=VAL, column=8).number_format  = "0.00"   # AVG CFU AQS (hidden helper)
+    ws.cell(row=VAL, column=8).number_format  = "0.00"   # AVG CFU AQS
     ws.cell(row=VAL, column=9).number_format  = "0.00"   # month AQS score
     ws.cell(row=VAL, column=12).number_format = "0.##"   # AVG Hang-free % — up to 2 decimal places
-    ws.cell(row=VAL, column=13).number_format = "0.00"   # Hang-free AQS (hidden helper)
+    ws.cell(row=VAL, column=13).number_format = "0.00"   # Hang-free AQS
     ws.cell(row=VAL, column=14).number_format = "0.00"   # Projected AQS
 
     # ── Borders, alternating rows & summary colors ───────────────────────────────
@@ -2719,12 +2720,12 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None, versio
     ws.column_dimensions["E"].width = 28
     ws.column_dimensions["F"].width = 4   # spacer
     ws.column_dimensions["G"].width = 12
-    ws.column_dimensions["H"].hidden = True   # CFU AQS Score — hidden helper for col N
+    ws.column_dimensions["H"].width = 22     # CFU AQS Score
     ws.column_dimensions["I"].width = 22
     ws.column_dimensions["J"].width = 4   # spacer
     ws.column_dimensions["K"].width = 24
     ws.column_dimensions["L"].width = 14
-    ws.column_dimensions["M"].hidden = True   # Hang-free AQS — hidden helper for col N
+    ws.column_dimensions["M"].width = 22     # Hang-free AQS
     ws.column_dimensions["N"].width = 30
     ws.row_dimensions[1].height = 45
 
