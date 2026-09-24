@@ -86,6 +86,7 @@ REL_BQ_START = REL_START_DATE.strftime("%Y-%m-%d")
 REL_BQ_END   = REL_END_DATE.strftime("%Y-%m-%d")
 
 HANGS_QUERY   = '!user.id:*-*-*-*-* app.in_foreground:True "*App hang* detected*"'
+PROJECTED_HANGS_QUERY = HANGS_QUERY + ' !stack.function:HangInjectionService.imitateHangIfEligible'
 CRASHES_QUERY = "level:fatal handled:no !stack.package:*gpsmaster* !stack.package:*GPSTraveller* !user.id:*-*-*-*-* !issue:RIDER-APP-IOS-Z7 !issue:RIDER-APP-IOS-1BM !issue:RIDER-APP-IOS-3DVQ"
 
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
@@ -2811,7 +2812,7 @@ def main():
         crash_users        = sum(crash_by_brand_rel.values())
 
         print(f"  v{ver} — hangs per brand per day (Sentry, {period_label})...")
-        ver_raw_hang      = fetch_discover_per_brand_for_release(rel, HANGS_QUERY, start=_start, end=_end)
+        ver_raw_hang      = fetch_discover_per_brand_for_release(rel, PROJECTED_HANGS_QUERY, start=_start, end=_end)
         ver_hang_rows     = shape_rows(ver_raw_hang, "HANG_USERS")
         hang_by_brand_rel = aggregate_by_brand(ver_hang_rows, "HANG_USERS")
         hang_users        = sum(hang_by_brand_rel.values())

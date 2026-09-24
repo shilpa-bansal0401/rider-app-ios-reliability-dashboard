@@ -593,7 +593,8 @@ for rel in RELEASE_WEEKLY_RELEASES:
 
 # ── Run categories by release analysis ───────────────────────────────────────
 # 90-day window to capture full release lifetime.
-# Uses cumulative exclusions matching the monthly analysis priority order.
+# Uses the Issues API (same as monthly analysis) so that stack.function filters
+# work correctly — the Discover API does not index stack.function for App Hang events.
 
 RELEASE_CAT_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
 RELEASE_CAT_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
@@ -606,24 +607,32 @@ for rel in RELEASES:
     print(f"\n── Categories by Release: {v} (dist {dists_str}) ──")
 
     cumulative_excl = ""
+    assigned = set()
     results = []
     for cat in CATEGORIES:
-        discover_queries = [
-            f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {f}'.strip()
-            for f in cat["filters"]
-        ]
+        cat_issues = {}
+        for filt in cat["filters"]:
+            q = f"{BASE_QUERY} {rel_filter} {cumulative_excl} {filt}".strip()
+            try:
+                fetched = fetch_all(q, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
+                for iid, u in fetched.items():
+                    if iid not in cat_issues or cat_issues[iid] < u:
+                        cat_issues[iid] = u
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"  ERROR {cat['label']} / {filt}: {e}")
+                time.sleep(3)
+
+        new_issues = {iid: u for iid, u in cat_issues.items() if iid not in assigned}
+        cat_users  = sum(new_issues.values())
+        assigned.update(new_issues.keys())
+
         link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {cat["link_filter"]}'.strip()
-        try:
-            users = count_unique_users_multi(discover_queries, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
-        except Exception as e:
-            print(f"  ERROR {cat['label']}: {e}")
-            users = 0
-        print(f"  {cat['label']:30s} {users:6} unique users")
-        results.append({**cat, "users": users, "link_query": link_query})
+        print(f"  {cat['label']:30s} {cat_users:6} unique users")
+        results.append({**cat, "users": cat_users, "link_query": link_query})
         nx_key = cat["key"] if cat["key"] in NX else None
         if nx_key:
             cumulative_excl = (cumulative_excl + " " + NX[nx_key]).strip()
-        time.sleep(0.5)
 
     total = sum(r["users"] for r in results)
     print(f"  {'TOTAL':30s} {total:6} users")
