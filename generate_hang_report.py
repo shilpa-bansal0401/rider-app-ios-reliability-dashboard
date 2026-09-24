@@ -258,6 +258,17 @@ CATEGORIES = [
             "PersistentDataActorImpl.__allocating_init", "PersistentDataActorImpl.init",
         ],
     },
+    {
+        "key":      "injected_hangs",
+        "label":    "Externally injected hangs",
+        "color":    "#C8E6C9", # Pastel Green
+        "filters":  ["stack.function:HangInjectionService.imitateHangIfEligible"],
+        "excl":     excl("mapbox", "webkit", "firebase", "sentry", "keyboard"),
+        "link_filter": "stack.function:HangInjectionService.imitateHangIfEligible",
+        "culprits": [
+            "HangInjectionService.imitateHangIfEligible",
+        ],
+    },
 ]
 
 # ── Sentry fetch helpers ───────────────────────────────────────────────────────
