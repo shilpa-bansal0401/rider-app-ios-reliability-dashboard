@@ -2749,9 +2749,9 @@ def main():
     bq_rows = fetch_bigquery()
 
     print("Fetching Sentry hangs (per-brand queries)...")
-    raw_hang_rows = fetch_discover_per_brand(HANGS_QUERY)
+    raw_hang_rows = fetch_discover_per_brand(PROJECTED_HANGS_QUERY)
     hang_rows = shape_rows(raw_hang_rows, "HANG_USERS")
-    backfill_zero_rows(hang_rows, "HANG_USERS", HANGS_QUERY)
+    backfill_zero_rows(hang_rows, "HANG_USERS", PROJECTED_HANGS_QUERY)
 
     print("Fetching Sentry crashes (per-brand queries)...")
     raw_crash_rows = fetch_discover_per_brand(CRASHES_QUERY, environment="production", exact_brand=True)
@@ -2965,7 +2965,7 @@ def main():
         prev_bq_rows = fetch_bigquery(PREV_BQ_START, PREV_BQ_END)
 
         print("Fetching Sentry hangs for previous month...")
-        prev_raw_hang = fetch_discover_per_brand(HANGS_QUERY, start=PREV_START, end=PREV_END)
+        prev_raw_hang = fetch_discover_per_brand(PROJECTED_HANGS_QUERY, start=PREV_START, end=PREV_END)
         prev_hang_shaped = shape_rows(prev_raw_hang, "HANG_USERS")
 
         print("Fetching Sentry crashes for previous month...")
