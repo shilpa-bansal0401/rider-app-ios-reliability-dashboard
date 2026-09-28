@@ -39,10 +39,9 @@ OUT_DIR = "hang_report"
 # Each entry needs a version string and the Sentry dist (build number).
 # Set to [] to auto-fetch the most recent releases from Sentry instead.
 PINNED_RELEASES = [
-    {"version": "4.2636.1", "dist": "1058"},
-    {"version": "4.2637.1", "dist": "1062"},
     {"version": "4.2638.1", "dist": "1065"},
     {"version": "4.2639.1", "dist": "1069"},
+    {"version": "4.2640.1", "dist": "1073"},
 ]
 
 # Release Weekly uses title-based search rather than mechanism filter.
@@ -144,6 +143,10 @@ def excl(*keys):
 BASE_QUERY = 'is:unresolved "*App Hang* detected*"'
 # Discover events API doesn't support is:unresolved (issue-level filter).
 DISCOVER_BASE_QUERY = '"*App Hang* detected*"'
+# Injected hangs are excluded from monthly and by-release views.
+# Note: stack.function is not indexed in Discover for App Hang events, so the
+# exclusion below is only fully effective via the Issues API (monthly analysis).
+INJECTED_HANG_EXCL = "!stack.function:HangInjectionService.imitateHangIfEligible"
 
 # ── Category definitions ──────────────────────────────────────────────────────
 
@@ -493,6 +496,8 @@ for month in MONTHS:
     results  = []
 
     for cat in CATEGORIES:
+        if cat["key"] == "injected_hangs":
+            continue
         cat_issues = {}
         for filt in cat["filters"]:
             q = f"{BASE_QUERY} {cat['excl']} {filt}".strip()
@@ -543,8 +548,8 @@ all_release_results = []
 for rel in RELEASES:
     v          = rel["version"]
     rel_filter = rel_filter_str(rel)
-    link_query = f'is:unresolved "*App Hang* detected*" {rel_filter}'.strip()
-    discover_q = f'"*App Hang* detected*" {rel_filter}'.strip()
+    link_query = f'is:unresolved "*App Hang* detected*" {rel_filter} {INJECTED_HANG_EXCL}'.strip()
+    discover_q = f'"*App Hang* detected*" {rel_filter} {INJECTED_HANG_EXCL}'.strip()
     dists_str  = ",".join(rel["dists"]) if rel.get("dists") else rel.get("dist")
     print(f"\n── Release {v} (dist {dists_str}) ──")
     try:
@@ -593,8 +598,7 @@ for rel in RELEASE_WEEKLY_RELEASES:
 
 # ── Run categories by release analysis ───────────────────────────────────────
 # 90-day window to capture full release lifetime.
-# Uses the Issues API (same as monthly analysis) so that stack.function filters
-# work correctly — the Discover API does not index stack.function for App Hang events.
+# Uses cumulative exclusions matching the monthly analysis priority order.
 
 RELEASE_CAT_WINDOW_START = (TODAY - datetime.timedelta(days=90)).strftime("%Y-%m-%dT00:00:00")
 RELEASE_CAT_WINDOW_END   = TODAY.strftime("%Y-%m-%dT00:00:00")
@@ -607,32 +611,24 @@ for rel in RELEASES:
     print(f"\n── Categories by Release: {v} (dist {dists_str}) ──")
 
     cumulative_excl = ""
-    assigned = set()
     results = []
     for cat in CATEGORIES:
-        cat_issues = {}
-        for filt in cat["filters"]:
-            q = f"{BASE_QUERY} {rel_filter} {cumulative_excl} {filt}".strip()
-            try:
-                fetched = fetch_all(q, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
-                for iid, u in fetched.items():
-                    if iid not in cat_issues or cat_issues[iid] < u:
-                        cat_issues[iid] = u
-                time.sleep(0.5)
-            except Exception as e:
-                print(f"  ERROR {cat['label']} / {filt}: {e}")
-                time.sleep(3)
-
-        new_issues = {iid: u for iid, u in cat_issues.items() if iid not in assigned}
-        cat_users  = sum(new_issues.values())
-        assigned.update(new_issues.keys())
-
+        discover_queries = [
+            f'{DISCOVER_BASE_QUERY} {rel_filter} {cumulative_excl} {f}'.strip()
+            for f in cat["filters"]
+        ]
         link_query = f'{BASE_QUERY} {rel_filter} {cumulative_excl} {cat["link_filter"]}'.strip()
-        print(f"  {cat['label']:30s} {cat_users:6} unique users")
-        results.append({**cat, "users": cat_users, "link_query": link_query})
+        try:
+            users = count_unique_users_multi(discover_queries, RELEASE_CAT_WINDOW_START, RELEASE_CAT_WINDOW_END)
+        except Exception as e:
+            print(f"  ERROR {cat['label']}: {e}")
+            users = 0
+        print(f"  {cat['label']:30s} {users:6} unique users")
+        results.append({**cat, "users": users, "link_query": link_query})
         nx_key = cat["key"] if cat["key"] in NX else None
         if nx_key:
             cumulative_excl = (cumulative_excl + " " + NX[nx_key]).strip()
+        time.sleep(0.5)
 
     total = sum(r["users"] for r in results)
     print(f"  {'TOTAL':30s} {total:6} users")

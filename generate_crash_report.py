@@ -39,10 +39,9 @@ if not TOKEN:
 
 # Pin specific releases to compare in the Release Trend and Release Weekly tabs.
 PINNED_RELEASES = [
-    {"version": "4.2636.1", "dist": "1058"},
-    {"version": "4.2637.1", "dist": "1062"},
     {"version": "4.2638.1", "dist": "1065"},
     {"version": "4.2639.1", "dist": "1069"},
+    {"version": "4.2640.1", "dist": "1073"},
 ]
 
 # ── Months to analyze ─────────────────────────────────────────────────────────

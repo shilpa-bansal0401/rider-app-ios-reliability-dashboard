@@ -110,9 +110,9 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2637.1", "dist": "1062", "asti": 4.25, "stti": 1.08, "month_start": "2026-09-01"},
-    {"version": "4.2638.1", "dist": "1065", "asti": 4.15, "stti": 1.03, "month_start": "2026-09-01"},
-    {"version": "4.2639.1", "dist": "1069", "asti": 4.13, "stti": 1.05, "month_start": "2026-09-01"},
+    {"version": "4.2638.1", "dist": "1065", "asti": 4.45, "stti": 1.12, "month_start": "2026-09-01"},
+    {"version": "4.2639.1", "dist": "1069", "asti": 3.99, "stti": 1.01, "month_start": "2026-09-01"},
+    {"version": "4.2640.1", "dist": "1073", "asti": 3.99, "stti": 1.01, "month_start": "2026-09-01"},
 ]
 
 
@@ -2730,7 +2730,8 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None, versio
     ws.column_dimensions["N"].width = 30
     ws.row_dimensions[1].height = 45
 
-    add_release_version_sheets(wb, version_aqs_data)
+    version_sheet_versions = {"4.2638.1", "4.2639.1"}
+    add_release_version_sheets(wb, [v for v in version_aqs_data if v["version"] in version_sheet_versions])
     add_consolidation_sheet(wb, firebase_data=firebase_data)
 
     # Make Consolidation the first visible tab when the workbook is opened
