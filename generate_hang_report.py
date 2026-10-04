@@ -143,7 +143,7 @@ def excl(*keys):
 BASE_QUERY = 'is:unresolved "*App Hang* detected*"'
 # Discover events API doesn't support is:unresolved (issue-level filter).
 DISCOVER_BASE_QUERY = '"*App Hang* detected*"'
-# Injected hangs are excluded from monthly and by-release views.
+# Injected hangs are excluded from monthly, by-release, and device class views.
 # Note: stack.function is not indexed in Discover for App Hang events, so the
 # exclusion below is only fully effective via the Issues API (monthly analysis).
 INJECTED_HANG_EXCL = "!stack.function:HangInjectionService.imitateHangIfEligible"
@@ -650,8 +650,8 @@ device_class_sentry = {}
 
 print(f"\n── Device Class: overall hang-impacted riders ({YESTERDAY}) ──")
 for tier in DEVICE_TIERS:
-    discover_q = f'{DISCOVER_BASE_QUERY} device.class:{tier["key"]}'.strip()
-    link_q     = f'{BASE_QUERY} device.class:{tier["key"]}'.strip()
+    discover_q = f'{DISCOVER_BASE_QUERY} device.class:{tier["key"]} {INJECTED_HANG_EXCL}'.strip()
+    link_q     = f'{BASE_QUERY} device.class:{tier["key"]} {INJECTED_HANG_EXCL}'.strip()
     try:
         users = count_unique_users(discover_q, DEVICE_WINDOW_START, DEVICE_WINDOW_END)
         time.sleep(0.3)
@@ -1049,7 +1049,7 @@ html = f"""<!DOCTYPE html>
     <strong>High-end:</strong> iPhone 13+ (A15+) &nbsp;·&nbsp;
     <strong>Mid-range:</strong> iPhone 11–12 &amp; X/XR/XS (A11–A14) &nbsp;·&nbsp;
     <strong>Low-end:</strong> iPhone 10 &amp; older &nbsp;|&nbsp;
-    Riders from BigQuery (yesterday) · Hang-impacted from Sentry device.class (yesterday) · Click count to open Sentry
+    Riders from BigQuery (yesterday) · Hang-impacted from Sentry device.class (yesterday, excluding injected hangs) · Click count to open Sentry
   </p>
 
   <div class="weekly-summary" id="device-class-fleet-summary"></div>
@@ -1104,7 +1104,7 @@ html = f"""<!DOCTYPE html>
   <br>• <strong>Filter:</strong> <code>"*App Hang* detected*"</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
   <br>• <strong>{current_month_note}</strong> Earlier months in this report are complete months.
-  <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
+  <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate. Injected hangs (<code>HangInjectionService</code>) are excluded.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
   <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
 </div>

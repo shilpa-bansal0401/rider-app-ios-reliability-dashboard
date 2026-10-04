@@ -131,16 +131,16 @@ def rel_filter_str(rel):
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["foodpanda", "panda", "pandarider", "panda rider"],                    "app_size": 77.8, "asti": 4.27, "stti": 1.13, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora", "foodora rider"],                                           "app_size": 83.2, "asti": 4.27, "stti": 1.13, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider", "Talabat"],                                           "app_size": 77.8, "asti": 4.27, "stti": 1.13, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["PedidosYa", "pedidosYa", "peya", "peya rider"],                     "app_size": 68.4, "asti": 4.27, "stti": 1.13, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerStation", "hungerstation rider", "HungerStation"],                             "app_size": 78.3, "asti": 4.27, "stti": 1.13, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti", "yemek", "yemek rider"],                               "app_size": 78.3, "asti": 4.27, "stti": 1.13, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider", "Glovo"],                                 "app_size": 77.9, "asti": 4.27, "stti": 1.13, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa", "woowa rider"],                                               "app_size": 78.0, "asti": 4.27, "stti": 1.13, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood", "efood rider"],                                                             "app_size": 68.1, "asti": 4.27, "stti": 1.13, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                                             "app_size": 68.1, "asti": 4.27, "stti": 1.13, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["foodpanda", "panda", "pandarider", "panda rider"],                    "app_size": 77.8, "asti": 3.94, "stti": 1.1, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora", "foodora rider"],                                           "app_size": 83.2, "asti": 3.94, "stti": 1.1, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider", "Talabat"],                                           "app_size": 77.8, "asti": 3.94, "stti": 1.1, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["PedidosYa", "pedidosYa", "peya", "peya rider"],                     "app_size": 68.4, "asti": 3.94, "stti": 1.1, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerStation", "hungerstation rider", "HungerStation"],                             "app_size": 78.3, "asti": 3.94, "stti": 1.1, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti", "yemek", "yemek rider"],                               "app_size": 78.3, "asti": 3.94, "stti": 1.1, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider", "Glovo"],                                 "app_size": 77.9, "asti": 3.94, "stti": 1.1, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa", "woowa rider"],                                               "app_size": 78.0, "asti": 3.94, "stti": 1.1, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood", "efood rider"],                                                             "app_size": 68.1, "asti": 3.94, "stti": 1.1, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                                             "app_size": 68.1, "asti": 3.94, "stti": 1.1, "riders": 729},
 ]
 
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -1118,8 +1118,8 @@ def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_
             "app_size": brand["app_size"],
             "asti":     brand["asti"],
             "stti":     brand["stti"],
-            "frozen":   firebase_data.get("frozen",  0.58),
-            "skipped":  firebase_data.get("skipped", 1.2),
+            "frozen":   firebase_data.get("frozen",  3.5),
+            "skipped":  firebase_data.get("skipped", 0.92),
             "fallback": users == 0,
         })
 
@@ -1376,7 +1376,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+      Frozen frames (3.5%) and skipped frames (0.92%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1399,7 +1399,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+      Frozen frames (3.5%) and skipped frames (0.92%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1752,7 +1752,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 {stale_footer_note}  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-    Fallback frozen=0.58, skipped=1.2 used when Firebase BQ is unavailable.<br>
+    Frozen frames (3.5%) and skipped frames (0.92%) are hardcoded values.<br>
   &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
 </div>
 
@@ -2452,8 +2452,8 @@ def add_release_version_sheets(wb, version_aqs_data):
             _sc(4, static.get("app_size", 75.0))
             _sc(5, static.get("asti",     3.93))
             _sc(6, rel_data.get("stti",   1.20))
-            _sc(7, 0.58)   # frozen — fleet fallback (no per-release firebase data)
-            _sc(8, 1.20)   # skipped
+            _sc(7, 1.2)    # frozen — hardcoded value
+            _sc(8, 0.57)   # skipped — hardcoded value
 
             riders_cell = _sc(RIDER_COL, bd["riders"])
             weight_cell = _sc(WEIGHT_COL, bd["weight"])
@@ -2759,8 +2759,8 @@ def main():
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
-    print("Fetching Firebase Performance frames...")
-    firebase_data = fetch_firebase_frames()
+    print("Using hardcoded frozen frames (3.5%) and skipped frames (0.92%)...")
+    firebase_data = {"frozen": 3.5, "skipped": 0.92}
 
     # Aggregate per-brand totals for HTML report (no extra network calls)
     bq_users_by_brand = {}
