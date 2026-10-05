@@ -110,9 +110,12 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2638.1", "dist": "1065", "asti": 4.45, "stti": 1.12, "month_start": "2026-09-01"},
-    {"version": "4.2639.1", "dist": "1069", "asti": 3.99, "stti": 1.01, "month_start": "2026-09-01"},
-    {"version": "4.2640.1", "dist": "1073", "asti": 3.99, "stti": 1.01, "month_start": "2026-09-01"},
+    {"version": "4.2638.1", "dist": "1065", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
+    {"version": "4.2639.1", "dist": "1069", "asti": 4.251, "stti": 1.09, "month_start": "2026-09-01"},
+    {"version": "4.2640.1", "dist": "1073", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2640.2", "dist": "1074", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
+    {"version": "4.2640.3", "dist": "1076", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2641.1", "dist": "1079", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
 ]
 
 
