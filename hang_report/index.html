@@ -159,6 +159,7 @@
 <div class="panel" id="panel-releases">
   <p style="font-size:13px;color:#666;margin-bottom:20px;">
     AppHang category breakdown per release — last 90 days &nbsp;|&nbsp;
+    <strong style="color:#dc2626;">Injected hangs excluded</strong> &nbsp;|&nbsp;
     Click any cell to open the matching Sentry query for that release
   </p>
   <div class="weekly-summary" id="release-summary"></div>
@@ -178,6 +179,7 @@
 <div class="panel" id="panel-release-categories">
   <p style="font-size:13px;color:#666;margin-bottom:20px;">
     AppHang categories per release — last 90 days &nbsp;|&nbsp;
+    <strong style="color:#dc2626;">Injected hangs excluded</strong> &nbsp;|&nbsp;
     Click any cell to open the matching Sentry query
   </p>
   <div class="weekly-summary" id="release-categories-summary"></div>
@@ -249,8 +251,6 @@
 </div>
 
 <div class="footer">
-  <strong style="font-size: 14px; color: #dc2626;">⚠ INJECTED HANGS ARE EXCLUDED FROM ALL REPORTS</strong> — Data excludes hangs from <code>HangInjectionService</code> across all tabs.
-  <br><br>
   <strong>Notes:</strong>
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
      Priority: Mapbox › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
@@ -2313,6 +2313,7 @@ MONTHS.forEach((month, mi) => {
     <p style="font-size:13px;color:#666;margin-bottom:20px;">
       ${month.label} &nbsp;|&nbsp;
       Total unique riders impacted: <strong>${month.total.toLocaleString()}</strong> &nbsp;|&nbsp;
+      ${(mi === 1 || mi === 2) ? '<strong style="color:#dc2626;">Injected hangs excluded</strong> &nbsp;|&nbsp;' : ''}
       Click any row or legend item to open in Sentry
     </p>
     <div class="layout">
