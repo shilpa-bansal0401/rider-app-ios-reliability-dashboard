@@ -110,8 +110,6 @@ FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
 # Pinned release versions tracked for version-based AQS performance scoring
 PINNED_RELEASES = [
-    {"version": "4.2638.1", "dist": "1065", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
-    {"version": "4.2639.1", "dist": "1069", "asti": 4.251, "stti": 1.09, "month_start": "2026-09-01"},
     {"version": "4.2640.1", "dist": "1073", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
     {"version": "4.2640.2", "dist": "1074", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
     {"version": "4.2640.3", "dist": "1076", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
@@ -2733,7 +2731,7 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None, versio
     ws.column_dimensions["N"].width = 30
     ws.row_dimensions[1].height = 45
 
-    version_sheet_versions = {"4.2638.1", "4.2639.1"}
+    version_sheet_versions = {"4.2640.3"}
     add_release_version_sheets(wb, [v for v in version_aqs_data if v["version"] in version_sheet_versions])
     add_consolidation_sheet(wb, firebase_data=firebase_data)
 
