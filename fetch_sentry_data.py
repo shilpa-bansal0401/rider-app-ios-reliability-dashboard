@@ -113,7 +113,7 @@ PINNED_RELEASES = [
     {"version": "4.2640.1", "dist": "1073", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
     {"version": "4.2640.2", "dist": "1074", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
     {"version": "4.2640.3", "dist": "1076", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
-    {"version": "4.2641.1", "dist": "1079", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2641", "dists": ["1079", "1081"], "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
 ]
 
 
@@ -183,7 +183,7 @@ AQS_CONFIG = {
     "app_size": {"baseline": 75,   "target": 60,   "weight": 2},
     "asti":     {"baseline": 4,    "target": 2,    "weight": 10},
     "stti":     {"baseline": 1.5,  "target": 0.5,  "weight": 10},
-    "frozen":   {"baseline": 3,    "target": 1,    "weight": 13},
+    "frozen":   {"baseline": 3.1,  "target": 1,    "weight": 13},
     "skipped":  {"baseline": 2,    "target": 1,    "weight": 5},
 }
 
@@ -1377,7 +1377,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (3.2%) and skipped frames (0.93%) are hardcoded values.<br>
+      Frozen frames (3.1%) and skipped frames (0.93%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1400,7 +1400,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (3.2%) and skipped frames (0.93%) are hardcoded values.<br>
+      Frozen frames (3.1%) and skipped frames (0.93%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1753,7 +1753,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 {stale_footer_note}  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-    Frozen frames (3.2%) and skipped frames (0.93%) are hardcoded values.<br>
+    Frozen frames (3.1%) and skipped frames (0.93%) are hardcoded values.<br>
   &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
 </div>
 
@@ -2760,8 +2760,8 @@ def main():
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
-    print("Using hardcoded frozen frames (3.2%) and skipped frames (0.93%)...")
-    firebase_data = {"frozen": 3.2, "skipped": 0.93}
+    print("Using hardcoded frozen frames (3.1%) and skipped frames (0.93%)...")
+    firebase_data = {"frozen": 3.1, "skipped": 0.93}
 
     # Aggregate per-brand totals for HTML report (no extra network calls)
     bq_users_by_brand = {}
