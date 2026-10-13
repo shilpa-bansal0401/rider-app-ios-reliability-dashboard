@@ -113,7 +113,9 @@ PINNED_RELEASES = [
     {"version": "4.2640.1", "dist": "1073", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
     {"version": "4.2640.2", "dist": "1074", "asti": 4.56, "stti": 1.14, "month_start": "2026-09-01"},
     {"version": "4.2640.3", "dist": "1076", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
-    {"version": "4.2641", "dists": ["1079", "1081", "1084"], "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2641.1", "dist": "1079", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2641.3", "dist": "1081", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
+    {"version": "4.2641.5", "dist": "1084", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
     {"version": "4.2642.1", "dist": "1088", "asti": 4.34, "stti": 1.10, "month_start": "2026-10-01"},
 ]
 
