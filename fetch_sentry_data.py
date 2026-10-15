@@ -1122,7 +1122,7 @@ def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_
             "app_size": brand["app_size"],
             "asti":     brand["asti"],
             "stti":     brand["stti"],
-            "frozen":   firebase_data.get("frozen",  2.64),
+            "frozen":   firebase_data.get("frozen",  2.4),
             "skipped":  firebase_data.get("skipped", 0.92),
             "fallback": users == 0,
         })
@@ -2763,8 +2763,8 @@ def main():
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
-    print("Using hardcoded frozen frames (2.64%) and skipped frames (0.92%)...")
-    firebase_data = {"frozen": 2.64, "skipped": 0.92}
+    print("Using hardcoded frozen frames (2.4%) and skipped frames (0.92%)...")
+    firebase_data = {"frozen": 2.4, "skipped": 0.92}
 
     # Aggregate per-brand totals for HTML report (no extra network calls)
     bq_users_by_brand = {}
