@@ -104,7 +104,7 @@
 <h1>Fatal Crash Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>level:fatal handled:no</code> &nbsp;|&nbsp;
-  Data fetched: 14 Oct 2026 &nbsp;|&nbsp;
+  Data fetched: 15 Oct 2026 &nbsp;|&nbsp;
   Months: Aug 2026 · Sep 2026 · Oct 2026
 </p>
 
@@ -264,8 +264,8 @@
 
 <div class="panel" id="panel-country">
   <p style="font-size:13px;color:#666;margin-bottom:16px;">
-    Crash-impacted riders by <code>country_code</code> — October 2026 (partial, data up to 14 Oct 2026) &nbsp;|&nbsp;
-    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-10-01 – 2026-10-15) &nbsp;|&nbsp;
+    Crash-impacted riders by <code>country_code</code> — October 2026 (partial, data up to 15 Oct 2026) &nbsp;|&nbsp;
+    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-10-01 – 2026-10-16) &nbsp;|&nbsp;
     Click any row to open Sentry filtered by that country
   </p>
   <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin-bottom:24px;overflow:auto;">
@@ -289,7 +289,7 @@
   <br>• <strong>Counts are deduplicated</strong> — each issue counted in exactly one category (highest priority wins).
      Priority: QUIC Protocol › Data Sync Upload › Watchdog/Fatal Hangs › Mapbox › Location › Core Logic/Concurrency › UIKit/Foundation.
   <br>• <strong>Filter:</strong> <code>level:fatal handled:no</code> — actionable unresolved fatal crashes where the event is unhandled.
-  <br>• <strong>Oct 2026 is a partial month (data up to 14 Oct 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>Oct 2026 is a partial month (data up to 15 Oct 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Device Class tab:</strong> both crash-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate.
   <br>• <strong>Delta arrows:</strong> ▲ = more users impacted (worse), ▼ = fewer (better).
   <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
@@ -512,15 +512,15 @@ const MONTHS          = [
   {
     "label": "October 2026",
     "short": "Oct 2026",
-    "total": 2271,
+    "total": 2404,
     "start": "2026-10-01T00:00:00",
-    "end": "2026-10-15T00:00:00",
+    "end": "2026-10-16T00:00:00",
     "categories": [
       {
         "key": "quic",
         "label": "QUIC Protocol",
         "color": "#A0C4FF",
-        "users": 207,
+        "users": 213,
         "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
         "culprits": [
           "QUIC protocol errors",
@@ -532,7 +532,7 @@ const MONTHS          = [
         "key": "rider_home",
         "label": "Rider Home",
         "color": "#FFC6FF",
-        "users": 67,
+        "users": 68,
         "query": "is:unresolved level:fatal handled:no  message:*RiderHomeDataService*",
         "culprits": [
           "RiderHomeDataService"
@@ -542,7 +542,7 @@ const MONTHS          = [
         "key": "data_sync",
         "label": "Data Sync Upload",
         "color": "#BDE0FE",
-        "users": 16,
+        "users": 17,
         "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*DataSync*",
         "culprits": [
           "Data sync upload",
@@ -554,7 +554,7 @@ const MONTHS          = [
         "key": "watchdog",
         "label": "Watchdog / Fatal Hangs",
         "color": "#FFADAD",
-        "users": 1965,
+        "users": 2088,
         "query": "is:unresolved level:fatal handled:no  error.mechanism:watchdog_termination",
         "culprits": [
           "Watchdog termination",
@@ -566,7 +566,7 @@ const MONTHS          = [
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFD6A5",
-        "users": 13,
+        "users": 15,
         "query": "is:unresolved level:fatal handled:no  Mapbox",
         "culprits": [
           "Mapbox SDK",
@@ -615,110 +615,6 @@ const MONTHS          = [
   }
 ];
 const WEEKS           = [
-  {
-    "label": "Sep 14 - Sep 20",
-    "short": "Sep 14",
-    "total": 1514,
-    "start": "2026-09-14T00:00:00",
-    "end": "2026-09-21T00:00:00",
-    "categories": [
-      {
-        "key": "quic",
-        "label": "QUIC Protocol",
-        "color": "#A0C4FF",
-        "users": 120,
-        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
-        "culprits": [
-          "QUIC protocol errors",
-          "Network transport failures",
-          "Cronet / HTTP3 stack"
-        ]
-      },
-      {
-        "key": "rider_home",
-        "label": "Rider Home",
-        "color": "#FFC6FF",
-        "users": 395,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*RiderHomeDataService*",
-        "culprits": [
-          "RiderHomeDataService"
-        ]
-      },
-      {
-        "key": "data_sync",
-        "label": "Data Sync Upload",
-        "color": "#BDE0FE",
-        "users": 4,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* message:*DataSync*",
-        "culprits": [
-          "Data sync upload",
-          "Upload pipeline",
-          "Background sync"
-        ]
-      },
-      {
-        "key": "watchdog",
-        "label": "Watchdog / Fatal Hangs",
-        "color": "#FFADAD",
-        "users": 984,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* error.mechanism:watchdog_termination",
-        "culprits": [
-          "Watchdog termination",
-          "Main thread blocked",
-          "App unresponsive (0x8badf00d)"
-        ]
-      },
-      {
-        "key": "mapbox",
-        "label": "Mapbox",
-        "color": "#FFD6A5",
-        "users": 10,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination Mapbox",
-        "culprits": [
-          "Mapbox SDK",
-          "Map rendering",
-          "Navigation / tiles",
-          "Camera / map lifecycle"
-        ]
-      },
-      {
-        "key": "location",
-        "label": "Location",
-        "color": "#CAFFBF",
-        "users": 1,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
-        "culprits": [
-          "CoreLocation",
-          "Location provider",
-          "Location manager"
-        ]
-      },
-      {
-        "key": "core_logic",
-        "label": "Core Logic / Concurrency",
-        "color": "#D0BFFF",
-        "users": 0,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
-        "culprits": [
-          "Swift concurrency",
-          "DispatchQueue",
-          "Core business logic"
-        ]
-      },
-      {
-        "key": "uikit",
-        "label": "UIKit / Foundation",
-        "color": "#FFB5A7",
-        "users": 0,
-        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
-        "culprits": [
-          "UIKit",
-          "Foundation",
-          "App lifecycle / view controller stack"
-        ]
-      }
-    ]
-  },
   {
     "label": "Sep 21 - Sep 27",
     "short": "Sep 21",
@@ -1030,70 +926,174 @@ const WEEKS           = [
         ]
       }
     ]
+  },
+  {
+    "label": "Oct 12 - Oct 15 (partial)",
+    "short": "Oct 12",
+    "total": 622,
+    "start": "2026-10-12T00:00:00",
+    "end": "2026-10-16T00:00:00",
+    "categories": [
+      {
+        "key": "quic",
+        "label": "QUIC Protocol",
+        "color": "#A0C4FF",
+        "users": 54,
+        "query": "is:unresolved level:fatal handled:no  message:*QUIC*",
+        "culprits": [
+          "QUIC protocol errors",
+          "Network transport failures",
+          "Cronet / HTTP3 stack"
+        ]
+      },
+      {
+        "key": "rider_home",
+        "label": "Rider Home",
+        "color": "#FFC6FF",
+        "users": 8,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* message:*RiderHomeDataService*",
+        "culprits": [
+          "RiderHomeDataService"
+        ]
+      },
+      {
+        "key": "data_sync",
+        "label": "Data Sync Upload",
+        "color": "#BDE0FE",
+        "users": 4,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* message:*DataSync*",
+        "culprits": [
+          "Data sync upload",
+          "Upload pipeline",
+          "Background sync"
+        ]
+      },
+      {
+        "key": "watchdog",
+        "label": "Watchdog / Fatal Hangs",
+        "color": "#FFADAD",
+        "users": 551,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* error.mechanism:watchdog_termination",
+        "culprits": [
+          "Watchdog termination",
+          "Main thread blocked",
+          "App unresponsive (0x8badf00d)"
+        ]
+      },
+      {
+        "key": "mapbox",
+        "label": "Mapbox",
+        "color": "#FFD6A5",
+        "users": 4,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination Mapbox",
+        "culprits": [
+          "Mapbox SDK",
+          "Map rendering",
+          "Navigation / tiles",
+          "Camera / map lifecycle"
+        ]
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "color": "#CAFFBF",
+        "users": 1,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* stack.package:*CoreLocation*",
+        "culprits": [
+          "CoreLocation",
+          "Location provider",
+          "Location manager"
+        ]
+      },
+      {
+        "key": "core_logic",
+        "label": "Core Logic / Concurrency",
+        "color": "#D0BFFF",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* message:*concurrency*",
+        "culprits": [
+          "Swift concurrency",
+          "DispatchQueue",
+          "Core business logic"
+        ]
+      },
+      {
+        "key": "uikit",
+        "label": "UIKit / Foundation",
+        "color": "#FFB5A7",
+        "users": 0,
+        "query": "is:unresolved level:fatal handled:no !message:*QUIC* !message:*quic* !stack.function:*quic* !stack.package:*Cronet* !stack.function:*RiderHomeDataService* !message:*DataSync* !message:*Data Sync* !stack.function:*DataSync* !stack.function:*Upload* !stack.function:*upload* !error.mechanism:watchdog_termination !stack.package:*Mapbox* !stack.function:*Mapbox* !message:*Mapbox* !stack.package:*CoreLocation* !stack.function:*CLLocation* !stack.function:*Location* !message:*concurrency* !message:*Concurrency* !stack.function:*swift_task* !stack.function:*Task* !stack.function:*DispatchQueue* !stack.function:*_dispatch* stack.package:*UIKit*",
+        "culprits": [
+          "UIKit",
+          "Foundation",
+          "App lifecycle / view controller stack"
+        ]
+      }
+    ]
   }
 ];
 const RELEASES        = [
   {
     "label": "4.2640.1",
     "short": "4.2640.1",
-    "users": 1737,
+    "users": 1739,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1073"
   },
   {
     "label": "4.2640.2",
     "short": "4.2640.2",
-    "users": 770,
+    "users": 793,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1074"
   },
   {
     "label": "4.2640.3",
     "short": "4.2640.3",
-    "users": 1133,
+    "users": 1186,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1076"
   },
   {
     "label": "4.2641.1",
     "short": "4.2641.1",
-    "users": 44,
+    "users": 46,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1079"
   },
   {
     "label": "4.2641.3",
     "short": "4.2641.3",
-    "users": 337,
+    "users": 416,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1081"
   },
   {
     "label": "4.2641.5",
     "short": "4.2641.5",
-    "users": 80,
+    "users": 110,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1084"
   },
   {
     "label": "4.2642.1",
     "short": "4.2642.1",
-    "users": 10,
+    "users": 49,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1088"
   }
 ];
@@ -1103,9 +1103,9 @@ const RELEASE_WEEKLY    = [
     "short": "4.2640.1",
     "week_users": [
       0,
-      0,
       1713,
-      22
+      22,
+      5
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1073"
   },
@@ -1114,9 +1114,9 @@ const RELEASE_WEEKLY    = [
     "short": "4.2640.2",
     "week_users": [
       0,
-      0,
       372,
-      368
+      368,
+      115
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1074"
   },
@@ -1125,9 +1125,9 @@ const RELEASE_WEEKLY    = [
     "short": "4.2640.3",
     "week_users": [
       0,
-      0,
       263,
-      760
+      760,
+      229
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1076"
   },
@@ -1137,8 +1137,8 @@ const RELEASE_WEEKLY    = [
     "week_users": [
       0,
       0,
-      0,
-      23
+      23,
+      29
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1079"
   },
@@ -1148,8 +1148,8 @@ const RELEASE_WEEKLY    = [
     "week_users": [
       0,
       0,
-      0,
-      195
+      195,
+      298
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1081"
   },
@@ -1159,8 +1159,8 @@ const RELEASE_WEEKLY    = [
     "week_users": [
       0,
       0,
-      0,
-      35
+      35,
+      84
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1084"
   },
@@ -1171,7 +1171,7 @@ const RELEASE_WEEKLY    = [
       0,
       0,
       0,
-      0
+      109
     ],
     "link_query": "is:unresolved level:fatal handled:no dist:1088"
   }
@@ -1180,64 +1180,64 @@ const WATCHDOG_RELEASES = [
   {
     "label": "4.2640.1",
     "short": "4.2640.1",
-    "users": 101,
+    "users": 103,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1073 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2640.2",
     "short": "4.2640.2",
-    "users": 455,
+    "users": 470,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1074 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2640.3",
     "short": "4.2640.3",
-    "users": 676,
+    "users": 706,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1076 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2641.1",
     "short": "4.2641.1",
-    "users": 31,
+    "users": 32,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1079 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2641.3",
     "short": "4.2641.3",
-    "users": 167,
+    "users": 211,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1081 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2641.5",
     "short": "4.2641.5",
-    "users": 52,
+    "users": 72,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1084 error.mechanism:watchdog_termination"
   },
   {
     "label": "4.2642.1",
     "short": "4.2642.1",
-    "users": 7,
+    "users": 25,
     "issues": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1088 error.mechanism:watchdog_termination"
   }
 ];
@@ -1246,56 +1246,56 @@ const MAPBOX_RELEASES   = [
     "label": "4.2640.1",
     "short": "4.2640.1",
     "users": 1,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1073 Mapbox"
   },
   {
     "label": "4.2640.2",
     "short": "4.2640.2",
-    "users": 30,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "users": 32,
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1074 Mapbox"
   },
   {
     "label": "4.2640.3",
     "short": "4.2640.3",
-    "users": 64,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "users": 65,
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1076 Mapbox"
   },
   {
     "label": "4.2641.1",
     "short": "4.2641.1",
     "users": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1079 Mapbox"
   },
   {
     "label": "4.2641.3",
     "short": "4.2641.3",
-    "users": 12,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "users": 16,
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1081 Mapbox"
   },
   {
     "label": "4.2641.5",
     "short": "4.2641.5",
-    "users": 1,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "users": 3,
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1084 Mapbox"
   },
   {
     "label": "4.2642.1",
     "short": "4.2642.1",
-    "users": 0,
-    "start": "2026-07-16T00:00:00",
-    "end": "2026-10-14T00:00:00",
+    "users": 1,
+    "start": "2026-07-17T00:00:00",
+    "end": "2026-10-15T00:00:00",
     "query": "is:unresolved level:fatal handled:no dist:1088 Mapbox"
   }
 ];
@@ -1304,7 +1304,7 @@ const DEVICE_CLASS      = [
     "key": "high",
     "label": "High-end",
     "color": "#6366f1",
-    "impacted_users": 154,
+    "impacted_users": 177,
     "query": "is:unresolved level:fatal handled:no device.class:high",
     "total_riders": 0
   },
@@ -1312,7 +1312,7 @@ const DEVICE_CLASS      = [
     "key": "medium",
     "label": "Mid-range",
     "color": "#f59e0b",
-    "impacted_users": 126,
+    "impacted_users": 131,
     "query": "is:unresolved level:fatal handled:no device.class:medium",
     "total_riders": 0
   },
@@ -1328,7 +1328,7 @@ const DEVICE_CLASS      = [
 const COUNTRY_DATA      = {
   "month": "October 2026",
   "start": "2026-10-01T00:00:00",
-  "end": "2026-10-15T00:00:00",
+  "end": "2026-10-16T00:00:00",
   "countries": []
 };
 
@@ -2014,8 +2014,8 @@ MONTHS.forEach(m => {
       environment: "production",
       project: PROJECT_ID,
       query: tier.query,
-      start: "2026-10-13T00:00:00",
-      end:   "2026-10-14T00:00:00",
+      start: "2026-10-14T00:00:00",
+      end:   "2026-10-15T00:00:00",
     });
     window.open(BASE_URL + "?" + p.toString(), "_blank");
   }
