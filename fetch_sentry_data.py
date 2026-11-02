@@ -108,18 +108,8 @@ FIREBASE_BRANDS = [
 # Derived from FIREBASE_BRANDS for use in Firebase fetch queries
 FIREBASE_TABLES = [t for _, t in FIREBASE_BRANDS]
 
-# Pinned release versions tracked for version-based AQS performance scoring
-PINNED_RELEASES = [
-    {"version": "4.2641.1", "dist": "1079", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
-    {"version": "4.2641.3", "dist": "1081", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
-    {"version": "4.2641.5", "dist": "1084", "asti": 3.91, "stti": 0.988, "month_start": "2026-09-01"},
-    {"version": "4.2642.1", "dist": "1088", "asti": 4.18, "stti": 0.99, "month_start": "2026-10-01"},
-    {"version": "4.2643.1", "dist": "1091", "asti": 4.18, "stti": 0.99, "month_start": "2026-10-01"},
-]
-
-
 def rel_filter_str(rel):
-    """Build a Sentry query filter for a PINNED_RELEASES entry (dist: or release:)."""
+    """Build a Sentry query filter for a release entry (dist: or release:)."""
     dists = rel.get("dists")
     d     = rel.get("dist")
     v     = rel.get("version")
@@ -133,18 +123,22 @@ def rel_filter_str(rel):
 # ── Brand definitions (shared by Excel and HTML outputs) ──────────────────────
 
 BRANDS = [
-    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["foodpanda", "panda", "pandarider", "panda rider"],                    "app_size": 77.8, "asti": 4.18, "stti": 0.99, "riders": 78203},
-    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora", "foodora rider"],                                           "app_size": 83.2, "asti": 4.18, "stti": 0.99, "riders": 14946},
-    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider", "Talabat"],                                           "app_size": 77.8, "asti": 4.18, "stti": 0.99, "riders": 16988},
-    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["PedidosYa", "pedidosYa", "peya", "peya rider"],                     "app_size": 68.4, "asti": 4.18, "stti": 0.99, "riders": 20641},
-    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerStation", "hungerstation rider", "HungerStation"],                             "app_size": 78.3, "asti": 4.18, "stti": 0.99, "riders": 10630},
-    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti", "yemek", "yemek rider"],                               "app_size": 78.3, "asti": 4.18, "stti": 0.99, "riders": 2186},
-    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider", "Glovo"],                                 "app_size": 77.9, "asti": 4.18, "stti": 0.99, "riders": 46896},
-    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa", "woowa rider"],                                               "app_size": 78.0, "asti": 4.18, "stti": 0.99, "riders": 731},
-    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood", "efood rider"],                                                             "app_size": 68.1, "asti": 4.18, "stti": 0.99, "riders": 5258},
-    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                                             "app_size": 68.1, "asti": 4.18, "stti": 0.99, "riders": 729},
+    {"name": "Foodpanda",     "bq_key": "foodpanda",     "sentry_key": "foodpanda",     "bundle_id": "com.logistics.rider.foodpanda",     "sentry_aliases": ["foodpanda", "panda", "pandarider", "panda rider"],                    "app_size": 79.7, "asti": 3.78, "stti": 0.8, "riders": 78203},
+    {"name": "Foodora",       "bq_key": "foodora",       "sentry_key": "foodora",       "bundle_id": "com.logistics.rider.foodora",       "sentry_aliases": ["foodora", "foodora rider"],                                           "app_size": 87.7, "asti": 3.78, "stti": 0.8, "riders": 14946},
+    {"name": "Talabat",       "bq_key": "talabat",       "sentry_key": "talabat",       "bundle_id": "com.logistics.rider.talabat",       "sentry_aliases": ["talabat", "talabat rider", "Talabat"],                                           "app_size": 79.7, "asti": 3.78, "stti": 0.8, "riders": 16988},
+    {"name": "pedidosya",     "bq_key": "pedidosya",     "sentry_key": "pedidosya",     "bundle_id": "com.logistics.rider.pedidosya",     "sentry_aliases": ["PedidosYa", "pedidosYa", "peya", "peya rider"],                     "app_size": 69.4, "asti": 3.78, "stti": 0.8, "riders": 20641},
+    {"name": "HungerStation", "bq_key": "hungerstation", "sentry_key": "hungerstation", "bundle_id": "com.logistics.rider.hungerstation", "sentry_aliases": ["hungerStation", "hungerstation rider", "HungerStation"],                             "app_size": 83.6, "asti": 3.78, "stti": 0.8, "riders": 10630},
+    {"name": "Yemeksepeti",   "bq_key": "yemeksepeti",   "sentry_key": "yemeksepeti",   "bundle_id": "com.logistics.rider.yemeksepeti",   "sentry_aliases": ["yemeksepeti", "yemek", "yemek rider"],                               "app_size": 79.8, "asti": 3.78, "stti": 0.8, "riders": 2186},
+    {"name": "Glovo",         "bq_key": "glovo",         "sentry_key": "glovo",         "bundle_id": "com.logistics.rider.glovo",         "sentry_aliases": ["glovo", "glovorider", "glovo rider", "Glovo"],                                 "app_size": 81.8, "asti": 3.78, "stti": 0.8, "riders": 46896},
+    {"name": "Woowa",         "bq_key": "woowabros",     "sentry_key": "woowa",         "bundle_id": "com.logistics.rider.woowabros",     "sentry_aliases": ["woowa", "woowa rider"],                                               "app_size": 78.7, "asti": 3.78, "stti": 0.8, "riders": 731},
+    {"name": "efood",         "bq_key": "efood",         "sentry_key": "efood",         "bundle_id": "com.logistics.rider.efood",         "sentry_aliases": ["efood", "efood rider"],                                                             "app_size": 71.4, "asti": 3.78, "stti": 0.8, "riders": 5258},
+    {"name": "Foody",         "bq_key": "foody",         "sentry_key": "foody",         "bundle_id": "com.logistics.rider.foody",         "sentry_aliases": ["foody"],                                                             "app_size": 71.3, "asti": 3.78, "stti": 0.8, "riders": 729},
 ]
 
+# Hardcoded hang-free rate (%) applied to every brand; no longer derived from Sentry.
+HANG_RATE    = 99.53
+# Hardcoded screen availability (%) applied to every brand.
+SCREEN_AVAILABILITY = 99.87
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
 RIDER_COUNTS = [78203, 14946, 16988, 20641, 10630, 2186, 46896, 731, 5258, 729]
 
@@ -179,8 +173,9 @@ def package_id_filter(brand):
 # ── AQS config ─────────────────────────────────────────────────────────────────
 
 AQS_CONFIG = {
-    "cfu":      {"baseline": 99.7, "target": 99.9, "weight": 35},
-    "hang":     {"baseline": 99.7, "target": 99.9, "weight": 25},
+    "cfu":      {"baseline": 99.7, "target": 99.9, "weight": 28},
+    "hang":     {"baseline": 99.7, "target": 99.9, "weight": 16},
+    "screen":   {"baseline": 99.7, "target": 99.9, "weight": 16},
     "app_size": {"baseline": 75,   "target": 60,   "weight": 2},
     "asti":     {"baseline": 4,    "target": 2,    "weight": 10},
     "stti":     {"baseline": 1.5,  "target": 0.5,  "weight": 10},
@@ -696,6 +691,7 @@ def color_skipped(v):
 COLOR_FNS = {
     "cfu":      color_cfu,
     "hang":     color_hang,
+    "screen":   color_cfu,
     "app_size": color_app_size,
     "asti":     color_asti,
     "stti":     color_stti,
@@ -737,11 +733,11 @@ def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_
         hangs   = hang_by_brand.get(skey, 0)
         if users > 0:
             cfu  = max(0.0, min(100.0, int((1 - crashes / users) * 10000) / 100))
-            hang = max(0.0, min(100.0, int((1 - hangs / users) * 10000) / 100))
+            hang = HANG_RATE
         else:
             fallback = brand["riders"] * days_in_period
             cfu  = max(0.0, min(100.0, int((1 - crashes / fallback) * 10000) / 100))
-            hang = max(0.0, min(100.0, int((1 - hangs / fallback) * 10000) / 100))
+            hang = HANG_RATE
         brand_metrics.append({
             "name":     brand["name"],
             "riders":   brand["riders"],
@@ -750,18 +746,19 @@ def _compute_metrics(bq_users_by_brand, crash_by_brand, hang_by_brand, firebase_
             "hangs":    hangs,
             "cfu":      cfu,
             "hang":     hang,
+            "screen":   SCREEN_AVAILABILITY,
             "app_size": brand["app_size"],
             "asti":     brand["asti"],
             "stti":     brand["stti"],
-            "frozen":   firebase_data.get("frozen",  0.7),
-            "skipped":  firebase_data.get("skipped", 0.92),
+            "frozen":   firebase_data.get("frozen",  0.3),
+            "skipped":  firebase_data.get("skipped", 0.90),
             "fallback": users == 0,
         })
 
     def weighted_avg(key):
         return int(sum(m[key] * w for m, w in zip(brand_metrics, WEIGHTS)) * 100) / 100
 
-    avg_metrics = {k: weighted_avg(k) for k in ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]}
+    avg_metrics = {k: weighted_avg(k) for k in ["cfu", "hang", "screen", "app_size", "asti", "stti", "frozen", "skipped"]}
     aqs_scores  = {k: round(aqs_score(avg_metrics[k], k), 4) for k in AQS_CONFIG}
     final_aqs   = round(sum(aqs_scores.values()), 2)
     return brand_metrics, avg_metrics, aqs_scores, final_aqs
@@ -836,6 +833,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         <td style="{cell_style}font-weight:600;white-space:nowrap;">{m['name']}{fallback_note}</td>
         <td style="{cell_style}text-align:right;">{fmt_pct(m['cfu'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_pct(m['hang'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['screen'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_mb(m['app_size'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_s(m['asti'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_s(m['stti'])}</td>
@@ -844,7 +842,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         <td style="{cell_style}text-align:right;">{m['riders']:,}</td>
       </tr>"""
 
-            aqs_col_order = ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]
+            aqs_col_order = ["cfu", "hang", "screen", "app_size", "asti", "stti", "frozen", "skipped"]
             aqs_cells_html = "".join(
                 f'<td style="text-align:right;">{aqs_scores[k]:.4f}</td>'
                 for k in aqs_col_order
@@ -858,6 +856,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         <th>Brand</th>
         <th class="num">Crash Free %</th>
         <th class="num">App Hangs %</th>
+        <th class="num">Screen Availability %</th>
         <th class="num">App Size (MB)</th>
         <th class="num">ASTI (s)</th>
         <th class="num">STTI (s)</th>
@@ -872,6 +871,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
         <td>Weighted AVG</td>
         <td>{avg_metrics['cfu']:.2f}%</td>
         <td>{avg_metrics['hang']:.2f}%</td>
+        <td>{avg_metrics['screen']:.2f}%</td>
         <td>{avg_metrics['app_size']}</td>
         <td>{avg_metrics['asti']}</td>
         <td>{avg_metrics['stti']}</td>
@@ -1007,7 +1007,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (3.0%) and skipped frames (0.93%) are hardcoded values.<br>
+      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1030,7 +1030,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (3.0%) and skipped frames (0.93%) are hardcoded values.<br>
+      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1112,6 +1112,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         <td style="{cell_style}font-weight:600;white-space:nowrap;">{m['name']}{fallback_note}</td>
         <td style="{cell_style}text-align:right;">{fmt_pct(m['cfu'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_pct(m['hang'])}</td>
+        <td style="{cell_style}text-align:right;">{fmt_pct(m['screen'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_mb(m['app_size'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_s(m['asti'])}</td>
         <td style="{cell_style}text-align:right;">{fmt_s(m['stti'])}</td>
@@ -1121,7 +1122,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
       </tr>"""
 
     # ── AQS score row cells ────────────────────────────────────────────────────
-    aqs_col_order = ["cfu", "hang", "app_size", "asti", "stti", "frozen", "skipped"]
+    aqs_col_order = ["cfu", "hang", "screen", "app_size", "asti", "stti", "frozen", "skipped"]
     aqs_cells_html = "".join(
         f'<td style="text-align:right;">{aqs_scores[k]:.4f}</td>'
         for k in aqs_col_order
@@ -1142,6 +1143,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
             "color":    BRAND_COLORS[i],
             "cfu":      m["cfu"],
             "hang":     m["hang"],
+            "screen":   m["screen"],
             "app_size": m["app_size"],
             "asti":     m["asti"],
             "stti":     m["stti"],
@@ -1328,6 +1330,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         <th>Brand</th>
         <th class="num">Crash Free %</th>
         <th class="num">App Hangs %</th>
+        <th class="num">Screen Availability %</th>
         <th class="num">App Size (MB)</th>
         <th class="num">ASTI (s)</th>
         <th class="num">STTI (s)</th>
@@ -1342,6 +1345,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
         <td>Weighted AVG</td>
         <td>{avg_metrics['cfu']:.2f}%</td>
         <td>{avg_metrics['hang']:.2f}%</td>
+        <td>{avg_metrics['screen']:.2f}%</td>
         <td>{avg_metrics['app_size']}</td>
         <td>{avg_metrics['asti']}</td>
         <td>{avg_metrics['stti']}</td>
@@ -1376,7 +1380,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 {stale_footer_note}  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-    Frozen frames (3.0%) and skipped frames (0.93%) are hardcoded values.<br>
+    Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
   &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
 </div>
 
@@ -1423,6 +1427,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
           <th>Brand</th>
           <th>Crash Free %</th>
           <th>App Hangs %</th>
+          <th>Screen Availability %</th>
           <th>App Size (MB)</th>
           <th>ASTI (s)</th>
           <th>STTI (s)</th>
@@ -1472,6 +1477,7 @@ function renderSummary() {{
   var cards = [
     {{ key: 'cfu',      label: 'Crash Free %',     fmt: function(v) {{ return v.toFixed(2) + '%'; }} }},
     {{ key: 'hang',     label: 'App Hangs %',       fmt: function(v) {{ return v.toFixed(2) + '%'; }} }},
+    {{ key: 'screen',   label: 'Screen Availability %', fmt: function(v) {{ return v.toFixed(2) + '%'; }} }},
     {{ key: 'frozen',   label: 'Frozen Frames %',   fmt: function(v) {{ return v.toFixed(2) + '%'; }} }},
     {{ key: 'skipped',  label: 'Skipped Frames %',  fmt: function(v) {{ return v.toFixed(2) + '%'; }} }},
     {{ key: 'app_size', label: 'Avg App Size (MB)',  fmt: function(v) {{ return v.toFixed(1) + ' MB'; }} }},
@@ -1569,7 +1575,7 @@ function renderTable() {{
   var active = getActiveBrands();
   var tbody = document.getElementById('dash-table-body');
   if (!active.length) {{
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:20px;">No brands selected</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:20px;">No brands selected</td></tr>';
     return;
   }}
   tbody.innerHTML = active.map(function(b) {{
@@ -1577,6 +1583,7 @@ function renderTable() {{
       + '<td>' + b.name + '</td>'
       + '<td>' + b.cfu.toFixed(2) + '%</td>'
       + '<td>' + b.hang.toFixed(2) + '%</td>'
+      + '<td>' + b.screen.toFixed(2) + '%</td>'
       + '<td>' + b.app_size + '</td>'
       + '<td>' + b.asti + '</td>'
       + '<td>' + b.stti + '</td>'
@@ -1638,31 +1645,32 @@ renderAll();
 def add_consolidation_sheet(wb, firebase_data=None):
     """Second tab: per-brand summary.
 
-    Crash free users (B) and App Hangs (C) are computed directly from the
-    Dashboard tab's raw data (T-AF) using SUMIFS, so they always reflect
-    whichever date range was fetched — no need to change B10 per brand.
+    Crash free users (B) is computed directly from the Dashboard tab's raw
+    data (T-AF) using SUMIFS, so it always reflects whichever date range was
+    fetched — no need to change B10 per brand. App Hangs (C) and Screen
+    availability (D) are hardcoded.
 
-    Frozen Frames (G) and Skipped Frames (H) use hardcoded values
-    (2.0% and 0.92% respectively).
+    Frozen Frames (H) and Skipped Frames (I) use hardcoded values
+    (0.3% and 0.90% respectively).
     """
     if firebase_data is None:
         firebase_data = {}
     ws = wb.create_sheet(title="Consolidation", index=0)
 
     headers = [
-        "Brand", "Crash free users", "App Hangs", "App size",
+        "Brand", "Crash free users", "App Hangs", "Screen availability", "App size",
         "ASTI", "STTI", "Frozen Frames", "Skipped Frames",
     ]
-    # Column M (13) — Riders count per brand (order matches BRANDS list)
-    RIDER_COL  = 13   # M
-    # Column N (14) — fixed brand weights by rider share; order matches BRANDS list
-    WEIGHT_COL = 14   # N
+    # Column N (14) — Riders count per brand (order matches BRANDS list)
+    RIDER_COL  = 14   # N
+    # Column O (15) — fixed brand weights by rider share; order matches BRANDS list
+    WEIGHT_COL = 15   # O
 
     # Static per-brand columns: (brand_name, app_size, asti, stti, frozen_fb, skipped_fb)
     # Brand name and numeric columns are derived from the module-level BRANDS list.
     # frozen_fb / skipped_fb are fallback values used when firebase_data is unavailable.
     static_cols = [
-        (b["name"], b["app_size"], b["asti"], b["stti"], 0.58, 1.2)
+        (b["name"], b["app_size"], b["asti"], b["stti"], 0.3, 0.90)
         for b in BRANDS
     ]
     brands = [row[0] for row in static_cols]
@@ -1673,7 +1681,7 @@ def add_consolidation_sheet(wb, firebase_data=None):
     DATA_END   = DATA_START + len(brands) - 1   # row 11
     AVG_ROW    = DATA_END + 1                   # row 12
     AQS_ROW    = AVG_ROW + 1                    # row 13
-    FINAL_ROW  = AQS_ROW + 2                    # row 15 (one blank gap)
+    FINAL_ROW  = AQS_ROW + 3                    # row 16 (two blank rows: 14-15)
 
     FINAL_BLUE = PatternFill("solid", fgColor="4472C4")
 
@@ -1704,24 +1712,21 @@ def add_consolidation_sheet(wb, firebase_data=None):
             f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(Dashboard!$X:$X,Dashboard!$Z:$Z,"*"&$A{r}&"*")'
             f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,'
             f'SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),'
-            f'M{r}*{month_days}))*100)),2)'
+            f'N{r}*{month_days}))*100)),2)'
         )
-        # C: Hang free %
-        styled(3).value = (
-            f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(Dashboard!$AB:$AB,Dashboard!$AD:$AD,"*"&$A{r}&"*")'
-            f'/IF(SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*")>0,'
-            f'SUMIFS(Dashboard!$V:$V,Dashboard!$U:$U,"*"&$A{r}&"*"),'
-            f'M{r}*{month_days}))*100)),2)'
-        )
-        styled(4, app_size)
-        styled(5, asti)
-        styled(6, stti)
+        # C: Hang free % — hardcoded (no longer derived from Sentry)
+        styled(3, HANG_RATE)
+        # D: Screen availability — hardcoded, same for all brands
+        styled(4, SCREEN_AVAILABILITY)
+        styled(5, app_size)
+        styled(6, asti)
+        styled(7, stti)
 
-        # G: Frozen Frames — single aggregated value from BQ, same for all brands
-        styled(7, firebase_data.get("frozen",  frozen_fb))
+        # H: Frozen Frames — single aggregated value, same for all brands
+        styled(8, firebase_data.get("frozen",  frozen_fb))
 
-        # H: Skipped Frames — single aggregated value from BQ, same for all brands
-        styled(8, firebase_data.get("skipped", skipped_fb))
+        # I: Skipped Frames — single aggregated value, same for all brands
+        styled(9, firebase_data.get("skipped", skipped_fb))
 
     # ── Column M: Riders count ────────────────────────────────────────────────
     rcol = get_column_letter(RIDER_COL)
@@ -1750,7 +1755,7 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ws.cell(AVG_ROW, 1, value="AVG").font = BOLD
     ws.cell(AVG_ROW, 1).fill = SUMMARY_LBL_FILL
     ws.cell(AVG_ROW, 1).border = THIN_BOX
-    for ci in range(2, 9):
+    for ci in range(2, 10):
         cl = get_column_letter(ci)
         cell = ws.cell(AVG_ROW, ci)
         cell.value = (f"=TRUNC(SUMPRODUCT({cl}{DATA_START}:{cl}{DATA_END},"
@@ -1760,13 +1765,14 @@ def add_consolidation_sheet(wb, firebase_data=None):
 
     # ── AQS row (row 13) ─────────────────────────────────────────────────────
     aqs_formulas = {
-        2: f"=MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*35%",
-        3: f"=MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*25%",
-        4: f"=MIN(100,MAX(0,(((D{AVG_ROW}-75)/(60-75))*50)+50))*2%",
-        5: f"=MIN(100,MAX(0,(((E{AVG_ROW}-4)/(2-4))*50)+50))*10%",
-        6: f"=MIN(100,MAX(0,(((F{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*10%",
-        7: f"=MIN(100,MAX(0,(((G{AVG_ROW}-3)/(1-3))*50)+50))*13%",
-        8: f"=MIN(100,MAX(0,(((H{AVG_ROW}-2)/(1-2))*50)+50))*5%",
+        2: f"=MIN(100,MAX(0,(((B{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*28%",
+        3: f"=MIN(100,MAX(0,(((C{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*16%",
+        4: f"=MIN(100,MAX(0,(((D{AVG_ROW}-99.7)/(99.9-99.7))*50)+50))*16%",
+        5: f"=MIN(100,MAX(0,(((E{AVG_ROW}-75)/(60-75))*50)+50))*2%",
+        6: f"=MIN(100,MAX(0,(((F{AVG_ROW}-4)/(2-4))*50)+50))*10%",
+        7: f"=MIN(100,MAX(0,(((G{AVG_ROW}-1.5)/(0.5-1.5))*50)+50))*10%",
+        8: f"=MIN(100,MAX(0,(((H{AVG_ROW}-3)/(1-3))*50)+50))*13%",
+        9: f"=MIN(100,MAX(0,(((I{AVG_ROW}-2)/(1-2))*50)+50))*5%",
     }
     ws.cell(AQS_ROW, 1, value="AQS").font = BOLD
     ws.cell(AQS_ROW, 1).fill = SUMMARY_VAL_FILL
@@ -1776,11 +1782,11 @@ def add_consolidation_sheet(wb, firebase_data=None):
         cell.font = BOLD; cell.fill = SUMMARY_VAL_FILL; cell.border = THIN_BOX
         cell.number_format = "0.00"   # plain number, no % sign
 
-    # M13: sum of M column data rows
-    m13 = ws.cell(AQS_ROW, 13, value=f"=SUM(M{DATA_START}:M{DATA_END})")
+    # N13: sum of riders column data rows
+    m13 = ws.cell(AQS_ROW, RIDER_COL, value=f"=SUM(N{DATA_START}:N{DATA_END})")
     m13.font = BOLD; m13.fill = SUMMARY_VAL_FILL; m13.border = THIN_BOX
 
-    # N13: sum of weights (validation — should equal 100%)
+    # O13: sum of weights (validation — should equal 100%)
     n13 = ws.cell(AQS_ROW, WEIGHT_COL, value=f"=SUM({wcol}{DATA_START}:{wcol}{DATA_END})")
     n13.font = BOLD; n13.fill = SETTINGS_FILL; n13.border = THIN_BOX
     n13.number_format = "0.00%"
@@ -1793,7 +1799,7 @@ def add_consolidation_sheet(wb, firebase_data=None):
     ws.cell(FINAL_ROW, 1).alignment = Alignment(horizontal="right")
 
     final_cell = ws.cell(FINAL_ROW, 2)
-    final_cell.value = f"=ROUND(SUM(B{AQS_ROW}:H{AQS_ROW}),2)"
+    final_cell.value = f"=ROUND(SUM(B{AQS_ROW}:I{AQS_ROW}),2)"
     final_cell.font = Font(bold=True, color="FFFFFF", size=13)
     final_cell.fill = FINAL_BLUE
     final_cell.border = MEDIUM_BOX
@@ -1814,20 +1820,20 @@ def add_consolidation_sheet(wb, firebase_data=None):
         note_cell.border = MEDIUM_BOX
         note_cell.alignment = Alignment(wrap_text=True)
         ws.merge_cells(start_row=NOTE_ROW, start_column=1,
-                       end_row=NOTE_ROW,   end_column=8)
+                       end_row=NOTE_ROW,   end_column=9)
         ws.row_dimensions[NOTE_ROW].height = 30
 
         MANUAL_COMMENT = ("Older values, not recently updated.\n"
                           "Update manually for accurate AQS score.")
-        for col_letter in ("D", "E", "F"):
+        for col_letter in ("E", "F", "G"):
             ws[f"{col_letter}1"].comment = Comment(MANUAL_COMMENT, "Script")
 
     # ── Column widths & freeze ────────────────────────────────────────────────
     ws.column_dimensions["A"].width = 18
-    for col in "BCDEFGH":
+    for col in "BCDEFGHI":
         ws.column_dimensions[col].width = 17
-    ws.column_dimensions[rcol].width = 15  # M — Riders count
-    ws.column_dimensions[wcol].width = 16  # N — Weight Rider ID
+    ws.column_dimensions[rcol].width = 15  # N — Riders count
+    ws.column_dimensions[wcol].width = 16  # O — Weight Rider ID
     ws.row_dimensions[1].height = 40
     ws.freeze_panes = "B2"
 
@@ -1885,14 +1891,14 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     # ── Dashboard (A-N) ────────────────────────────────────────────────────────
     # Settings: column A = label, column B = value, rows 1-10
     settings = [
-        ("CFU part in AQS",  60),      # B1
+        ("CFU part in AQS",  44),      # B1
         ("base AQS score",   32.65),   # B2
         ("CFU minimum",      99.5),    # B3
         ("CFU maximum",      99.9),    # B4
         (None,               None),
         ("Hang minimum",     99.5),    # B6
         ("Hang maximum",     99.9),    # B7
-        ("Hang part in AQS", 25),      # B8
+        ("Hang part in AQS", 16),      # B8
         (None,               None),
         ("Brand",            "woowa"), # B10 — change to filter by brand
     ]
@@ -1942,10 +1948,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
     for r in range(2, FORMULA_END + 1):
         ws.cell(r, 4).value  = f'=SUMIFS(V:V,U:U,"*"&$B$10&"*",T:T,C{r})'
         ws.cell(r, 5).value  = f'=SUMIFS(X:X,Z:Z,"*"&$B$10&"*",Y:Y,C{r})'
-        ws.cell(r, 7).value  = f'=ROUND(MAX(0,MIN(100,(1-E{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100)),2)'
+        ws.cell(r, 7).value  = f'=ROUND(MAX(0,MIN(100,(1-E{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$N:$N,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days}))*100)),2)'
         ws.cell(r, 8).value  = f'=MIN(1,(G{r}-$B$3)/($B$4-$B$3))*$B$1'
         ws.cell(r, 11).value = f'=SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*",AC:AC,C{r})'
-        ws.cell(r, 12).value = f'=ROUND(MAX(0,MIN(100,100*(1-K{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})))),2)'
+        ws.cell(r, 12).value = f'=ROUND(MAX(0,MIN(100,100*(1-K{r}/IF(D{r}>0,D{r},SUMIFS(Consolidation!$N:$N,Consolidation!$A:$A,"*"&$B$10&"*")/{month_days})))),2)'
         ws.cell(r, 13).value = f'=MAX(0,(L{r}-$B$6)/($B$7-$B$6)*$B$8)'
         ws.cell(r, 14).value = f'=$B$2+H{r}+M{r}'
 
@@ -1956,10 +1962,10 @@ def write_excel(bq_rows, hang_rows, crash_rows, path, firebase_data=None):
 
     summaries = [
         (4,  None,                            f"=AVERAGE(D2:D{FORMULA_END})"),
-        (7,  "AVG CFU",                       f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
+        (7,  "AVG CFU",                       f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(X:X,Z:Z,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$N:$N,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
         (8,  None,                            f"=AVERAGE(H2:H{FORMULA_END})"),
         (9,  f"{month_name} AQS score",       f"=$B$2+H{VAL}"),
-        (12, "AVG Hang-free",                 f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$M:$M,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
+        (12, "AVG Hang-free",                 f'=TRUNC(MAX(0,MIN(100,(1-SUMIFS(AB:AB,AD:AD,"*"&$B$10&"*")/IF(SUMIFS(V:V,U:U,"*"&$B$10&"*")>0,SUMIFS(V:V,U:U,"*"&$B$10&"*"),SUMIFS(Consolidation!$N:$N,Consolidation!$A:$A,"*"&$B$10&"*")*{month_days}))*100)),2)'),
         (13, None,                            f"=MAX(0,(L{VAL}-$B$6)/($B$7-$B$6)*$B$8)"),
         (14, "Projected AQS including hangs", f"=$B$2+MAX(0,(G{VAL}-$B$3)/($B$4-$B$3)*($B$1-$B$8))+M{VAL}"),
     ]
@@ -2072,8 +2078,8 @@ def main():
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
-    print("Using hardcoded frozen frames (0.7%) and skipped frames (0.92%)...")
-    firebase_data = {"frozen": 0.7, "skipped": 0.92}
+    print("Using hardcoded frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%)...")
+    firebase_data = {"frozen": 0.3, "skipped": 0.90}
 
     # Aggregate per-brand totals for HTML report (no extra network calls)
     bq_users_by_brand = {}
@@ -2103,7 +2109,7 @@ def main():
                                                    start=PREV_START, end=PREV_END, exact_brand=True)
         prev_crash_shaped = shape_rows(prev_raw_crash, "CRASH_USERS", sort_by_day=False)
 
-        prev_firebase_data = {"frozen": 0.7, "skipped": 0.92}
+        prev_firebase_data = {"frozen": 0.3, "skipped": 0.90}
 
         prev_bq_users_by_brand = {}
         for row in prev_bq_rows:
