@@ -136,7 +136,7 @@ BRANDS = [
 ]
 
 # Hardcoded hang-free rate (%) applied to every brand; no longer derived from Sentry.
-HANG_RATE    = 99.53
+HANG_RATE    = 99.49
 # Hardcoded screen availability (%) applied to every brand.
 SCREEN_AVAILABILITY = 99.87
 WEIGHTS      = [0.3966, 0.0758, 0.0861, 0.1047, 0.0539, 0.0111, 0.2378, 0.0037, 0.0267, 0.0037]
@@ -1007,7 +1007,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
+      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.49%) and screen availability (99.87%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1030,7 +1030,7 @@ def generate_html_report(bq_users_by_brand, crash_by_brand, hang_by_brand, fireb
     &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
     &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
     &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
+      Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.49%) and screen availability (99.87%) are hardcoded values.<br>
     &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
   </div>
 </div>
@@ -1380,7 +1380,7 @@ document.getElementById('tabs').addEventListener('click', function(e) {{
 {stale_footer_note}  &bull; <strong>Weighted AVG</strong> — SUMPRODUCT of brand values with rider-share weights.<br>
   &bull; <strong>AQS formula</strong> — <code>min(100, max(0, (((value - baseline) / (target - baseline)) * 50) + 50)) * weight%</code><br>
   &bull; BQ_AVAILABLE = <code>{bq_available_str}</code> &nbsp;|&nbsp;
-    Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%) are hardcoded values.<br>
+    Frozen frames (0.3%), skipped frames (0.90%), hang rate (99.49%) and screen availability (99.87%) are hardcoded values.<br>
   &bull; Rows marked with <span style="color:#9ca3af">*</span> used fallback CFU/hang values (BQ user count was zero).
 </div>
 
@@ -2078,7 +2078,7 @@ def main():
     crash_rows = shape_rows(raw_crash_rows, "CRASH_USERS", sort_by_day=False)
     backfill_zero_rows(crash_rows, "CRASH_USERS", CRASHES_QUERY, environment="production")
 
-    print("Using hardcoded frozen frames (0.3%), skipped frames (0.90%), hang rate (99.53%) and screen availability (99.87%)...")
+    print("Using hardcoded frozen frames (0.3%), skipped frames (0.90%), hang rate (99.49%) and screen availability (99.87%)...")
     firebase_data = {"frozen": 0.3, "skipped": 0.90}
 
     # Aggregate per-brand totals for HTML report (no extra network calls)
