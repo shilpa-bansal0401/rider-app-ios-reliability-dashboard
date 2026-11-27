@@ -104,7 +104,7 @@
 <h1>AppHang Analysis — Rider iOS</h1>
 <p class="subtitle">
   Filter: <code>is:unresolved "*App Hang* detected*"</code> &nbsp;|&nbsp;
-  Data fetched: 26 Nov 2026 &nbsp;|&nbsp;
+  Data fetched: 27 Nov 2026 &nbsp;|&nbsp;
   Months: Sep 2026 · Oct 2026 · Nov 2026
 </p>
 
@@ -228,8 +228,8 @@
 
 <div class="panel" id="panel-country">
   <p style="font-size:13px;color:#666;margin-bottom:16px;">
-    Hang-impacted riders by <code>country_code</code> — November 2026 (partial, data up to 26 Nov 2026) &nbsp;|&nbsp;
-    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-11-01 – 2026-11-27) &nbsp;|&nbsp;
+    Hang-impacted riders by <code>country_code</code> — November 2026 (partial, data up to 27 Nov 2026) &nbsp;|&nbsp;
+    Total riders from BigQuery (<code>rider_devices</code>, iOS, 2026-11-01 – 2026-11-28) &nbsp;|&nbsp;
     Click any row to open Sentry filtered by that country
   </p>
   <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:18px;margin-bottom:24px;overflow:auto;">
@@ -254,7 +254,7 @@
      Priority: Mapbox › WebKit › Firebase › Sentry SDK › Keyboard › Location › Audio › Camera › Storage.
   <br>• <strong>Filter:</strong> <code>"*App Hang* detected*"</code> — matches all AppHang events reported by the Sentry SDK.
   <br>• <strong>Firebase</strong> is statically linked — matched via <code>message:</code> contains for known culprits (<code>FIRCLS*</code>, <code>FireApp*</code>).
-  <br>• <strong>Nov 2026 is a partial month (data up to 26 Nov 2026).</strong> Earlier months in this report are complete months.
+  <br>• <strong>Nov 2026 is a partial month (data up to 27 Nov 2026).</strong> Earlier months in this report are complete months.
   <br>• <strong>Device Class tab:</strong> both hang-impacted riders (Sentry) and fleet totals (BigQuery) are for yesterday only — giving a true daily impact rate. Injected hangs (<code>HangInjectionService</code>) are excluded.
   <br>• <strong>Delta arrows:</strong> ▲ = more riders impacted (worse), ▼ = fewer (better).
   <br>• <strong>Release 4.2625.3 is excluded</strong> — it only rolled out to ~5% of riders and is not comparable to full-rollout releases.
@@ -489,15 +489,15 @@ const MONTHS              = [
   {
     "label": "November 2026",
     "short": "Nov 2026",
-    "total": 18183,
+    "total": 18867,
     "start": "2026-11-01T00:00:00",
-    "end": "2026-11-27T00:00:00",
+    "end": "2026-11-28T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 14109,
+        "users": 14569,
         "query": "is:unresolved \"*App Hang* detected*\"  stack.function:[*Mapbox*,*NavigationMapView*]",
         "culprits": [
           "MetalView.draw",
@@ -515,7 +515,7 @@ const MONTHS              = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 2066,
+        "users": 2165,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -528,7 +528,7 @@ const MONTHS              = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 968,
+        "users": 1012,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -540,7 +540,7 @@ const MONTHS              = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 486,
+        "users": 549,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -548,7 +548,7 @@ const MONTHS              = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 372,
+        "users": 385,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -561,7 +561,7 @@ const MONTHS              = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 26,
+        "users": 28,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -573,7 +573,7 @@ const MONTHS              = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 156,
+        "users": 159,
         "query": "is:unresolved \"*App Hang* detected*\" !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.function:*QRScanCameraOverlayView*",
         "culprits": [
           "QRScanCameraOverlayView",
@@ -617,35 +617,35 @@ const WEEKS               = [
     "end": "2026-11-23T00:00:00"
   },
   {
-    "label": "Nov 23 - Nov 26 (partial)",
+    "label": "Nov 23 - Nov 27 (partial)",
     "short": "Nov 23",
     "start": "2026-11-23T00:00:00",
-    "end": "2026-11-27T00:00:00"
+    "end": "2026-11-28T00:00:00"
   }
 ];
 const RELEASES            = [
   {
     "label": "4.2645.1",
     "short": "4.2645.1",
-    "users": 5604,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "users": 5616,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1100 !stack.function:HangInjectionService.imitateHangIfEligible"
   },
   {
     "label": "4.2646.1",
     "short": "4.2646.1",
-    "users": 7869,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "users": 8303,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.function:HangInjectionService.imitateHangIfEligible"
   },
   {
     "label": "4.2648.1",
     "short": "4.2648.1",
-    "users": 394,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "users": 618,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.function:HangInjectionService.imitateHangIfEligible"
   }
 ];
@@ -657,7 +657,7 @@ const RELEASE_WEEKLY      = [
       1968,
       3595,
       474,
-      100
+      123
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1100"
   },
@@ -667,8 +667,8 @@ const RELEASE_WEEKLY      = [
     "week_users": [
       0,
       1874,
-      4993,
-      2669
+      4994,
+      3162
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1104"
   },
@@ -679,7 +679,7 @@ const RELEASE_WEEKLY      = [
       0,
       0,
       0,
-      602
+      890
     ],
     "link_query": "is:unresolved \"*App Hang* detected*\" dist:1111"
   }
@@ -688,15 +688,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2645.1",
     "short": "4.2645.1",
-    "total": 2594,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "total": 2598,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 732,
+        "users": 734,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1100  stack.function:[*Mapbox*,*NavigationMapView*]",
         "culprits": [
           "MetalView.draw",
@@ -714,7 +714,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 418,
+        "users": 419,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1100 !stack.package:*Mapbox* !message:*Mapbox* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -739,7 +739,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 820,
+        "users": 821,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1100 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -808,15 +808,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2646.1",
     "short": "4.2646.1",
-    "total": 4385,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "total": 4626,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 1181,
+        "users": 1261,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104  stack.function:[*Mapbox*,*NavigationMapView*]",
         "culprits": [
           "MetalView.draw",
@@ -834,7 +834,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 636,
+        "users": 679,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -847,7 +847,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 428,
+        "users": 457,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -859,7 +859,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 1403,
+        "users": 1470,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -867,7 +867,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 369,
+        "users": 389,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -880,7 +880,7 @@ const RELEASE_CATEGORIES  = [
         "key": "audio",
         "label": "Audio / Media",
         "color": "#FDFDCC",
-        "users": 65,
+        "users": 66,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.package:*AVFoundation*",
         "culprits": [
           "AudioPlayerImpl.registerRemoteSyncProvider",
@@ -892,7 +892,7 @@ const RELEASE_CATEGORIES  = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 74,
+        "users": 75,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1104 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.function:*QRScanCameraOverlayView*",
         "culprits": [
           "QRScanCameraOverlayView",
@@ -928,15 +928,15 @@ const RELEASE_CATEGORIES  = [
   {
     "label": "4.2648.1",
     "short": "4.2648.1",
-    "total": 168,
-    "start": "2026-08-28T00:00:00",
-    "end": "2026-11-26T00:00:00",
+    "total": 289,
+    "start": "2026-08-29T00:00:00",
+    "end": "2026-11-27T00:00:00",
     "categories": [
       {
         "key": "mapbox",
         "label": "Mapbox",
         "color": "#FFB3BA",
-        "users": 38,
+        "users": 72,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111  stack.function:[*Mapbox*,*NavigationMapView*]",
         "culprits": [
           "MetalView.draw",
@@ -954,7 +954,7 @@ const RELEASE_CATEGORIES  = [
         "key": "webkit",
         "label": "WebKit / WebView",
         "color": "#BAE1FF",
-        "users": 28,
+        "users": 44,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.package:*Mapbox* !message:*Mapbox* stack.package:*WebKit*",
         "culprits": [
           "WebViewController.webView.getter",
@@ -967,7 +967,7 @@ const RELEASE_CATEGORIES  = [
         "key": "firebase",
         "label": "Firebase / Crashlytics",
         "color": "#FFFFBA",
-        "users": 11,
+        "users": 22,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* message:*FIRCLS*",
         "culprits": [
           "FIRCLSFileLoopWithWriteBlock",
@@ -979,7 +979,7 @@ const RELEASE_CATEGORIES  = [
         "key": "keyboard",
         "label": "Keyboard",
         "color": "#E0BBE4",
-        "users": 79,
+        "users": 124,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* stack.function:*UIKeyboard*",
         "culprits": []
       },
@@ -987,7 +987,7 @@ const RELEASE_CATEGORIES  = [
         "key": "location",
         "label": "Location",
         "color": "#B2F2EF",
-        "users": 11,
+        "users": 22,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.package:*CoreLocation*",
         "culprits": [
           "AppleLocationProvider.init",
@@ -1012,7 +1012,7 @@ const RELEASE_CATEGORIES  = [
         "key": "camera",
         "label": "Camera / AR",
         "color": "#97EDEA",
-        "users": 1,
+        "users": 5,
         "query": "is:unresolved \"*App Hang* detected*\" dist:1111 !stack.package:*Mapbox* !message:*Mapbox* !stack.package:*WebKit*,*WebCore*,*WKWebView* !message:*FIRCLS*,*FireApp* !stack.function:*UIKeyboard* stack.function:*QRScanCameraOverlayView*",
         "culprits": [
           "QRScanCameraOverlayView",
@@ -1051,7 +1051,7 @@ const DEVICE_CLASS        = [
     "key": "high",
     "label": "High-end",
     "color": "#6366f1",
-    "impacted_users": 312,
+    "impacted_users": 275,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:high !stack.function:HangInjectionService.imitateHangIfEligible",
     "total_riders": 0
   },
@@ -1059,7 +1059,7 @@ const DEVICE_CLASS        = [
     "key": "medium",
     "label": "Mid-range",
     "color": "#f59e0b",
-    "impacted_users": 705,
+    "impacted_users": 695,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:medium !stack.function:HangInjectionService.imitateHangIfEligible",
     "total_riders": 0
   },
@@ -1067,7 +1067,7 @@ const DEVICE_CLASS        = [
     "key": "low",
     "label": "Low-end",
     "color": "#94a3b8",
-    "impacted_users": 3,
+    "impacted_users": 0,
     "query": "is:unresolved \"*App Hang* detected*\" device.class:low !stack.function:HangInjectionService.imitateHangIfEligible",
     "total_riders": 0
   }
@@ -1075,7 +1075,7 @@ const DEVICE_CLASS        = [
 const COUNTRY_DATA        = {
   "month": "November 2026",
   "start": "2026-11-01T00:00:00",
-  "end": "2026-11-27T00:00:00",
+  "end": "2026-11-28T00:00:00",
   "countries": []
 };
 
@@ -1732,8 +1732,8 @@ MONTHS.forEach((month, mi) => {
       environment: "production",
       project: PROJECT_ID,
       query: tier.query,
-      start: "2026-11-25T00:00:00",
-      end:   "2026-11-26T00:00:00",
+      start: "2026-11-26T00:00:00",
+      end:   "2026-11-27T00:00:00",
     });
     window.open(BASE_URL + "?" + p.toString(), "_blank");
   }
